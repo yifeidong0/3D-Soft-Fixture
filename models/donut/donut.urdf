@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<robot name="donut">
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://donut/donut_vis.dae"/>
+        <!-- <box size="0.6 0.1 0.2"/> -->
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://donut/donut_col.stl"/>
+        <!-- <box size="0.6 0.1 0.2"/> -->
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint1" type="continuous">
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <parent link="base_link"/>
+    <child link="arm_link1"/>
+  </joint>
+
+  <link name="arm_link1">
+    <visual>
+      <geometry>
+        <mesh filename="package://donut/donut_vis.dae"/>
+        <!-- <box size="0.6 0.1 0.2"/> -->
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://donut/donut_col.stl"/>
+        <!-- <box size="0.6 0.1 0.2"/> -->
+      </geometry>
+    </collision>
+  </link>
+
+</robot>
