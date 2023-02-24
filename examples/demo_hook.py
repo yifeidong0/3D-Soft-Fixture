@@ -14,18 +14,18 @@ from pb_ompl import PbOMPLRobot
 class MyObject(PbOMPLRobot):
     def __init__(self, id) -> None:
         self.id = id
-        self.num_dim = 7
-        self.joint_idx=[0]
+        self.num_dim = 6
+        self.joint_idx=[]
         self.reset()
 
         self.joint_bounds = []
         self.joint_bounds.append([-2, 2]) # x
         self.joint_bounds.append([-2, 2]) # y
-        self.joint_bounds.append([0, 4]) # z
+        self.joint_bounds.append([0, 5]) # z
         self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r
         self.joint_bounds.append([math.radians(-180), math.radians(180)]) # p
         self.joint_bounds.append([math.radians(-180), math.radians(180)]) # y
-        self.joint_bounds.append([math.radians(-0), math.radians(0)]) # joint_0
+        # self.joint_bounds.append([math.radians(-0), math.radians(0)]) # joint_0
 
     def set_bisec_thres(self, zmax):
         self.joint_bounds[2][1] = zmax
@@ -42,13 +42,13 @@ class MyObject(PbOMPLRobot):
         r = R.from_euler('zyx', state[3:6], degrees=False)
         quat = r.as_quat()
         p.resetBasePositionAndOrientation(self.id, pos, quat)
-        self._set_joint_positions(self.joint_idx, [state[-1]])
+        # self._set_joint_positions(self.joint_idx, [state[-1]])
 
         self.state = state
 
     def reset(self):
         p.resetBasePositionAndOrientation(self.id, [0,0,0], [0,0,0,1])
-        self._set_joint_positions(self.joint_idx, [0])
+        # self._set_joint_positions(self.joint_idx, [0])
         self.state = [0] * self.num_dim
 
     def _set_joint_positions(self, joints, positions):
@@ -67,7 +67,7 @@ class DonutDemo():
         p.loadURDF("plane.urdf")
 
         # load robot
-        robot_id = p.loadURDF("models/donut/donut.urdf", (0,0,0))
+        robot_id = p.loadURDF("models/triple_hook/triple_hook.urdf", globalScaling=.03)
         self.robot = MyObject(robot_id)
         
         self.start = [0,0,3,0,1,0] # :3 pos // 3: rot [radian]
@@ -94,13 +94,6 @@ class DonutDemo():
         path_z = np.array(path)[:,2]
         max_z_escape = np.max(path_z)
         self.max_z_escapes.append(max_z_escape)
-        # depth = np.around(np.max(path_z)-path_z[0], decimals=2)
-        # self.cage_depth.append([depth, self.cover_z])
-        # plt.plot(path_z)
-        # plt.xlabel('path node')
-        # plt.ylabel('height')
-        # plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
-        # plt.show()
 
     def demo(self):
         self.robot.set_state(self.start)

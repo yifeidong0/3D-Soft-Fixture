@@ -13,8 +13,9 @@ from scipy.spatial.transform import Rotation as R
 class ArticulateRobot(pb_ompl.PbOMPLRobot):
     def __init__(self, id) -> None:
         self.id = id
-        self.num_dim = 10
-        self.joint_idx=[0,1,2,3]
+        self.articulate_num = p.getNumJoints(id)
+        self.num_dim = 6 + self.articulate_num
+        self.joint_idx = list(range(self.articulate_num))
         # self.reset()
 
         self.joint_bounds = []
@@ -23,8 +24,8 @@ class ArticulateRobot(pb_ompl.PbOMPLRobot):
         self.joint_bounds.append([0, 5]) # z
         for i in range(3):
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
-        for i in range(4):
-            self.joint_bounds.append([math.radians(-90), math.radians(90)]) # joint_0-3
+        for i in range(self.articulate_num):
+            self.joint_bounds.append([math.radians(-15), math.radians(15)]) # joint_articulates
 
     def set_bisec_thres(self, zmax):
         self.joint_bounds[2][1] = zmax
@@ -47,7 +48,7 @@ class ArticulateRobot(pb_ompl.PbOMPLRobot):
 
     def reset(self):
         p.resetBasePositionAndOrientation(self.id, [0,0,0], [0,0,0,1])
-        self._set_joint_positions(self.joint_idx, [0]*4)
+        self._set_joint_positions(self.joint_idx, [0]*self.articulate_num)
         self.state = [0] * self.num_dim
 
     def _set_joint_positions(self, joints, positions):
@@ -70,8 +71,8 @@ class ArticulateDemo():
         robot_id = p.loadURDF("models/articulate_robot.xacro", (0,0,0))
         self.robot = ArticulateRobot(robot_id)
         
-        self.start = [0,0,3,0,0,0] + [np.pi/4]*4 # :3 pos // 3: rot [radian]
-        self.goal = [0,0,0,0,0,0] + [0]*4
+        self.start = [0,0,3,0,0,0] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
+        self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
         
         self.max_z_escapes = [] # successful escapes
         self.eps_thres = eps_thres # threshold of search resolution
@@ -124,6 +125,9 @@ class ArticulateDemo():
 
         # for i in range(NUMITER):
         while eps > self.eps_thres: 
+            # from time import sleep
+            # sleep(1240.)
+
             # data record
             self.zus.append(zupper)
             self.zls.append(zlower)
@@ -191,7 +195,7 @@ class ArticulateDemo():
 
 if __name__ == '__main__':
     env = ArticulateDemo(eps_thres=1e-1)
-    env.add_obstacles()
+    # env.add_obstacles()
     env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, env.obstacles)
 
     # iterative height threshold search
