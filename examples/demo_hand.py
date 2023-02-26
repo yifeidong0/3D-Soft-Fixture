@@ -8,7 +8,7 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 import pb_ompl
 import matplotlib.pyplot as plt
 import numpy as np
-from my_donut_robot import MyDonutRobot
+from demo_donut import MyObject
 
 class RobotiqDemo():
     def __init__(self, numiter):
@@ -30,7 +30,7 @@ class RobotiqDemo():
 
         # load object
         object_id = p.loadURDF("models/donut/donut.urdf", (0,0,1), globalScaling=.3)
-        self.object = MyDonutRobot(object_id)
+        self.object = MyObject(object_id)
         self.start = [0,0,.4,0,1,0] # :3 pos // 3: rot [radian]
         self.goal = [0,0,-.5,0,0,0]
 

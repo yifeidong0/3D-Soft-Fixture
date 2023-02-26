@@ -127,6 +127,8 @@ class PbOMPL():
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles(self.obstacles)
 
+        self.reset_robot_state_bound()
+
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()

@@ -10,23 +10,41 @@ import numpy as np
 from time import sleep
 from scipy.spatial.transform import Rotation as R
 
-class ArticulateRobot(pb_ompl.PbOMPLRobot):
+OBJID = 0
+OBSID = 0
+PATHS = ['models/articulate_fish.xacro', 
+         'models/triple_hook/triple_hook.urdf', 
+         'models/donut/donut.urdf',
+         'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+         'models/franka_description/robots/panda_arm.urdf',
+         'models/planar_robot_4_link.xacro',
+         '']
+
+class ObjectToCage(pb_ompl.PbOMPLRobot):
     def __init__(self, id) -> None:
         self.id = id
+        self.comDof = 3 + 3 # SE3
         self.articulate_num = p.getNumJoints(id)
-        self.num_dim = 6 + self.articulate_num
-        self.joint_idx = list(range(self.articulate_num))
+        self.num_dim = self.comDof + self.articulate_num
+        self.joint_idx = []
+        # self.joint_idx = list(range(self.articulate_num))
         # self.reset()
 
-        self.joint_bounds = []
-        self.joint_bounds.append([-2, 2]) # x
-        self.joint_bounds.append([-2, 2]) # y
-        self.joint_bounds.append([0, 5]) # z
-        for i in range(3):
-            self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
-        for i in range(self.articulate_num):
-            self.joint_bounds.append([math.radians(-15), math.radians(15)]) # joint_articulates
+        self.set_search_bounds()
 
+    def set_search_bounds(self):
+        self.joint_bounds = [[-2, 2], [-2, 2], [0, 5]] # CoM pos
+        for i in range(3): # CoM rot
+            self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
+        
+        for i in range(self.articulate_num):
+            info = p.getJointInfo(self.id, i)
+            jointType = info[2]
+            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+                self.joint_idx.append(i)
+                bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
+                self.joint_bounds.append(bounds) # joint_0-3
+   
     def set_bisec_thres(self, zmax):
         self.joint_bounds[2][1] = zmax
         
@@ -38,8 +56,8 @@ class ArticulateRobot(pb_ompl.PbOMPLRobot):
 
     def set_state(self, state):
         pos = state[0:3]
-        # r = R.from_euler('zyx', [0,0,0], degrees=False)
-        r = R.from_euler('zyx', state[3:6], degrees=False)
+        eulerRot = state[3:6]
+        r = R.from_euler('zyx', eulerRot, degrees=False)
         quat = r.as_quat()
         p.resetBasePositionAndOrientation(self.id, pos, quat)
         self._set_joint_positions(self.joint_idx, state[6:])
@@ -47,7 +65,9 @@ class ArticulateRobot(pb_ompl.PbOMPLRobot):
         self.state = state
 
     def reset(self):
-        p.resetBasePositionAndOrientation(self.id, [0,0,0], [0,0,0,1])
+        pos = [0,0,0]
+        quat = [0,0,0,1]
+        p.resetBasePositionAndOrientation(self.id, pos, quat)
         self._set_joint_positions(self.joint_idx, [0]*self.articulate_num)
         self.state = [0] * self.num_dim
 
@@ -63,13 +83,11 @@ class ArticulateDemo():
         p.connect(p.GUI)
         # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
-
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
-        # p.loadURDF("plane.urdf")
 
         # load robot
-        robot_id = p.loadURDF("models/articulate_fish.xacro", (0,0,0))
-        self.robot = ArticulateRobot(robot_id)
+        robot_id = p.loadURDF(PATHS[OBJID], (0,0,0))
+        self.robot = ObjectToCage(robot_id)
         
         self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
         self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
@@ -95,13 +113,6 @@ class ArticulateDemo():
         path_z = np.array(path)[:,2]
         max_z_escape = np.max(path_z)
         self.max_z_escapes.append(max_z_escape)
-        # depth = np.around(np.max(path_z)-path_z[0], decimals=2)
-        # self.cage_depth.append([depth, self.cover_z])
-        # plt.plot(path_z)
-        # plt.xlabel('path node')
-        # plt.ylabel('height')
-        # plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
-        # plt.show()
 
     def demo(self):
         self.robot.set_state(self.start)
@@ -125,7 +136,6 @@ class ArticulateDemo():
         self.itercount = []
 
         while eps > self.eps_thres: 
-
             # data record
             self.zus.append(zupper)
             self.zls.append(zlower)
@@ -133,7 +143,7 @@ class ArticulateDemo():
 
             # set upper bound of searching
             self.pb_ompl_interface.reset_robot_state_bound()
-            self.pb_ompl_interface.set_planner("RRT")
+            self.pb_ompl_interface.set_planner("RRTstar")
             
             # start planning
             self.demo()
