@@ -19,6 +19,8 @@ import time
 from itertools import product
 import copy
 import numpy as np
+import math
+import sys
 
 INTERPOLATE_NUM = 500
 DEFAULT_PLANNING_TIME = 20.0
@@ -143,7 +145,6 @@ class PbOMPL():
         # self.si.setStateValidityCheckingResolution(0.005)
         # self.collision_fn = pb_utils.get_collision_fn(self.robot_id, self.robot.joint_idx, self.obstacles, [], True, set(),
         #                                                 custom_limits={}, max_distance=0, allow_collision_links=[])
-
         # self.set_planner("RRT") # RRT by default
 
     def set_obstacles(self, obstacles):
