@@ -23,7 +23,7 @@ import math
 import sys
 
 INTERPOLATE_NUM = 500
-DEFAULT_PLANNING_TIME = 20.0
+DEFAULT_PLANNING_TIME = 60.0
 
 class PbOMPLRobot():
     '''
@@ -93,6 +93,7 @@ class PbOMPLRobot():
         for joint, value in zip(joints, positions):
             p.resetJointState(self.id, joint, value, targetVelocity=0)
 
+
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
         super().__init__(num_dim)
@@ -116,8 +117,22 @@ class PbStateSpace(ob.RealVectorStateSpace):
         '''
         self.state_sampler = state_sampler
 
+
+class minPathPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start):
+        super(minPathPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+
+    def combineCosts(self, c1, c2):
+        return ob.Cost(max(c1.value(), c2.value()))
+
+    def motionCost(self, s1, s2):
+        return ob.Cost(s2[2] - self.start_[2])
+
+
 class PbOMPL():
-    def __init__(self, robot, obstacles = []) -> None:
+    def __init__(self, robot, start, obstacles=[]) -> None:
         '''
         Args
             robot: A PbOMPLRobot instance.
@@ -125,12 +140,13 @@ class PbOMPL():
         '''
         self.robot = robot
         self.robot_id = robot.id
+        self.start = start
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles(self.obstacles)
 
-        self.reset_robot_state_bound()
-
+        # self.reset_robot_state_bound()
+        
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()
@@ -139,9 +155,12 @@ class PbOMPL():
             bounds.setHigh(i, bound[1])
         self.space.setBounds(bounds)
 
-        self.ss = og.SimpleSetup(self.space)
-        self.ss.setStateValidityChecker(ob.StateValidityCheckerFn(self.is_state_valid))
-        self.si = self.ss.getSpaceInformation()
+        # self.ss = og.SimpleSetup(self.space)
+        self.si = ob.SpaceInformation(self.space)
+        self.si.setStateValidityChecker(ob.StateValidityCheckerFn(self.is_state_valid))
+        self.si.setup()
+        # self.si = self.ss.getSpaceInformation()
+        
         # self.si.setStateValidityCheckingResolution(0.005)
         # self.collision_fn = pb_utils.get_collision_fn(self.robot_id, self.robot.joint_idx, self.obstacles, [], True, set(),
         #                                                 custom_limits={}, max_distance=0, allow_collision_links=[])
@@ -191,32 +210,34 @@ class PbOMPL():
         '''
         Note: Add your planner here!!
         '''
-        if planner_name == "PRM":
-            self.planner = og.PRM(self.ss.getSpaceInformation())
-        elif planner_name == "RRT":
-            self.planner = og.RRT(self.ss.getSpaceInformation())
-        elif planner_name == "RRTConnect":
-            self.planner = og.RRTConnect(self.ss.getSpaceInformation())
-        elif planner_name == "RRTstar":
-            self.planner = og.RRTstar(self.ss.getSpaceInformation())
-        elif planner_name == "EST":
-            self.planner = og.EST(self.ss.getSpaceInformation())
-        elif planner_name == "FMT":
-            self.planner = og.FMT(self.ss.getSpaceInformation())
-        elif planner_name == "BITstar":
-            self.planner = og.BITstar(self.ss.getSpaceInformation())
-        else:
-            print("{} not recognized, please add it first".format(planner_name))
-            return
+        # if planner_name == "PRM":
+        #     self.planner = og.PRM(self.ss.getSpaceInformation())
+        # elif planner_name == "RRT":
+        #     self.planner = og.RRT(self.ss.getSpaceInformation())
+        # elif planner_name == "RRTConnect":
+        #     self.planner = og.RRTConnect(self.ss.getSpaceInformation())
+        # elif planner_name == "RRTstar":
+        #     self.planner = og.RRTstar(self.ss.getSpaceInformation())
+        # elif planner_name == "EST":
+        #     self.planner = og.EST(self.ss.getSpaceInformation())
+        # elif planner_name == "FMT":
+        #     self.planner = og.FMT(self.ss.getSpaceInformation())
+        # elif planner_name == "BITstar":
+        #     self.planner = og.BITstar(self.ss.getSpaceInformation())
+        # else:
+        #     print("{} not recognized, please add it first".format(planner_name))
+        #     return
 
-        self.ss.setPlanner(self.planner)
+        # Set customized optimization objective
+        self.pdef = ob.ProblemDefinition(self.si)
+
 
     def plan_start_goal(self, start, goal, allowed_time=DEFAULT_PLANNING_TIME, reached_thres=.5):
         '''
         plan a path to goal from the given robot start state
         '''
         print("start_planning")
-        print(self.planner.params())
+        # print(self.planner.params())
 
         orig_robot_state = self.robot.get_cur_state()
 
@@ -227,21 +248,30 @@ class PbOMPL():
             s[i] = start[i]
             g[i] = goal[i]
 
-        self.ss.setStartAndGoalStates(s, g)
+        self.pdef.setStartAndGoalStates(s, g)
+        potentialObjective = minPathPotentialObjective(self.si, self.start)
+        self.pdef.setOptimizationObjective(potentialObjective)
+        self.planner = og.BITstar(self.si)
+        self.planner.setProblemDefinition(self.pdef)
+        self.planner.setup()
+        
+        # self.ss.setPlanner(self.planner)
 
         # attempt to solve the problem within allowed planning time
-        solved = self.ss.solve(allowed_time)
+        solved = self.planner.solve(allowed_time)
         res = False
         sol_path_list = []
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # print the path to screen
-            sol_path_geometric = self.ss.getSolutionPath()
+            sol_path_geometric = self.pdef.getSolutionPath()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
             sol_path_states = sol_path_geometric.getStates()
             sol_path_list = [self.state_to_list(state) for state in sol_path_states]
             # print(len(sol_path_list))
             # print(sol_path_list)
+            print('cost!!!!!!!!!!!!!!', 
+                  self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value())
             for sol_path in sol_path_list:
                 self.is_state_valid(sol_path)
 

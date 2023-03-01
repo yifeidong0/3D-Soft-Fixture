@@ -113,6 +113,13 @@ class ArticulateDemo():
         path_z = np.array(path)[:,2]
         max_z_escape = np.max(path_z)
         self.max_z_escapes.append(max_z_escape)
+        
+        depth = np.around(np.max(path_z)-path_z[0], decimals=2)
+        plt.plot(path_z)
+        plt.xlabel('path node')
+        plt.ylabel('height')
+        plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
+        plt.show()
 
     def demo(self):
         self.robot.set_state(self.start)
@@ -204,7 +211,7 @@ class ArticulateDemo():
 if __name__ == '__main__':
     env = ArticulateDemo(eps_thres=1e-1)
     env.add_obstacles()
-    env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, env.obstacles)
+    env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, env.start, env.obstacles)
 
     # iterative height threshold search
     env.find_height_thres_escape()
