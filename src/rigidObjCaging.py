@@ -13,12 +13,26 @@ class RigidObjectCaging():
         self.args = args
         self.obstacles = []
 
-        p.connect(p.GUI)
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)
         # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-        # load robot
+        self.load_object()
+
+        # Set start and goal nodes
+        self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
+        self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
+
+        self.max_z_escapes = [] # successful escapes
+        self.eps_thres = eps_thres # bi-section search resolution
+
+    def load_object(self):
+        """Load object for caging."""
         self.paths = {'Fish': 'models/articulate_fish.xacro', 
                 'Hook': 'models/triple_hook/triple_hook.urdf', 
                 'Donut': 'models/donut/donut.urdf',
@@ -29,13 +43,6 @@ class RigidObjectCaging():
                 }
         robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
-        
-        # Set start and goal nodes
-        self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
-        self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
-        
-        self.max_z_escapes = [] # successful escapes
-        self.eps_thres = eps_thres # threshold of search resolution
 
     def add_obstacles(self):
         self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
@@ -56,12 +63,13 @@ class RigidObjectCaging():
         max_z_escape = np.max(path_z)
         self.max_z_escapes.append(max_z_escape)
         
-        depth = np.around(np.max(path_z)-path_z[0], decimals=2)
-        plt.plot(path_z)
-        plt.xlabel('path node')
-        plt.ylabel('height')
-        plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
-        plt.show()
+        if self.args.visualization:
+            depth = np.around(np.max(path_z)-path_z[0], decimals=2)
+            plt.plot(path_z)
+            plt.xlabel('path node')
+            plt.ylabel('height')
+            plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
+            plt.show()
 
     def execute_search(self):
         # sleep(1240.)

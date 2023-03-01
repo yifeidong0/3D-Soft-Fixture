@@ -14,23 +14,4 @@
     </collision>
   </link>
 
-  <!-- <joint name="joint1" type="continuous">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
-    <parent link="base_link"/>
-    <child link="copy"/>
-  </joint>
-
-  <link name="copy">
-    <visual>
-      <geometry>
-        <mesh filename="package://triple_hook/triple_hook.dae"/>
-      </geometry>
-    </visual>
-    <collision>
-      <geometry>
-        <mesh filename="package://triple_hook/triple_hook.stl"/>
-      </geometry>
-    </collision>
-  </link> -->
-
 </robot>
