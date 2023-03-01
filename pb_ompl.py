@@ -124,23 +124,30 @@ class minPathPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
 
-    def combineCosts(self, c1, c2):
-        return ob.Cost(max(c1.value(), c2.value()))
-
     def motionCost(self, s1, s2):
         return ob.Cost(s2[2] - self.start_[2])
 
+    def combineCosts(self, c1, c2):
+        '''
+        The vertex i cost is expressed as the potential energy gain along 
+        the path connecting i and v_start, and formulated as
+        v_child.cost = combineCost(v_parent.cost, 
+                                   motionCost(v_parent, v_child))
+                     = max(v_parent.cost, v_child.energy-v_start.energy)
+        '''
+        return ob.Cost(max(c1.value(), c2.value()))
+
 
 class PbOMPL():
-    def __init__(self, robot, start, obstacles=[]) -> None:
+    def __init__(self, robot, args, obstacles=[]) -> None:
         '''
         Args
             robot: A PbOMPLRobot instance.
             obstacles: list of obstacle ids. Optional.
         '''
+        self.args = args
         self.robot = robot
         self.robot_id = robot.id
-        self.start = start
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles(self.obstacles)
@@ -199,8 +206,8 @@ class PbOMPL():
 
     def setup_collision_detection(self, robot, obstacles, self_collisions = False, allow_collision_links = []):
         self.check_link_pairs = utils.get_self_link_pairs(robot.id, robot.joint_idx) if self_collisions else []
-        moving_links = frozenset(
-            [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
+        # moving_links = frozenset(
+        #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
         moving_bodies = [robot.id] # for deformable ball
         # moving_bodies = [(robot.id, moving_links)] # original 
         print('moving_bodies: ', moving_bodies)
@@ -210,27 +217,23 @@ class PbOMPL():
         '''
         Note: Add your planner here!!
         '''
-        # if planner_name == "PRM":
-        #     self.planner = og.PRM(self.ss.getSpaceInformation())
-        # elif planner_name == "RRT":
-        #     self.planner = og.RRT(self.ss.getSpaceInformation())
-        # elif planner_name == "RRTConnect":
-        #     self.planner = og.RRTConnect(self.ss.getSpaceInformation())
-        # elif planner_name == "RRTstar":
-        #     self.planner = og.RRTstar(self.ss.getSpaceInformation())
-        # elif planner_name == "EST":
-        #     self.planner = og.EST(self.ss.getSpaceInformation())
-        # elif planner_name == "FMT":
-        #     self.planner = og.FMT(self.ss.getSpaceInformation())
-        # elif planner_name == "BITstar":
-        #     self.planner = og.BITstar(self.ss.getSpaceInformation())
-        # else:
-        #     print("{} not recognized, please add it first".format(planner_name))
-        #     return
-
-        # Set customized optimization objective
-        self.pdef = ob.ProblemDefinition(self.si)
-
+        if planner_name == "PRM":
+            self.planner = og.PRM(self.si)
+        elif planner_name == "RRT":
+            self.planner = og.RRT(self.si)
+        elif planner_name == "RRTConnect":
+            self.planner = og.RRTConnect(self.si)
+        elif planner_name == "RRTstar":
+            self.planner = og.RRTstar(self.si)
+        elif planner_name == "EST":
+            self.planner = og.EST(self.si)
+        elif planner_name == "FMT":
+            self.planner = og.FMT(self.si)
+        elif planner_name == "BITstar":
+            self.planner = og.BITstar(self.si)
+        else:
+            print("{} not recognized, please add it first".format(planner_name))
+            return
 
     def plan_start_goal(self, start, goal, allowed_time=DEFAULT_PLANNING_TIME, reached_thres=.5):
         '''
@@ -248,14 +251,14 @@ class PbOMPL():
             s[i] = start[i]
             g[i] = goal[i]
 
+        self.pdef = ob.ProblemDefinition(self.si)
         self.pdef.setStartAndGoalStates(s, g)
-        potentialObjective = minPathPotentialObjective(self.si, self.start)
+     
+        # Set customized optimization objective
+        potentialObjective = minPathPotentialObjective(self.si, start)
         self.pdef.setOptimizationObjective(potentialObjective)
-        self.planner = og.BITstar(self.si)
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
-        
-        # self.ss.setPlanner(self.planner)
 
         # attempt to solve the problem within allowed planning time
         solved = self.planner.solve(allowed_time)
@@ -270,8 +273,8 @@ class PbOMPL():
             sol_path_list = [self.state_to_list(state) for state in sol_path_states]
             # print(len(sol_path_list))
             # print(sol_path_list)
-            print('cost!!!!!!!!!!!!!!', 
-                  self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value())
+            # print('cost!!!!!!!!!!!!!!', 
+            #       self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value())
             for sol_path in sol_path_list:
                 self.is_state_valid(sol_path)
 
@@ -286,12 +289,12 @@ class PbOMPL():
         self.robot.set_state(orig_robot_state)
         return res, sol_path_list
 
-    def plan(self, goal, allowed_time = DEFAULT_PLANNING_TIME):
+    def plan(self, goal, allowed_time=DEFAULT_PLANNING_TIME):
         '''
         plan a path to goal from current robot state
         '''
         start = self.robot.get_cur_state()
-        return self.plan_start_goal(start, goal, allowed_time=allowed_time)
+        return self.plan_start_goal(start, goal, allowed_time)
 
     def execute(self, path, dynamics=False):
         '''

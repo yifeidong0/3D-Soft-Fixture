@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
 from scipy.spatial.transform import Rotation as R
+import argparse
 
 OBJID = 0
 OBSID = 0
@@ -77,7 +78,8 @@ class ObjectToCage(pb_ompl.PbOMPLRobot):
 
 
 class ArticulateDemo():
-    def __init__(self, eps_thres=1e-2):
+    def __init__(self, args, eps_thres=1e-2):
+        self.args = args
         self.obstacles = []
 
         p.connect(p.GUI)
@@ -124,7 +126,7 @@ class ArticulateDemo():
     def demo(self):
         self.robot.set_state(self.start)
         # sleep(1240.)
-        res, path = self.pb_ompl_interface.plan(self.goal)
+        res, path = self.pb_ompl_interface.plan(self.goal, args.runtime)
         if res:
             self.pb_ompl_interface.execute(path)
             self.track_path(path)
@@ -150,7 +152,7 @@ class ArticulateDemo():
 
             # set upper bound of searching
             self.pb_ompl_interface.reset_robot_state_bound()
-            self.pb_ompl_interface.set_planner("RRTstar")
+            self.pb_ompl_interface.set_planner(self.args.planner)
             
             # start planning
             self.demo()
@@ -208,10 +210,47 @@ class ArticulateDemo():
 
         return escape_energy, z_thres
 
+def argument_parser():
+    '''
+    Hyperparemeter setup.
+    '''
+    # Create an argument parser
+    parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
+
+    # Add a filename argument
+    parser.add_argument('-s', '--search', default='BisectionSearch', \
+        choices=['BisectionSearch', 'OneTimeSearch'], \
+        help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
+    parser.add_argument('-p', '--planner', default='BITstar', \
+        choices=['BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
+        'SORRTstar'], \
+        help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
+    parser.add_argument('-o', '--objective', default='GravityPotential', \
+        choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
+        'PotentialAndPathLengthCombo'], \
+        help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
+    parser.add_argument('-t', '--runtime', type=float, default=1.0, help=\
+        '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
+    parser.add_argument('-v', '--visualization', type=bool, default=False, help=\
+        '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
+    parser.add_argument('-f', '--file', default=None, \
+        help='(Optional) Specify an output path for the found solution path.')
+    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
+        help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
+        ' Defaults to WARN.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    return args
+
+
 if __name__ == '__main__':
-    env = ArticulateDemo(eps_thres=1e-1)
+    args = argument_parser()
+
+    env = ArticulateDemo(args, eps_thres=1e-1)
     env.add_obstacles()
-    env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, env.start, env.obstacles)
+    env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, args, env.obstacles)
 
     # iterative height threshold search
     env.find_height_thres_escape()
