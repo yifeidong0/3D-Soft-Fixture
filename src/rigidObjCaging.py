@@ -1,15 +1,12 @@
 import os.path as osp
 import pybullet as p
-import math
 import sys
 import pybullet_data
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
-import pb_ompl
 import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
-from scipy.spatial.transform import Rotation as R
-import argparse
+from object import ObjectToCage
 
 OBJID = 0
 OBSID = 0
@@ -21,63 +18,7 @@ PATHS = ['models/articulate_fish.xacro',
          'models/planar_robot_4_link.xacro',
          '']
 
-class ObjectToCage(pb_ompl.PbOMPLRobot):
-    def __init__(self, id) -> None:
-        self.id = id
-        self.comDof = 3 + 3 # SE3
-        self.articulate_num = p.getNumJoints(id)
-        self.num_dim = self.comDof + self.articulate_num
-        self.joint_idx = []
-        # self.joint_idx = list(range(self.articulate_num))
-        # self.reset()
-
-        self.set_search_bounds()
-
-    def set_search_bounds(self):
-        self.joint_bounds = [[-2, 2], [-2, 2], [0, 5]] # CoM pos
-        for i in range(3): # CoM rot
-            self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
-        
-        for i in range(self.articulate_num):
-            info = p.getJointInfo(self.id, i)
-            jointType = info[2]
-            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
-                self.joint_idx.append(i)
-                bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
-                self.joint_bounds.append(bounds) # joint_0-3
-   
-    def set_bisec_thres(self, zmax):
-        self.joint_bounds[2][1] = zmax
-        
-    def get_joint_bounds(self):
-        return self.joint_bounds
-
-    def get_cur_state(self):
-        return self.state
-
-    def set_state(self, state):
-        pos = state[0:3]
-        eulerRot = state[3:6]
-        r = R.from_euler('zyx', eulerRot, degrees=False)
-        quat = r.as_quat()
-        p.resetBasePositionAndOrientation(self.id, pos, quat)
-        self._set_joint_positions(self.joint_idx, state[6:])
-
-        self.state = state
-
-    def reset(self):
-        pos = [0,0,0]
-        quat = [0,0,0,1]
-        p.resetBasePositionAndOrientation(self.id, pos, quat)
-        self._set_joint_positions(self.joint_idx, [0]*self.articulate_num)
-        self.state = [0] * self.num_dim
-
-    def _set_joint_positions(self, joints, positions):
-        for joint, value in zip(joints, positions):
-            p.resetJointState(self.id, joint, value, targetVelocity=0)
-
-
-class ArticulateDemo():
+class RigidObjectCaging():
     def __init__(self, args, eps_thres=1e-2):
         self.args = args
         self.obstacles = []
@@ -123,10 +64,9 @@ class ArticulateDemo():
         plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
         plt.show()
 
-    def demo(self):
-        self.robot.set_state(self.start)
+    def execute_searching_once(self):
         # sleep(1240.)
-        res, path = self.pb_ompl_interface.plan(self.goal, args.runtime)
+        res, path = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             self.pb_ompl_interface.execute(path)
             self.track_path(path)
@@ -134,8 +74,20 @@ class ArticulateDemo():
             self.max_z_escapes.append(np.inf)
         return res, path
 
-    def find_height_thres_escape(self):
-        '''Iteratively find the (lowest) threshold of z upper bound that allows a escaping path'''
+    def one_time_search(self):
+        # set upper bound of searching
+        self.pb_ompl_interface.reset_robot_state_bound()
+        self.robot.set_state(self.start)
+        self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
+        
+        # start planning
+        self.execute_searching_once()
+
+        # shut down pybullet (GUI)
+        p.disconnect()        
+              
+    def bisection_search(self):
+        '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path'''
 
         zupper = self.robot.joint_bounds[2][1]
         zlower = self.start[2]
@@ -152,10 +104,11 @@ class ArticulateDemo():
 
             # set upper bound of searching
             self.pb_ompl_interface.reset_robot_state_bound()
-            self.pb_ompl_interface.set_planner(self.args.planner)
+            self.robot.set_state(self.start)
+            self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             
             # start planning
-            self.demo()
+            self.execute_searching_once()
             
             # update bounds
             curr_max_z = self.max_z_escapes[-1]
@@ -209,54 +162,3 @@ class ArticulateDemo():
         plt.show()
 
         return escape_energy, z_thres
-
-def argument_parser():
-    '''
-    Hyperparemeter setup.
-    '''
-    # Create an argument parser
-    parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
-
-    # Add a filename argument
-    parser.add_argument('-s', '--search', default='BisectionSearch', \
-        choices=['BisectionSearch', 'OneTimeSearch'], \
-        help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
-    parser.add_argument('-p', '--planner', default='BITstar', \
-        choices=['BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
-        'SORRTstar'], \
-        help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
-        choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
-        'PotentialAndPathLengthCombo'], \
-        help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
-    parser.add_argument('-t', '--runtime', type=float, default=1.0, help=\
-        '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-v', '--visualization', type=bool, default=False, help=\
-        '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
-    parser.add_argument('-f', '--file', default=None, \
-        help='(Optional) Specify an output path for the found solution path.')
-    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
-        help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
-        ' Defaults to WARN.')
-
-    # Parse the arguments
-    args = parser.parse_args()
-
-    return args
-
-
-if __name__ == '__main__':
-    args = argument_parser()
-
-    env = ArticulateDemo(args, eps_thres=1e-1)
-    env.add_obstacles()
-    env.pb_ompl_interface = pb_ompl.PbOMPL(env.robot, args, env.obstacles)
-
-    # iterative height threshold search
-    env.find_height_thres_escape()
-
-    # visualization
-    escape_energy, z_thres = env.visualize_bisec_search()
-    print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
-
-    # TODO: comapare the results with ground truth (Open3d OBB - donut model)

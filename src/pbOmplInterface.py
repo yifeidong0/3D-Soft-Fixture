@@ -17,82 +17,10 @@ import pybullet as p
 import utils
 import time
 from itertools import product
-import copy
 import numpy as np
-import math
 import sys
 
 INTERPOLATE_NUM = 500
-DEFAULT_PLANNING_TIME = 60.0
-
-class PbOMPLRobot():
-    '''
-    To use with Pb_OMPL. You need to construct a instance of this class and pass to PbOMPL.
-
-    Note:
-    This parent class by default assumes that all joints are acutated and should be planned. If this is not your desired
-    behaviour, please write your own inheritated class that overrides respective functionalities.
-    '''
-    def __init__(self, id) -> None:
-        # Public attributes
-        self.id = id
-
-        # prune fixed joints
-        all_joint_num = p.getNumJoints(id)
-        all_joint_idx = list(range(all_joint_num))
-        joint_idx = [j for j in all_joint_idx if self._is_not_fixed(j)]
-        self.num_dim = len(joint_idx)
-        self.joint_idx = joint_idx
-        print('joint_idx: ', self.joint_idx)
-        self.joint_bounds = []
-
-        self.reset()
-
-    def _is_not_fixed(self, joint_idx):
-        joint_info = p.getJointInfo(self.id, joint_idx)
-        return joint_info[2] != p.JOINT_FIXED
-
-    def get_joint_bounds(self):
-        '''
-        Get joint bounds.
-        By default, read from pybullet
-        '''
-        for i, joint_id in enumerate(self.joint_idx):
-            joint_info = p.getJointInfo(self.id, joint_id)
-            low = joint_info[8] # low bounds
-            high = joint_info[9] # high bounds
-            if low < high:
-                self.joint_bounds.append([low, high])
-        print("Joint bounds: {}".format(self.joint_bounds))
-        return self.joint_bounds
-
-    def get_cur_state(self):
-        return copy.deepcopy(self.state)
-
-    def set_state(self, state):
-        '''
-        Set robot state.
-        To faciliate collision checking
-        Args:
-            state: list[Float], joint values of robot
-        '''
-        self._set_joint_positions(self.joint_idx, state)
-        self.state = state
-
-    def reset(self):
-        '''
-        Reset robot state
-        Args:
-            state: list[Float], joint values of robot
-        '''
-        state = [0] * self.num_dim
-        self._set_joint_positions(self.joint_idx, state)
-        self.state = state
-
-    def _set_joint_positions(self, joints, positions):
-        for joint, value in zip(joints, positions):
-            p.resetJointState(self.id, joint, value, targetVelocity=0)
-
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -153,26 +81,7 @@ class PbOMPL():
         self.set_obstacles(self.obstacles)
 
         # self.reset_robot_state_bound()
-        
-    def reset_robot_state_bound(self):
-        bounds = ob.RealVectorBounds(self.robot.num_dim)
-        joint_bounds = self.robot.get_joint_bounds()
-        for i, bound in enumerate(joint_bounds):
-            bounds.setLow(i, bound[0])
-            bounds.setHigh(i, bound[1])
-        self.space.setBounds(bounds)
-
-        # self.ss = og.SimpleSetup(self.space)
-        self.si = ob.SpaceInformation(self.space)
-        self.si.setStateValidityChecker(ob.StateValidityCheckerFn(self.is_state_valid))
-        self.si.setup()
-        # self.si = self.ss.getSpaceInformation()
-        
-        # self.si.setStateValidityCheckingResolution(0.005)
-        # self.collision_fn = pb_utils.get_collision_fn(self.robot_id, self.robot.joint_idx, self.obstacles, [], True, set(),
-        #                                                 custom_limits={}, max_distance=0, allow_collision_links=[])
-        # self.set_planner("RRT") # RRT by default
-
+  
     def set_obstacles(self, obstacles):
         self.obstacles = obstacles
 
@@ -181,9 +90,6 @@ class PbOMPL():
 
     def add_obstacles(self, obstacle_id):
         self.obstacles.append(obstacle_id)
-
-    def remove_obstacles(self, obstacle_id):
-        self.obstacles.remove(obstacle_id)
 
     def is_state_valid(self, state):
         # satisfy bounds TODO
@@ -212,11 +118,26 @@ class PbOMPL():
         # moving_bodies = [(robot.id, moving_links)] # original 
         print('moving_bodies: ', moving_bodies)
         self.check_body_pairs = list(product(moving_bodies, obstacles))
+      
+    def reset_robot_state_bound(self):
+        bounds = ob.RealVectorBounds(self.robot.num_dim)
+        joint_bounds = self.robot.get_joint_bounds()
+        for i, bound in enumerate(joint_bounds):
+            bounds.setLow(i, bound[0])
+            bounds.setHigh(i, bound[1])
+        self.space.setBounds(bounds)
 
-    def set_planner(self, planner_name):
+    def set_planner(self, planner_name, goal):
         '''
-        Note: Add your planner here!!
+        Planner setup.
         '''
+        # Setup state bounds and collision checker
+        self.si = ob.SpaceInformation(self.space)
+        self.si.setStateValidityChecker(ob.StateValidityCheckerFn(self.is_state_valid))
+        self.si.setup()
+        # self.si.setStateValidityCheckingResolution(0.005)
+        
+        # Setup sampling-based planner
         if planner_name == "PRM":
             self.planner = og.PRM(self.si)
         elif planner_name == "RRT":
@@ -235,30 +156,34 @@ class PbOMPL():
             print("{} not recognized, please add it first".format(planner_name))
             return
 
-    def plan_start_goal(self, start, goal, allowed_time=DEFAULT_PLANNING_TIME, reached_thres=.5):
-        '''
-        plan a path to goal from the given robot start state
-        '''
-        print("start_planning")
-        # print(self.planner.params())
-
-        orig_robot_state = self.robot.get_cur_state()
-
-        # set the start and goal states;
+        # Set the start and goal states;
+        start = self.robot.get_cur_state()
         s = ob.State(self.space)
         g = ob.State(self.space)
         for i in range(len(start)):
             s[i] = start[i]
             g[i] = goal[i]
 
+        # Setup problem formulation
         self.pdef = ob.ProblemDefinition(self.si)
         self.pdef.setStartAndGoalStates(s, g)
      
         # Set customized optimization objective
-        potentialObjective = minPathPotentialObjective(self.si, start)
-        self.pdef.setOptimizationObjective(potentialObjective)
+        if self.args.objective == 'GravityPotential':
+            potentialObjective = minPathPotentialObjective(self.si, start)
+            self.pdef.setOptimizationObjective(potentialObjective)
+        
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
+
+    def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=.5):
+        '''
+        plan a path to goal from the given robot start state
+        '''
+        print("start_planning")
+        print(self.planner.params())
+
+        orig_robot_state = self.robot.get_cur_state()
 
         # attempt to solve the problem within allowed planning time
         solved = self.planner.solve(allowed_time)
@@ -289,12 +214,11 @@ class PbOMPL():
         self.robot.set_state(orig_robot_state)
         return res, sol_path_list
 
-    def plan(self, goal, allowed_time=DEFAULT_PLANNING_TIME):
+    def plan(self, goal, allowed_time=10.0):
         '''
         plan a path to goal from current robot state
         '''
-        start = self.robot.get_cur_state()
-        return self.plan_start_goal(start, goal, allowed_time)
+        return self.plan_start_goal(goal, allowed_time)
 
     def execute(self, path, dynamics=False):
         '''
@@ -307,33 +231,17 @@ class PbOMPL():
         '''
         for q in path:
             if dynamics:
-                # for i in range(self.robot.num_dim):
-                #     p.setJointMotorControl2(self.robot.id, i, p.POSITION_CONTROL, q[i], force=5*240.)
-
                 # TODO: try tune gravity
-                # Set up a PD controller to control the velocity of the center of mass
                 kp = 10
-                max_force = 100.0
                 target_pos = q[:3]
 
-                # Get the current position of the center of mass
                 current_pos, _ = p.getBasePositionAndOrientation(self.robot_id)
-
-                # Calculate the velocity error
                 grav = kp * (np.array(target_pos)-np.array(current_pos))
                 # p.setGravity(grav[0], grav[1], grav[2])
-                
-                # vel_error = [(target_pos[i]-current_pos[i]) * kp for i in range(3)]
-                # linear_vel, angular_vel = p.getBaseVelocity(self.robot_id)
-                # linear_vel_desired = [vel_error[i] - kd * linear_vel[i] for i in range(3)]
-                # force = [max(min(max_force, force[i]), -max_force) for i in range(3)]
-                # p.applyExternalForce(self.robot_id, base_link_id, force, [0, 0, 0], p.WORLD_FRAME)
-            
             else:
                 self.robot.set_state(q)
             p.stepSimulation()
             time.sleep(0.01)
-
 
     # -------------
     # Configurations
