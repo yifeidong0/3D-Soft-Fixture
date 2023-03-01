@@ -8,16 +8,6 @@ import numpy as np
 from time import sleep
 from object import ObjectToCage
 
-OBJID = 0
-OBSID = 0
-PATHS = ['models/articulate_fish.xacro', 
-         'models/triple_hook/triple_hook.urdf', 
-         'models/donut/donut.urdf',
-         'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
-         'models/franka_description/robots/panda_arm.urdf',
-         'models/planar_robot_4_link.xacro',
-         '']
-
 class RigidObjectCaging():
     def __init__(self, args, eps_thres=1e-2):
         self.args = args
@@ -29,9 +19,18 @@ class RigidObjectCaging():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         # load robot
-        robot_id = p.loadURDF(PATHS[OBJID], (0,0,0))
+        self.paths = {'Fish': 'models/articulate_fish.xacro', 
+                'Hook': 'models/triple_hook/triple_hook.urdf', 
+                'Donut': 'models/donut/donut.urdf',
+                '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+                'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
+                'PlanarRobot': 'models/planar_robot_4_link.xacro',
+                'Humanoid': 'models/humanoid.urdf'
+                }
+        robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
         
+        # Set start and goal nodes
         self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
         self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
         
@@ -64,7 +63,7 @@ class RigidObjectCaging():
         plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
         plt.show()
 
-    def execute_searching_once(self):
+    def execute_search(self):
         # sleep(1240.)
         res, path = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
@@ -81,11 +80,11 @@ class RigidObjectCaging():
         self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
         
         # start planning
-        self.execute_searching_once()
+        self.execute_search()
 
         # shut down pybullet (GUI)
         p.disconnect()        
-              
+
     def bisection_search(self):
         '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path'''
 
@@ -108,7 +107,7 @@ class RigidObjectCaging():
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             
             # start planning
-            self.execute_searching_once()
+            self.execute_search()
             
             # update bounds
             curr_max_z = self.max_z_escapes[-1]

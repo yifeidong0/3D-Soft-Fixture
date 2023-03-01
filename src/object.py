@@ -79,7 +79,6 @@ class ObjectToCage(ObjectBase):
         self.articulate_num = p.getNumJoints(id)
         self.num_dim = self.comDof + self.articulate_num
         self.joint_idx = []
-        # self.joint_idx = list(range(self.articulate_num))
         # self.reset()
 
         self.set_search_bounds()
@@ -89,12 +88,14 @@ class ObjectToCage(ObjectBase):
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
         
-        for i in range(self.articulate_num):
+        for i in range(self.articulate_num): # articulated joints
             info = p.getJointInfo(self.id, i)
             jointType = info[2]
             if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
-                self.joint_idx.append(i)
                 bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
+                if bounds[0] >= bounds[1]:
+                    continue
+                self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
    
     def set_bisec_thres(self, zmax):
