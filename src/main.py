@@ -14,13 +14,13 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-s', '--search', default='OneTimeSearch', \
-        choices=['BisectionSearch', 'OneTimeSearch'], \
-        help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
+    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
+        choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
+        help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
     parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
-        'SORRTstar'], \
+        'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
     parser.add_argument('-o', '--objective', default='GravityPotential', \
@@ -32,7 +32,7 @@ def argument_parser():
         choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', ''], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=100.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
     parser.add_argument('-v', '--visualization', type=bool, default=False, help=\
@@ -55,21 +55,22 @@ if __name__ == '__main__':
 
     rigidObjs = ['Donut', 'Hook']
     if args.object in rigidObjs:
-        env = RigidObjectCaging(args)
+        eps_thres = 1e-2 # threshold of loop terminating
+        env = RigidObjectCaging(args, eps_thres)
     else:
-        env = ArticulatedObjectCaging(args, eps_thres=1e-1)
+        env = ArticulatedObjectCaging(args)
 
     env.add_obstacles()
     env.pb_ompl_interface = pbOmplInterface.PbOMPL(env.robot, args, env.obstacles)
 
     # Choose different searching methods
-    if args.search == 'BisectionSearch':
-        env.bisection_search()
+    if args.search == 'BoundShrinkSearch':
+        useBisecSearch = False # True: bisection search; False: Conservative search
+        env.bound_shrink_search(useBisecSearch)
+        escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
+        print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+    elif args.search == 'EnergyMinimizeSearch':
+        env.energy_minimize_search()
+        env.visualize_energy_minimize_search()
 
-        # visualization
-        if args.visualization:
-            escape_energy, z_thres = env.visualize_bisec_search()
-            print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
-    elif args.search == 'OneTimeSearch':
-        env.one_time_search()
     # TODO: comapare the results with ground truth (Open3d OBB - donut model)

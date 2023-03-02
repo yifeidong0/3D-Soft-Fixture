@@ -33,14 +33,15 @@ class RigidObjectCaging():
 
     def load_object(self):
         """Load object for caging."""
-        self.paths = {'Fish': 'models/articulate_fish.xacro', 
-                'Hook': 'models/triple_hook/triple_hook.urdf', 
-                'Donut': 'models/donut/donut.urdf',
-                '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
-                'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
-                'PlanarRobot': 'models/planar_robot_4_link.xacro',
-                'Humanoid': 'models/humanoid.urdf'
-                }
+        self.paths = {
+            'Fish': 'models/articulate_fish.xacro', 
+            'Hook': 'models/triple_hook/triple_hook.urdf', 
+            'Donut': 'models/donut/donut.urdf',
+            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
+            'PlanarRobot': 'models/planar_robot_4_link.xacro',
+            'Humanoid': 'models/humanoid.urdf'
+            }
         robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
 
@@ -73,27 +74,44 @@ class RigidObjectCaging():
 
     def execute_search(self):
         # sleep(1240.)
-        res, path = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
+        res, path, sol_path_cost = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             self.pb_ompl_interface.execute(path)
             self.track_path(path)
         else:
             self.max_z_escapes.append(np.inf)
-        return res, path
+        return res, path, sol_path_cost
 
-    def one_time_search(self):
+    def energy_minimize_search(self, numIter=1):
         # set upper bound of searching
         self.pb_ompl_interface.reset_robot_state_bound()
         self.robot.set_state(self.start)
-        self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
+        # self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
         
         # start planning
-        self.execute_search()
+        self.energy_minimize_costs = []
+        for i in range(numIter):
+            self.robot.set_state(self.start)
+            self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
+            _, _, sol_path_cost = self.execute_search()
+            self.energy_minimize_costs.append(sol_path_cost+self.start[2])
 
         # shut down pybullet (GUI)
         p.disconnect()        
 
-    def bisection_search(self):
+    def visualize_energy_minimize_search(self):
+        '''visualize the convergence of caging depth'''
+        _, ax1 = plt.subplots()
+        ax1.plot(self.energy_minimize_costs, '-ro', label='max_z successful escapes') # max z's along successful escape paths
+        ax1.set_xlabel('# iterations')
+        ax1.set_ylabel('z_world')
+        ax1.grid(True)
+        ax1.legend()
+
+        plt.title('Iterative energy minimize search of caging depth')
+        plt.show()
+
+    def bound_shrink_search(self, useBisecSearch=False):
         '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path'''
 
         zupper = self.robot.joint_bounds[2][1]
@@ -102,8 +120,10 @@ class RigidObjectCaging():
         self.zus, self.zls, self.epss = [], [], []
         idx = 0
         self.itercount = []
+        noinf = []
+        moveOn = True
 
-        while eps > self.eps_thres: 
+        while moveOn: 
             # data record
             self.zus.append(zupper)
             self.zls.append(zlower)
@@ -119,19 +139,51 @@ class RigidObjectCaging():
             
             # update bounds
             curr_max_z = self.max_z_escapes[-1]
-            if curr_max_z == np.inf: # no solution
-                zlower = zupper
-                zupper = np.min(self.max_z_escapes) # except infs, the target z is monotonically decreasing
-            else: # solution found
-                zupper = (curr_max_z-zlower) / 2. + zlower # greedily search the lower half bounded by current solution
-                # zlower = zlower
-            eps = abs(zupper - zlower)
-            
+            noinf.append(curr_max_z) if curr_max_z!=np.inf else None
+
+            if useBisecSearch: # greedy but no lower bound guarantee
+                if curr_max_z == np.inf: # no solution
+                    zlower = zupper
+                    zupper = np.min(self.max_z_escapes) # except infs, the target z is monotonically decreasing
+                else: # solution found
+                    if curr_max_z < zlower: # a solution lower than lower bound found
+                        zupper = curr_max_z
+                        zlower = self.start[2]
+                    else: # solution found within expected bounds
+                        zupper = (curr_max_z-zlower) / 2. + zlower # greedily search the lower half bounded by current solution
+                    # zlower = zlower
+                
+                eps = abs(zupper-zlower)
+                self.epss.append(eps)
+                if eps < self.eps_thres: # terminate
+                    moveOn = False
+
+            else: # slower but guaranteed lower bound
+                eps = np.inf if len(self.epss)==0 else self.epss[-1]
+                if curr_max_z != np.inf: # solution found
+                    zupper = curr_max_z
+                    
+                    # check conditions to break loops
+                    if len(noinf) >= 2:
+                        eps = noinf[-2] - noinf[-1]
+
+                        # terminate if small eps's appear in a row
+                        rowlen = 3
+                        if len(self.epss) > rowlen:
+                            LastFewEpsIsSmall = [e<self.eps_thres for e in self.epss[-rowlen:]]
+                            if LastFewEpsIsSmall.count(True) == rowlen:
+                                moveOn = False
+                self.epss.append(eps)
+
+                # stop if more than two times invalid search
+                maxNumInfs = 2
+                if self.max_z_escapes.count(np.inf) > maxNumInfs:
+                    moveOn = False
+
             # reset z upper bound
             self.robot.set_bisec_thres(zupper)
             idx += 1
 
-            self.epss.append(eps)
             print("----------max_z_escapes: ", self.max_z_escapes)
             print('----------zupper, zlower, eps: ', zupper, zlower, eps)
             print("----------joint_bounds z: ", self.robot.joint_bounds[2])
@@ -139,7 +191,7 @@ class RigidObjectCaging():
         # shut down pybullet (GUI)
         p.disconnect()
 
-    def visualize_bisec_search(self):
+    def visualize_bound_shrink_search(self, useBisecSearch=False):
         '''visualize the convergence of caging depth'''
 
         escape_zs = [[i, esc] for i, esc in enumerate(self.max_z_escapes) if esc!=np.inf] # no infs
@@ -161,11 +213,14 @@ class RigidObjectCaging():
         ax2 = ax1.twinx()
         ax2.plot(self.itercount, self.epss, '-g.', label='convergence epsilon')
         ax2.axhline(y=self.eps_thres, color='k', alpha=.7, linestyle='--', label='search resolution')
-        ax2.set_ylabel('bound bandwidth')
+        if useBisecSearch:
+            ax2.set_ylabel('bound bandwidth')
+        else:
+            ax2.set_ylabel('previous heights diff')
         ax2.set_yscale('log')
         ax2.legend(loc='lower right')
 
-        plt.title('Iterative bisection search of caging depth')
+        plt.title('Iterative bound shrinking search of caging depth')
         plt.show()
 
         return escape_energy, z_thres

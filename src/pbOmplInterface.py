@@ -198,8 +198,7 @@ class PbOMPL():
             sol_path_list = [self.state_to_list(state) for state in sol_path_states]
             # print(len(sol_path_list))
             # print(sol_path_list)
-            # print('cost!!!!!!!!!!!!!!', 
-            #       self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value())
+            sol_path_cost = self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value()
             for sol_path in sol_path_list:
                 self.is_state_valid(sol_path)
 
@@ -212,7 +211,7 @@ class PbOMPL():
 
         # reset robot state
         self.robot.set_state(orig_robot_state)
-        return res, sol_path_list
+        return res, sol_path_list, sol_path_cost
 
     def plan(self, goal, allowed_time=10.0):
         '''
