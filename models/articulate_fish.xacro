@@ -1,10 +1,10 @@
 <robot name="my_robot">
   <!-- <link name="world"/>
 
-  <joint name="joint0" type="planar">
+  <joint name="joint0" type="floating">
     <origin rpy="0 0 0" xyz="0 0 0.0"/>
     <parent link="world"/>
-    <child link="base_link"/>
+    <child link="tail"/>
     <limit effort="30" velocity="1.0"/>
   </joint> -->
 
@@ -20,13 +20,13 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0."/>
       <geometry>
-        <box size="0.03 0.2 0.2" /> 
+        <box size="0.01 0.2 0.4" /> 
       </geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <box size="0.03 0.2 0.2" />
+        <box size="0.01 0.2 0.4" />
       </geometry>
     </collision>
   </link>
@@ -34,12 +34,12 @@
   <joint name="joint0" type="revolute">
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
-    <origin rpy="0 0 0" xyz="0 0.05 0"/>
+    <origin rpy="0 0 0" xyz="0 0.08 0"/>
     <parent link="tail"/>
-    <child link="arm_link0"/>
+    <child link="link0"/>
   </joint>
 
-  <link name="arm_link0">
+  <link name="link0">
     <inertial>
       <mass value="0.01" />
       <origin xyz="0 0 0." />
@@ -65,11 +65,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link0"/>
-    <child link="arm_link1"/>
+    <parent link="link0"/>
+    <child link="link1"/>
   </joint>
 
-  <link name="arm_link1">
+  <link name="link1">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -96,11 +96,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link1"/>
-    <child link="arm_link2"/>
+    <parent link="link1"/>
+    <child link="link2"/>
   </joint>
 
-  <link name="arm_link2">
+  <link name="link2">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -127,11 +127,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link2"/>
-    <child link="arm_link3"/>
+    <parent link="link2"/>
+    <child link="link3"/>
   </joint>
 
-  <link name="arm_link3">
+  <link name="link3">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -158,11 +158,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link3"/>
-    <child link="arm_link4"/>
+    <parent link="link3"/>
+    <child link="link4"/>
   </joint>
 
-  <link name="arm_link4">
+  <link name="link4">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -189,11 +189,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link4"/>
-    <child link="arm_link5"/>
+    <parent link="link4"/>
+    <child link="link5"/>
   </joint>
 
-  <link name="arm_link5">
+  <link name="link5">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -220,11 +220,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link5"/>
-    <child link="arm_link6"/>
+    <parent link="link5"/>
+    <child link="link6"/>
   </joint>
 
-  <link name="arm_link6">
+  <link name="link6">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -251,11 +251,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link6"/>
-    <child link="arm_link7"/>
+    <parent link="link6"/>
+    <child link="link7"/>
   </joint>
 
-  <link name="arm_link7">
+  <link name="link7">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -282,11 +282,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link7"/>
-    <child link="arm_link8"/>
+    <parent link="link7"/>
+    <child link="link8"/>
   </joint>
 
-  <link name="arm_link8">
+  <link name="link8">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -313,11 +313,11 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link8"/>
-    <child link="arm_link9"/>
+    <parent link="link8"/>
+    <child link="link9"/>
   </joint>
 
-  <link name="arm_link9">
+  <link name="link9">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
         <mass value="0.1"/>
@@ -344,14 +344,14 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" lower="-.5" upper=".5" velocity="0.5"/>
     <origin rpy="0 0 0" xyz="0 0.18 0"/>
-    <parent link="arm_link9"/>
-    <child link="arm_link10"/>
+    <parent link="link9"/>
+    <child link="link10"/>
   </joint>
 
-  <link name="arm_link10">
+  <link name="link10">
     <inertial>
         <origin rpy="0 0 0" xyz="0 0.1 0"/>
-        <mass value="0.1"/>
+        <mass value="0.5"/>
         <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
     </inertial>
     <visual>
@@ -397,7 +397,7 @@
           <mechanicalReduction>1</mechanicalReduction>
       </actuator>
   </transmission> -->
-  <transmission name="trans_joint1">
+  <!-- <transmission name="trans_joint1">
       <type>transmission_interface/SimpleTransmission</type>
       <joint name="joint1">
           <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
@@ -416,6 +416,6 @@
           <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
           <mechanicalReduction>1</mechanicalReduction>
       </actuator>
-  </transmission>
+  </transmission> -->
 
 </robot>

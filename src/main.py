@@ -23,19 +23,19 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLengthCombo'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Donut', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', ''], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-t', '--runtime', type=float, default=100.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=False, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=True, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
     
     parser.add_argument('-f', '--file', default=None, \
