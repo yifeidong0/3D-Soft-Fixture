@@ -19,13 +19,13 @@ def argument_parser():
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
     parser.add_argument('-p', '--planner', default='BITstar', \
-        choices=['BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
+        choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
     parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
-        'PotentialAndPathLengthCombo'], \
+        'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
     parser.add_argument('-j', '--object', default='Fish', \
@@ -35,7 +35,7 @@ def argument_parser():
     parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=True, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
     
     parser.add_argument('-f', '--file', default=None, \
@@ -70,7 +70,8 @@ if __name__ == '__main__':
         escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
         print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
     elif args.search == 'EnergyMinimizeSearch':
-        env.energy_minimize_search()
+        numIter = 4
+        env.energy_minimize_search(numIter)
         env.visualize_energy_minimize_search()
 
     # TODO: comapare the results with ground truth (Open3d OBB - donut model)

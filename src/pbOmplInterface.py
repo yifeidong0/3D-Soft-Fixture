@@ -22,6 +22,7 @@ import sys
 import kinpy as kp
 from scipy.spatial.transform import Rotation as R
 import math
+import objective
 
 INTERPOLATE_NUM = 500
 
@@ -49,98 +50,6 @@ class PbStateSpace(ob.RealVectorStateSpace):
         self.state_sampler = state_sampler
 
 
-class minPathPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start):
-        super(minPathPotentialObjective, self).__init__(si)
-        self.si_ = si
-        self.start_ = start
-
-    def motionCost(self, s1, s2):
-        return ob.Cost(s2[2] - self.start_[2])
-
-    def combineCosts(self, c1, c2):
-        '''
-        The vertex i cost is expressed as the potential energy gain along 
-        the path connecting i and v_start, and formulated as
-        v_child.cost = combineCost(v_parent.cost, 
-                                   motionCost(v_parent, v_child))
-                     = max(v_parent.cost, v_child.energy-v_start.energy)
-        '''
-        return ob.Cost(max(c1.value(), c2.value()))
-
-
-class minPathTotalPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start):
-        super(minPathTotalPotentialObjective, self).__init__(si)
-        self.si_ = si
-        self.start_ = start
-        
-        # parameters of articulated object
-        self.numStateSpace = len(start)
-        self.comDof = 6
-        self.numJoints = self.numStateSpace - self.comDof
-        self.numLinks = self.numJoints + 1
-        self.g = 9.81
-        # TODO:
-        self.masses = [1] * self.numLinks
-        self.stiffnesss = [.1] * self.numJoints
-
-        # calculated energy of initial pose
-        self.energyStart = self.stateEnergy(self.start_)
-
-    def getElasticEnergy(self, state):
-        # read joint stiffnesses
-        jointAngles = state[self.comDof:]
-
-        # get elastic potential energy
-        jointEnergies = [self.stiffnesss[i] * jointAngles[i]**2 for i in range(self.numJoints)]
-        energyElastic = 0.5*sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
-
-        return energyElastic
-
-    def getGravityEnergy(self, state):
-        # extract positions of links
-        chain = kp.build_chain_from_urdf(open("models/articulate_fish.xacro").read())
-        # jnames = chain.get_joint_parameter_names()
-        jointAngles = state[self.comDof:] # rad
-        linkPosesInBase = chain.forward_kinematics(jointAngles) # dictionary
-
-        # get object's base transform
-        basePositionInWorld = state[0:3]
-        baseOrientationInWorld = state[3:self.comDof] # euler
-        r = R.from_euler('zyx', baseOrientationInWorld, degrees=False)
-        mat = r.as_matrix() # 3*3
-        thirdRow = (mat[2,:].reshape((1,3)), np.array(basePositionInWorld[2]).reshape((1,1)))
-        baseTInWorld = np.hstack(thirdRow) # 1*4. 3rd row of Transform matrix
-        # baseTransformInWorld = np.vstack(baseTInWorld, np.array([.0, .0, .0, 1.0])) # 4*4
-
-        # get link heights in World frame
-        o = np.array([1.])
-        linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
-        linkPositionsInBase = [np.array(np.concatenate((i.pos,o))).reshape((4,1)) for i in linkPosesInBase]
-        linkZsInBase = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-
-        # get links' gravitational potential energy
-        linkEnergies = [linkZsInBase[i] * self.masses[i] for i in range(self.numLinks)]
-        energyGravity = 0.5 * self.g * sum(linkEnergies) # sigma(.5 * g * m_i * z_i)
-        
-        return energyGravity
-      
-    def stateEnergy(self, state):
-        energyElastic = self.getElasticEnergy(state)
-        energyGravity = self.getGravityEnergy(state)
-        energySum = energyElastic + energyGravity
-
-        return energySum
-    
-    def motionCost(self, state1, state2):
-        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
-        energyState2 = self.stateEnergy(state2)
-        return ob.Cost(energyState2 - self.energyStart)
-
-    def combineCosts(self, cost1, cost2):
-        return ob.Cost(max(cost1.value(), cost2.value()))
-    
 
 class PbOMPL():
     def __init__(self, robot, args, obstacles=[]) -> None:
@@ -228,8 +137,17 @@ class PbOMPL():
             self.planner = og.FMT(self.si)
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
+            self.planner.params().setParam("find_approximate_solutions", "1")
+            self.planner.params().setParam("samples_per_batch", "300")
+            # self.planner.params().setParam("use_strict_queue_ordering", "0")
+        elif planner_name == "ABITstar":
+            self.planner = og.ABITstar(self.si)
+        elif planner_name == "AITstar":
+            self.planner = og.AITstar(self.si)
         elif planner_name == "SORRTstar":
             self.planner = og.SORRTstar(self.si)
+        elif planner_name == "PRMstar":
+            self.planner = og.PRMstar(self.si)
         else:
             print("{} not recognized, please add it first".format(planner_name))
             return
@@ -247,18 +165,26 @@ class PbOMPL():
         self.pdef.setStartAndGoalStates(s, g)
      
         # Set customized optimization objective
-        if self.args.objective == 'GravityPotential':
-            potentialObjective = minPathPotentialObjective(self.si, start)
-            self.pdef.setOptimizationObjective(potentialObjective)
-        elif self.args.objective == 'GravityAndElasticPotential':
-            potentialObjective = minPathTotalPotentialObjective(self.si, start)
-            self.pdef.setOptimizationObjective(potentialObjective)
-        # else: self.args.objective == 'PathLength'
+        rigidObjs = ['Donut', 'Hook']
+        if self.args.search == 'EnergyMinimizeSearch':
+            if self.args.object in rigidObjs: # rigid object caging
+                if self.args.objective == 'GravityPotential':
+                    potentialObjective = objective.minPathPotentialObjective(self.si, start)
+                    self.pdef.setOptimizationObjective(potentialObjective)
+                # elif self.args.objective == 'GravityAndElasticPotential': # Not applied
+                # else self.args.objective == 'PathLength' # default objective
+
+            elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
+                potentialObjective = objective.minPathTotalPotentialObjective(self.si, start)
+                self.pdef.setOptimizationObjective(potentialObjective)
+            # else: self.args.objective == 'PathLength'
+        
+        # else self.args.search == 'BoundShrinkSearch':
 
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
 
-    def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=.5):
+    def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=100.5):
         '''
         plan a path to goal from the given robot start state
         '''
@@ -271,18 +197,28 @@ class PbOMPL():
         solved = self.planner.solve(allowed_time)
         res = False
         sol_path_list = []
+        sol_path_energy = None
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # print the path to screen
             sol_path_geometric = self.pdef.getSolutionPath()
+            # print('!!!!!self.pdef.getSolutionCount: {}'.format(self.pdef.getSolutionCount()))
+            # print('!!!!!self.pdef.getSolutions: {}'.format(self.pdef.getSolutions()))
+            sol_path_states_non_interp = sol_path_geometric.getStates()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
             sol_path_states = sol_path_geometric.getStates()
-            sol_path_list = [self.state_to_list(state) for state in sol_path_states]
-            # print(len(sol_path_list))
-            # print(sol_path_list)
-            sol_path_cost = self.pdef.getSolutionPath().cost(self.pdef.getOptimizationObjective()).value()
+            sol_path_list_non_interp = [self.state_to_list(s) for s in sol_path_states_non_interp]
+            sol_path_list = [self.state_to_list(s) for s in sol_path_states]
+            
+            # check if solution path is valid
             for sol_path in sol_path_list:
                 self.is_state_valid(sol_path)
+                
+            # get cost of the solution path
+            self.objective = self.pdef.getOptimizationObjective()
+            sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
+            sol_final_cost = sol_path_geometric.cost(self.objective).value()
+            print('!!!!!sol_final_cost: {}'.format(sol_final_cost))
 
             # make sure goal is reached
             diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
@@ -293,7 +229,7 @@ class PbOMPL():
 
         # reset robot state
         self.robot.set_state(orig_robot_state)
-        return res, sol_path_list, sol_path_cost
+        return res, sol_path_list, sol_path_energy
 
     def plan(self, goal, allowed_time=10.0):
         '''
@@ -322,7 +258,7 @@ class PbOMPL():
             else:
                 self.robot.set_state(q)
             p.stepSimulation()
-            time.sleep(0.05)
+            time.sleep(0.01)
 
     # -------------
     # Configurations

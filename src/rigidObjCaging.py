@@ -47,10 +47,10 @@ class RigidObjectCaging():
 
     def add_obstacles(self):
         self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
-        self.add_box([1, 0, 2.5], [0.01, 1, .5]) # add outer walls
-        self.add_box([-1, 0, 2.5], [0.01, 1, .5])
-        self.add_box([0, 1, 2.5], [1, 0.01, .5])
-        self.add_box([0, -1, 2.5], [1, 0.01, .5])
+        self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
+        self.add_box([-1, 0, 2.5], [0.01, 1, 1.0])
+        self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
+        self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)
@@ -59,28 +59,21 @@ class RigidObjectCaging():
         self.obstacles.append(box_id)
         return box_id
 
-    def track_path(self, path):
-        path_z = np.array(path)[:,2]
-        max_z_escape = np.max(path_z)
+    def track_path_cost(self, path):
+        self.path_z = np.array(path)[:,2]
+        max_z_escape = np.max(self.path_z)
         self.max_z_escapes.append(max_z_escape)
-        
-        if self.args.visualization:
-            depth = np.around(np.max(path_z)-path_z[0], decimals=2)
-            plt.plot(path_z)
-            plt.xlabel('path node')
-            plt.ylabel('height')
-            plt.title('Depth of Energy-bounded Caging: {}'.format(depth))
-            plt.show()
 
     def execute_search(self):
         # sleep(1240.)
-        res, path, sol_path_cost = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
+        res, path, sol_path_energy = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             self.pb_ompl_interface.execute(path)
-            self.track_path(path)
+            if self.args.objective == 'GravityPotential':
+                self.track_path_cost(path)
         else:
             self.max_z_escapes.append(np.inf)
-        return res, path, sol_path_cost
+        return res, path, sol_path_energy
 
     def energy_minimize_search(self, numIter=1):
         # set upper bound of searching
@@ -89,12 +82,12 @@ class RigidObjectCaging():
         # self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
         
         # start planning
-        self.energy_minimize_costs = []
+        self.energy_minimize_paths_energies = []
         for i in range(numIter):
             self.robot.set_state(self.start)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-            _, _, sol_path_cost = self.execute_search()
-            self.energy_minimize_costs.append(sol_path_cost+self.start[2])
+            _, _, sol_path_energy = self.execute_search()
+            self.energy_minimize_paths_energies.append(sol_path_energy)
 
         # shut down pybullet (GUI)
         p.disconnect()        
@@ -102,13 +95,15 @@ class RigidObjectCaging():
     def visualize_energy_minimize_search(self):
         '''visualize the convergence of caging depth'''
         _, ax1 = plt.subplots()
-        ax1.plot(self.energy_minimize_costs, '-ro', label='max_z successful escapes') # max z's along successful escape paths
-        ax1.set_xlabel('# iterations')
-        ax1.set_ylabel('z_world')
+        energy_curves = self.energy_minimize_paths_energies
+        for i in range(len(energy_curves)):
+            ax1.plot(energy_curves[i], label='path {}'.format(i)) # max z's along successful escape paths
+        ax1.set_xlabel('vertices of solution paths')
+        ax1.set_ylabel('state energy')
         ax1.grid(True)
         ax1.legend()
 
-        plt.title('Iterative energy minimize search of caging depth')
+        plt.title('Iterative BIT* energy minimize search')
         plt.show()
 
     def bound_shrink_search(self, useBisecSearch=False):
@@ -135,7 +130,7 @@ class RigidObjectCaging():
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             
             # start planning
-            self.execute_search()
+            _, _, _ = self.execute_search()
             
             # update bounds
             curr_max_z = self.max_z_escapes[-1]
