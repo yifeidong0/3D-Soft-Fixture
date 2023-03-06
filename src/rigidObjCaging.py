@@ -30,7 +30,7 @@ class RigidObjectCaging():
 
         self.max_z_escapes = [] # successful escapes
         self.eps_thres = eps_thres # bi-section search resolution
-
+        
     def load_object(self):
         """Load object for caging."""
         self.paths = {
@@ -40,8 +40,10 @@ class RigidObjectCaging():
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
-            'Humanoid': 'models/humanoid.urdf'
+            'Humanoid': 'models/humanoid.urdf',
+            'Bowl': 'models/bowl/bowl.urdf', 
             }
+
         robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
 

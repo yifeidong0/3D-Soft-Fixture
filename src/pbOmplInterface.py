@@ -101,12 +101,13 @@ class PbOMPL():
         #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
         moving_bodies = [robot.id] # for deformable ball
         # moving_bodies = [(robot.id, moving_links)] # original 
-        print('moving_bodies: ', moving_bodies)
+        # print('moving_bodies: ', moving_bodies)
         self.check_body_pairs = list(product(moving_bodies, obstacles))
       
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()
+        print('!!!joint_bounds: ', joint_bounds)
         for i, bound in enumerate(joint_bounds):
             bounds.setLow(i, bound[0])
             bounds.setHigh(i, bound[1])
@@ -138,7 +139,8 @@ class PbOMPL():
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
             self.planner.params().setParam("find_approximate_solutions", "1")
-            self.planner.params().setParam("samples_per_batch", "300")
+            self.planner.params().setParam("samples_per_batch", "500")
+            # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
@@ -165,7 +167,7 @@ class PbOMPL():
         self.pdef.setStartAndGoalStates(s, g)
      
         # Set customized optimization objective
-        rigidObjs = ['Donut', 'Hook']
+        rigidObjs = ['Donut', 'Hook', 'Bowl']
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 if self.args.objective == 'GravityPotential':
@@ -184,7 +186,7 @@ class PbOMPL():
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
 
-    def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=100.5):
+    def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=0.5):
         '''
         plan a path to goal from the given robot start state
         '''
@@ -202,8 +204,6 @@ class PbOMPL():
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # print the path to screen
             sol_path_geometric = self.pdef.getSolutionPath()
-            # print('!!!!!self.pdef.getSolutionCount: {}'.format(self.pdef.getSolutionCount()))
-            # print('!!!!!self.pdef.getSolutions: {}'.format(self.pdef.getSolutions()))
             sol_path_states_non_interp = sol_path_geometric.getStates()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
             sol_path_states = sol_path_geometric.getStates()
@@ -215,10 +215,11 @@ class PbOMPL():
                 self.is_state_valid(sol_path)
                 
             # get cost of the solution path
-            self.objective = self.pdef.getOptimizationObjective()
-            sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
-            sol_final_cost = sol_path_geometric.cost(self.objective).value()
-            print('!!!!!sol_final_cost: {}'.format(sol_final_cost))
+            if self.args.search == 'EnergyMinimizeSearch':
+                self.objective = self.pdef.getOptimizationObjective()
+                sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
+                sol_final_cost = sol_path_geometric.cost(self.objective).value()
+                print('!!!!!sol_final_cost: {}'.format(sol_final_cost))
 
             # make sure goal is reached
             diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]

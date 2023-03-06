@@ -14,25 +14,25 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
+    parser.add_argument('-s', '--search', default='BoundShrinkSearch', \
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='RRT', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
+    parser.add_argument('-o', '--objective', default='GravityPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
-        choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', ''], \
+    parser.add_argument('-j', '--object', default='Donut', \
+        choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', 'Bowl'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -48,12 +48,12 @@ def argument_parser():
     # Parse the arguments
     args = parser.parse_args()
 
-    return args 
+    return args
 
 if __name__ == '__main__':
     args = argument_parser()
 
-    rigidObjs = ['Donut', 'Hook']
+    rigidObjs = ['Donut', 'Hook', 'Bowl']
     if args.object in rigidObjs:
         eps_thres = 1e-2 # threshold of loop terminating
         env = RigidObjectCaging(args, eps_thres)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
 
     # Choose different searching methods
     if args.search == 'BoundShrinkSearch':
-        useBisecSearch = False # True: bisection search; False: Conservative search
+        useBisecSearch = True # True: bisection search; False: Conservative search
         env.bound_shrink_search(useBisecSearch)
         escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
         print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))

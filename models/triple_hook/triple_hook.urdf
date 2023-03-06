@@ -4,12 +4,12 @@
   <link name="hook">
     <visual>
       <geometry>
-        <mesh filename="package://triple_hook/triple_hook.dae"/>
+        <mesh filename="package://triple_hook/triple_hook.dae" scale="0.05 0.05 0.05"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://triple_hook/triple_hook.stl"/>
+        <mesh filename="package://triple_hook/triple_hook.stl" scale="0.05 0.05 0.05"/>
       </geometry>
     </collision>
   </link>

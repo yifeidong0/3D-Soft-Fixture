@@ -29,5 +29,3 @@ class ArticulatedObjectCaging(RigidObjectCaging):
         self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
 
         self.max_z_escapes = [] # successful escapes
-
-    # def forward_kinematics(self):
