@@ -23,14 +23,18 @@ class RigidObjectCaging():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-
-        # Set start and goal nodes
-        self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
-        self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
+        self.reset_start_and_goal()
 
         self.max_z_escapes = [] # successful escapes
         self.eps_thres = eps_thres # bi-section search resolution
-        
+
+    def reset_start_and_goal(self, start=None, goal=None):
+        # Set start and goal nodes
+        if start is None:
+            self.start = [0,-.5,4.9,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
+        if goal is None:
+            self.goal = [0,0,0.1,0,0,0] + [0]*self.robot.articulate_num
+
     def load_object(self):
         """Load object for caging."""
         self.paths = {
@@ -47,12 +51,17 @@ class RigidObjectCaging():
         robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
 
-    def add_obstacles(self):
-        self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
-        self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
-        self.add_box([-1, 0, 2.5], [0.01, 1, 1.0])
-        self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
-        self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
+    def add_obstacles(self, pos=(0,0,0), orn=(1,0,0,1)):
+        if self.args.obstacle == 'Box':
+            self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
+            self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
+            self.add_box([-1, 0, 2.5], [0.01, 1, 1.0])
+            self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
+            self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
+        
+        elif self.args.obstacle == 'Bowl':
+            obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos)
+            self.obstacles.append(obstacle_id)
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)

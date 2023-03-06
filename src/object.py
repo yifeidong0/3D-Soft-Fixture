@@ -84,7 +84,7 @@ class ObjectToCage(ObjectBase):
         self.set_search_bounds()
 
     def set_search_bounds(self):
-        self.joint_bounds = [[-2, 2], [-2, 2], [0, 5]] # CoM pos
+        self.joint_bounds = [[-2.5, 2.5], [-2.5, 2.5], [0, 5]] # CoM pos
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
         

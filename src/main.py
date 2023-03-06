@@ -5,6 +5,7 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 import pbOmplInterface
 from rigidObjCaging import RigidObjectCaging
 from articulatedObjCaging import ArticulatedObjectCaging
+import pybullet as p
 
 def argument_parser():
     '''
@@ -14,11 +15,11 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-s', '--search', default='BoundShrinkSearch', \
+    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRT', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -28,10 +29,14 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Donut', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', 'Bowl'], \
         help='(Optional) Specify the object to cage.')
 
+    parser.add_argument('-l', '--obstacle', default='Box', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
+        help='(Optional) Specify the obstacle that cages the object.')
+    
     parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     

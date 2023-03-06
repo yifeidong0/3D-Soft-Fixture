@@ -107,7 +107,6 @@ class PbOMPL():
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()
-        print('!!!joint_bounds: ', joint_bounds)
         for i, bound in enumerate(joint_bounds):
             bounds.setLow(i, bound[0])
             bounds.setHigh(i, bound[1])

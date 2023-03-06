@@ -1,15 +1,15 @@
 <?xml version="1.0"?>
 <robot name="bowl">
 
-  <link name="bowl">
+  <link concave="yes" name="bowl">
     <visual>
       <geometry>
-        <mesh filename="package://bowl/Bowl3.dae" scale="1 1 1"/>
+        <mesh filename="package://bowl/bowl4.dae" scale=".1 .1 .1"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://bowl/Bowl3.stl" scale="1 1 1"/>
+        <mesh filename="package://bowl/bowl4.stl" scale=".1 .1 .1"/>
       </geometry>
     </collision>
   </link>
