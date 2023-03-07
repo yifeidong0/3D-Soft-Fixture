@@ -10,7 +10,7 @@ from collections import defaultdict, deque, namedtuple
 from itertools import product, combinations, count
 
 BASE_LINK = -1
-MAX_DISTANCE = 0.
+MAX_DISTANCE = -0.025
 
 def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):  # 10000
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,

@@ -22,7 +22,7 @@ class runScenario():
             }
         self.args = args
         self.gravity = -10
-        self.downsampleRate = 50
+        self.downsampleRate = 30
         self.endFrame = 500
 
         # load object and obstacle

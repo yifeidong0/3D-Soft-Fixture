@@ -41,8 +41,8 @@ class RigidObjectCaging():
             'Bowl': 'models/bowl/small_bowl.stl', 
             }
 
-        robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
-        self.robot = ObjectToCage(robot_id)
+        self.robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
+        self.robot = ObjectToCage(self.robot_id)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
@@ -54,6 +54,16 @@ class RigidObjectCaging():
             self.goal = [0,0,0.1,0,0,0] + [0]*self.robot.articulate_num
         else:
             self.goal = goal
+
+        # make sure states are within search bounds
+        jbounds = self.robot.get_joint_bounds()
+        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+            print('The start or goal states violates search boundary conditions!')
+            return False 
+        
+        return True # bounds valid check passed
 
     def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1)):
         if self.args.obstacle == 'Box':
@@ -75,13 +85,13 @@ class RigidObjectCaging():
             mesh_visual_shape = -1  # Use the same shape for visualization
             mesh_position = pos  # The position of the mesh
             mesh_orientation = orn  # The orientation of the mesh
-            obstacle_id = p.createMultiBody(
+            self.obstacle_id = p.createMultiBody(
                 baseCollisionShapeIndex=mesh_collision_shape,
                 baseVisualShapeIndex=mesh_visual_shape,
                 basePosition=mesh_position,
                 baseOrientation=mesh_orientation,
             )
-            self.obstacles.append(obstacle_id)
+            self.obstacles.append(self.obstacle_id)
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)
