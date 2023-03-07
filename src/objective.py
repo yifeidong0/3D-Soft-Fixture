@@ -62,7 +62,7 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
-        print('!!!!!self.energyStart: {}'.format(self.energyStart))
+        # print('!!!!!self.energyStart: {}'.format(self.energyStart))
 
     def getElasticEnergy(self, state):
         # read joint stiffnesses
@@ -93,8 +93,6 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-        # if [self.start_[i] == state[i] for i in range(len(state))].count(True) == len(state):
-        #     print('!!!!!linkZsInWorld: {}'.format(linkZsInWorld))
 
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]

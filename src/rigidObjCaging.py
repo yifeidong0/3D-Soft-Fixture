@@ -28,13 +28,6 @@ class RigidObjectCaging():
         self.max_z_escapes = [] # successful escapes
         self.eps_thres = eps_thres # bi-section search resolution
 
-    def reset_start_and_goal(self, start=None, goal=None):
-        # Set start and goal nodes
-        if start is None:
-            self.start = [0,-.5,4.9,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
-        if goal is None:
-            self.goal = [0,0,0.1,0,0,0] + [0]*self.robot.articulate_num
-
     def load_object(self):
         """Load object for caging."""
         self.paths = {
@@ -45,13 +38,24 @@ class RigidObjectCaging():
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/bowl.urdf', 
+            'Bowl': 'models/bowl/small_bowl.stl', 
             }
 
         robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(robot_id)
 
-    def add_obstacles(self, pos=(0,0,0), orn=(1,0,0,1)):
+    def reset_start_and_goal(self, start=None, goal=None):
+        # Set start and goal nodes of searching algorithms
+        if start is None:
+            self.start = [0,-.5,4.9,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
+        else:
+            self.start = start
+        if goal is None:
+            self.goal = [0,0,0.1,0,0,0] + [0]*self.robot.articulate_num
+        else:
+            self.goal = goal
+
+    def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1)):
         if self.args.obstacle == 'Box':
             self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
             self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
@@ -60,7 +64,23 @@ class RigidObjectCaging():
             self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
         
         elif self.args.obstacle == 'Bowl':
-            obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos)
+            # Upload the mesh data to PyBullet and create a static object
+            mesh_scale = [.1, .1, .1]  # The scale of the mesh
+            mesh_collision_shape = p.createCollisionShape(
+                shapeType=p.GEOM_MESH,
+                fileName=self.paths[self.args.obstacle],
+                meshScale=mesh_scale,
+                flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+            )
+            mesh_visual_shape = -1  # Use the same shape for visualization
+            mesh_position = pos  # The position of the mesh
+            mesh_orientation = orn  # The orientation of the mesh
+            obstacle_id = p.createMultiBody(
+                baseCollisionShapeIndex=mesh_collision_shape,
+                baseVisualShapeIndex=mesh_visual_shape,
+                basePosition=mesh_position,
+                baseOrientation=mesh_orientation,
+            )
             self.obstacles.append(obstacle_id)
 
     def add_box(self, box_pos, half_box_size):
@@ -77,14 +97,14 @@ class RigidObjectCaging():
 
     def execute_search(self):
         # sleep(1240.)
-        res, path, sol_path_energy = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
+        res, path, sol_path_energy, sol_final_cost = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             self.pb_ompl_interface.execute(path)
             if self.args.objective == 'GravityPotential':
                 self.track_path_cost(path)
         else:
             self.max_z_escapes.append(np.inf)
-        return res, path, sol_path_energy
+        return res, path, sol_path_energy, sol_final_cost
 
     def energy_minimize_search(self, numIter=1):
         # set upper bound of searching
@@ -94,14 +114,13 @@ class RigidObjectCaging():
         
         # start planning
         self.energy_minimize_paths_energies = []
+        self.sol_final_costs = []
         for i in range(numIter):
             self.robot.set_state(self.start)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-            _, _, sol_path_energy = self.execute_search()
-            self.energy_minimize_paths_energies.append(sol_path_energy)
-
-        # shut down pybullet (GUI)
-        p.disconnect()        
+            _, _, sol_path_energy, sol_final_cost = self.execute_search()
+            self.energy_minimize_paths_energies.append(sol_path_energy)      
+            self.sol_final_costs.append(sol_final_cost)      
 
     def visualize_energy_minimize_search(self):
         '''visualize the convergence of caging depth'''
@@ -193,9 +212,6 @@ class RigidObjectCaging():
             print("----------max_z_escapes: ", self.max_z_escapes)
             print('----------zupper, zlower, eps: ', zupper, zlower, eps)
             print("----------joint_bounds z: ", self.robot.joint_bounds[2])
-
-        # shut down pybullet (GUI)
-        p.disconnect()
 
     def visualize_bound_shrink_search(self, useBisecSearch=False):
         '''visualize the convergence of caging depth'''

@@ -198,7 +198,7 @@ class PbOMPL():
         solved = self.planner.solve(allowed_time)
         res = False
         sol_path_list = []
-        sol_path_energy = None
+        sol_path_energy, sol_final_cost = None, None
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # print the path to screen
@@ -229,7 +229,8 @@ class PbOMPL():
 
         # reset robot state
         self.robot.set_state(orig_robot_state)
-        return res, sol_path_list, sol_path_energy
+
+        return res, sol_path_list, sol_path_energy, sol_final_cost
 
     def plan(self, goal, allowed_time=10.0):
         '''
