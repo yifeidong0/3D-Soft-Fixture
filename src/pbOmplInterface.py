@@ -137,8 +137,8 @@ class PbOMPL():
             self.planner = og.FMT(self.si)
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
-            self.planner.params().setParam("find_approximate_solutions", "1")
-            self.planner.params().setParam("samples_per_batch", "500")
+            # self.planner.params().setParam("find_approximate_solutions", "1")
+            self.planner.params().setParam("samples_per_batch", "1000")
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":

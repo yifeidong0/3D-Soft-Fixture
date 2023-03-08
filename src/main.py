@@ -35,14 +35,14 @@ def argument_parser():
         choices=['Fish', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm', 'Bowl'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Box', \
+    parser.add_argument('-l', '--obstacle', default='Bowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=2, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
     
     parser.add_argument('-f', '--file', default=None, \
@@ -82,7 +82,7 @@ if __name__ == '__main__':
         print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
     elif args.search == 'EnergyMinimizeSearch':
-        numInnerIter = 4
+        numInnerIter = 3
         env.energy_minimize_search(numInnerIter)
         env.visualize_energy_minimize_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))

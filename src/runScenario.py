@@ -29,9 +29,9 @@ class runScenario():
             'Bowl': 'models/bowl/small_bowl.stl', 
             }
         self.args = args
-        self.gravity = -10
-        self.downsampleRate = 75
-        self.endFrame = 500
+        self.gravity = -9.81
+        self.downsampleRate = 80
+        self.endFrame = 600
 
         # load object and obstacle
         self.loadObject()
@@ -41,14 +41,14 @@ class runScenario():
         # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
         # self.object = p.loadURDF('models/articulate_fish.xacro', (0,0,4), (0,0,1,1))
         self.objectPos = (0,0,4)
-        self.objectOrn = (0,0,1,1)
+        self.objectOrn = (0,1,0,1)
         self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectOrn)
         # p.changeDynamics(bowl, -1, mass=0)
 
     def loadObstacle(self):
         # Upload the mesh data to PyBullet and create a static object
-        self.obstaclePos = [-0.5, 1.5, 0]  # The position of the mesh
-        self.obstacleOrn = p.getQuaternionFromEuler([.6, 0, 0])  # The orientation of the mesh
+        self.obstaclePos = [-0.5, 0.5, 0]  # The position of the mesh, [-0.5, 1.5, 0]
+        self.obstacleOrn = p.getQuaternionFromEuler([0, 0, 0])  # The orientation of the mesh, [.6, 0, 0]
     
         mesh_scale = [.1, .1, .1]  # The scale of the mesh
         mesh_collision_shape = p.createCollisionShape(
@@ -84,10 +84,11 @@ class runScenario():
             # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
             # print(gemPos, gemOrn)
             p.setGravity(0, 0, self.gravity)
-            time.sleep(1/240.)
+            time.sleep(5/240.)
             
             i += 1
-            if i % self.downsampleRate == 0:
+            # print(i)
+            if i % self.downsampleRate == 0 and i > 140:
                 jointPositions,_,_ = self.getJointStates() # list(11)
                 gemPos, gemOrn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
                 jointPosSce.append(jointPositions)
@@ -103,7 +104,7 @@ class runScenario():
 if __name__ == '__main__':
     args = argument_parser()
     rigidObjs = ['Donut', 'Hook', 'Bowl']
-    basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
+    basePosBounds=[[-2,2], [-2,2], [0,3]] # searching bounds
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
     sce = runScenario(args)
@@ -121,16 +122,17 @@ if __name__ == '__main__':
     # set searching bounds and add obstacles
     env.robot.set_search_bounds(basePosBounds)
     env.add_obstacles(obsPos, obsOrn)
-    solFinalCostsSce = []
-    objBaseZs = []
+    bestCostsSce = []
+    startCostSce = [] # start state energy
+    # objBaseZs = []
 
     for i in range(numMainIter):
         start = objBasePosSce[i] + objBaseOrnSce[i] + objJointPosSce[i]
-        goal = [0,0,-3] + [0]*3 + [0]*env.robot.articulate_num
+        goal = [0,0,0.01] + [0]*3 + [0]*env.robot.articulate_num
         isValidStartAndGoal = env.reset_start_and_goal(start, goal)
         if not isValidStartAndGoal:
             continue
-        objBaseZs.append(start[2])
+        # objBaseZs.append(start[2])
         # print('Current object z_world: {}'.format(start[2]))
 
         env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
@@ -147,10 +149,11 @@ if __name__ == '__main__':
             print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
         elif args.search == 'EnergyMinimizeSearch':
-            numInnerIter = 5
+            numInnerIter = 1
             env.energy_minimize_search(numInnerIter)
             # env.visualize_energy_minimize_search()
-            solFinalCostsSce.append(min(env.sol_final_costs)) # list(numMainIter*list(numInnerIter))
+            bestCostsSce.append(min(env.sol_final_costs)) # list(numMainIter*list(numInnerIter))
+            startCostSce.append(env.energy_minimize_paths_energies[0][0])
             print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
     # shut down pybullet (GUI)
@@ -158,15 +161,13 @@ if __name__ == '__main__':
 
     # plot escape energy in the dynamic fall
     _, ax1 = plt.subplots()
-    ax1.plot(solFinalCostsSce, 'r--', label='escape energy')
-    ax2 = ax1.twinx()
-    ax2.plot(objBaseZs, 'g-*', label='obj base z_world')
+    ax1.plot(bestCostsSce, 'r--', label='escape energy')
+    ax1.plot(startCostSce, 'g-*', label='start energy')
     
     ax1.set_xlabel('# iterations')
     ax1.set_ylabel('energy')
-    ax2.set_ylabel('z_world')
     ax1.grid(True)
     ax1.legend()
-    ax2.legend(loc='lower right')
     plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
-    plt.show()
+    # plt.show()
+    plt.savefig('./images/fishFalls2.png')

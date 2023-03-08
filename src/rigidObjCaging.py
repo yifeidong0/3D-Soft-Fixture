@@ -171,7 +171,7 @@ class RigidObjectCaging():
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             
             # start planning
-            _, _, _ = self.execute_search()
+            _, _, _, _ = self.execute_search()
             
             # update bounds
             curr_max_z = self.max_z_escapes[-1]
