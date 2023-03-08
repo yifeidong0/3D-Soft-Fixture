@@ -24,8 +24,6 @@ class ArticulatedObjectCaging(RigidObjectCaging):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-
-        self.start = [0,-.5,2.5,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
-        self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
+        self.reset_start_and_goal()
 
         self.max_z_escapes = [] # successful escapes

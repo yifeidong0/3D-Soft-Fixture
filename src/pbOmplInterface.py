@@ -198,10 +198,12 @@ class PbOMPL():
         solved = self.planner.solve(allowed_time)
         res = False
         sol_path_list = []
-        sol_path_energy, sol_final_cost = None, None
+        sol_path_energy, best_cost = None, None
+        
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
-            # print the path to screen
+            # solution_path = self.planner.bestPathFromGoalToStart() # TODO: expose the corresponding C++ protected function
+            
             sol_path_geometric = self.pdef.getSolutionPath()
             sol_path_states_non_interp = sol_path_geometric.getStates()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
@@ -217,8 +219,11 @@ class PbOMPL():
             if self.args.search == 'EnergyMinimizeSearch':
                 self.objective = self.pdef.getOptimizationObjective()
                 sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
-                sol_final_cost = sol_path_geometric.cost(self.objective).value()
-                print('!!!!!sol_final_cost: {}'.format(sol_final_cost))
+                best_cost = self.planner.bestCost().value() # approximate solution?
+                print('!!!!!!!!bestCost', best_cost)
+                
+                # sol_final_cost = sol_path_geometric.cost(self.objective).value() # exact solution?
+                # print('!!!!!!!!sol_final_cost', sol_final_cost)
 
             # make sure goal is reached
             diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
@@ -230,7 +235,7 @@ class PbOMPL():
         # reset robot state
         self.robot.set_state(orig_robot_state)
 
-        return res, sol_path_list, sol_path_energy, sol_final_cost
+        return res, sol_path_list, sol_path_energy, best_cost
 
     def plan(self, goal, allowed_time=10.0):
         '''

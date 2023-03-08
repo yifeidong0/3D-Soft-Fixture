@@ -1,6 +1,14 @@
-
 import pybullet as p
 import time
+import os.path as osp
+import sys
+import argparse
+sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
+from pbOmplInterface import PbOMPL
+from rigidObjCaging import RigidObjectCaging
+from articulatedObjCaging import ArticulatedObjectCaging
+import matplotlib.pyplot as plt
+from main import argument_parser
 
 class runScenario():
     def __init__(self, args):
@@ -22,7 +30,7 @@ class runScenario():
             }
         self.args = args
         self.gravity = -10
-        self.downsampleRate = 30
+        self.downsampleRate = 75
         self.endFrame = 500
 
         # load object and obstacle
@@ -90,3 +98,75 @@ class runScenario():
                 p.disconnect()
                 return jointPosSce, basePosSce, baseOrnSce, self.obstaclePos, self.obstacleOrn
             # print(jointPositions)
+
+
+if __name__ == '__main__':
+    args = argument_parser()
+    rigidObjs = ['Donut', 'Hook', 'Bowl']
+    basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
+
+    # run a dynamic falling scenario and analyze frame-wise escape energy
+    sce = runScenario(args)
+    objJointPosSce, objBasePosSce, objBaseQtnSce, obsPos, obsOrn = sce.runDynamicFalling()
+    objBaseOrnSce = [list(p.getEulerFromQuaternion(q)) for q in objBaseQtnSce]
+    numMainIter = len(objJointPosSce)
+
+    # create caging environment and items in pybullet
+    if args.object in rigidObjs:
+        eps_thres = 1e-2 # threshold of loop terminating
+        env = RigidObjectCaging(args, eps_thres)
+    else:
+        env = ArticulatedObjectCaging(args)
+
+    # set searching bounds and add obstacles
+    env.robot.set_search_bounds(basePosBounds)
+    env.add_obstacles(obsPos, obsOrn)
+    solFinalCostsSce = []
+    objBaseZs = []
+
+    for i in range(numMainIter):
+        start = objBasePosSce[i] + objBaseOrnSce[i] + objJointPosSce[i]
+        goal = [0,0,-3] + [0]*3 + [0]*env.robot.articulate_num
+        isValidStartAndGoal = env.reset_start_and_goal(start, goal)
+        if not isValidStartAndGoal:
+            continue
+        objBaseZs.append(start[2])
+        # print('Current object z_world: {}'.format(start[2]))
+
+        env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+        # CP = p.getClosestPoints(bodyA=env.robot_id, bodyB=env.obstacle_id, distance=-0.025)
+        # if len(CP)>0:
+        #     dis = [CP[i][8] for i in range(len(CP))]
+        #     print('!!!!CP', dis)
+
+        # Choose from different searching methods
+        if args.search == 'BoundShrinkSearch':
+            useBisecSearch = True # True: bisection search; False: Conservative search
+            env.bound_shrink_search(useBisecSearch)
+            escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
+            print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+
+        elif args.search == 'EnergyMinimizeSearch':
+            numInnerIter = 5
+            env.energy_minimize_search(numInnerIter)
+            # env.visualize_energy_minimize_search()
+            solFinalCostsSce.append(min(env.sol_final_costs)) # list(numMainIter*list(numInnerIter))
+            print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
+
+    # shut down pybullet (GUI)
+    p.disconnect()
+
+    # plot escape energy in the dynamic fall
+    _, ax1 = plt.subplots()
+    ax1.plot(solFinalCostsSce, 'r--', label='escape energy')
+    ax2 = ax1.twinx()
+    ax2.plot(objBaseZs, 'g-*', label='obj base z_world')
+    
+    ax1.set_xlabel('# iterations')
+    ax1.set_ylabel('energy')
+    ax2.set_ylabel('z_world')
+    ax1.grid(True)
+    ax1.legend()
+    ax2.legend(loc='lower right')
+    plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
+    plt.show()

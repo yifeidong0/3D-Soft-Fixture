@@ -47,11 +47,11 @@ class RigidObjectCaging():
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
         if start is None:
-            self.start = [0,-.5,4.9,0,0,0.78] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
+            self.start = [0,0,2.6,1.57,0,0] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
         else:
             self.start = start
         if goal is None:
-            self.goal = [0,0,0.1,0,0,0] + [0]*self.robot.articulate_num
+            self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
         else:
             self.goal = goal
 
@@ -134,6 +134,7 @@ class RigidObjectCaging():
 
     def visualize_energy_minimize_search(self):
         '''visualize the convergence of caging depth'''
+
         _, ax1 = plt.subplots()
         energy_curves = self.energy_minimize_paths_energies
         for i in range(len(energy_curves)):
