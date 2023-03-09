@@ -1,0 +1,101 @@
+startThreads creating 1 threads.
+starting thread 0
+started thread 0 
+argc=2
+argv[0] = --unused
+argv[1] = --start_demo_name=Physics Server
+ExampleBrowserThreadFunc started
+X11 functions dynamically loaded using dlopen/dlsym OK!
+X11 functions dynamically loaded using dlopen/dlsym OK!
+Creating context
+Created GL 3.3 context
+Direct GLX rendering context obtained
+Making context current
+GL_VENDOR=Intel
+GL_RENDERER=Mesa Intel(R) Graphics (ADL GT2)
+GL_VERSION=4.6 (Core Profile) Mesa 22.0.5
+GL_SHADING_LANGUAGE_VERSION=4.60
+pthread_getconcurrency()=0
+Version = 4.6 (Core Profile) Mesa 22.0.5
+Vendor = Intel
+Renderer = Mesa Intel(R) Graphics (ADL GT2)
+b3Printf: Selected demo: Physics Server
+startThreads creating 1 threads.
+starting thread 0
+started thread 0 
+MotionThreadFunc thread started
+ven = Intel
+Workaround for some crash in the Intel OpenGL driver on Linux/Ubuntu
+ven = Intel
+Workaround for some crash in the Intel OpenGL driver on Linux/Ubuntu
+numActiveThreads = 0
+stopping threads
+Thread with taskId 0 exiting
+Thread TERMINATED
+destroy semaphore
+semaphore destroyed
+destroy main semaphore
+main semaphore destroyed
+finished
+numActiveThreads = 0
+btShutDownExampleBrowser stopping threads
+Thread with taskId 0 exiting
+Thread TERMINATED
+destroy semaphore
+semaphore destroyed
+destroy main semaphore
+main semaphore destroyed
+Debug:   The value of parameter 'samples_per_batch' is now: '1000'
+Info:    : No direct informed sampling scheme is defined, defaulting to rejection sampling.
+Info:    kBITstar: Searching for a solution to the given planning problem.
+Info:    kBITstar (2 iters): Did not find an exact solution from 1000 samples after processing 1 edges (1 collision checked) to create 1 vertices and perform 0 rewirings. The final graph has 1 vertices.
+Debug:   The value of parameter 'samples_per_batch' is now: '1000'
+Info:    : No direct informed sampling scheme is defined, defaulting to rejection sampling.
+Info:    kBITstar: Searching for a solution to the given planning problem.
+Info:    kBITstar (2 iters): Did not find an exact solution from 1000 samples after processing 1 edges (1 collision checked) to create 1 vertices and perform 0 rewirings. The final graph has 1 vertices.
+Debug:   The value of parameter 'samples_per_batch' is now: '1000'
+Info:    : No direct informed sampling scheme is defined, defaulting to rejection sampling.
+Info:    kBITstar: Searching for a solution to the given planning problem.
+Info:    kBITstar (2 iters): Did not find an exact solution from 1000 samples after processing 1 edges (1 collision checked) to create 1 vertices and perform 0 rewirings. The final graph has 1 vertices.
+start_planning
+delay_rewiring_to_first_solution = 0
+drop_unconnected_samples_on_prune = 0
+find_approximate_solutions = 0
+prune_threshold_as_fractional_cost_change = 0.05
+rewire_factor = 1.1
+samples_per_batch = 1000
+stop_on_each_solution_improvement = 0
+use_graph_pruning = 1
+use_just_in_time_sampling = 0
+use_k_nearest = 1
+use_strict_queue_ordering = 1
+
+No solution found
+start_planning
+delay_rewiring_to_first_solution = 0
+drop_unconnected_samples_on_prune = 0
+find_approximate_solutions = 0
+prune_threshold_as_fractional_cost_change = 0.05
+rewire_factor = 1.1
+samples_per_batch = 1000
+stop_on_each_solution_improvement = 0
+use_graph_pruning = 1
+use_just_in_time_sampling = 0
+use_k_nearest = 1
+use_strict_queue_ordering = 1
+
+No solution found
+start_planning
+delay_rewiring_to_first_solution = 0
+drop_unconnected_samples_on_prune = 0
+find_approximate_solutions = 0
+prune_threshold_as_fractional_cost_change = 0.05
+rewire_factor = 1.1
+samples_per_batch = 1000
+stop_on_each_solution_improvement = 0
+use_graph_pruning = 1
+use_just_in_time_sampling = 0
+use_k_nearest = 1
+use_strict_queue_ordering = 1
+
+No solution found

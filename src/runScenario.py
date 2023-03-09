@@ -9,6 +9,7 @@ from rigidObjCaging import RigidObjectCaging
 from articulatedObjCaging import ArticulatedObjectCaging
 import matplotlib.pyplot as plt
 from main import argument_parser
+import pybullet_data
 
 class runScenario():
     def __init__(self, args):
@@ -17,6 +18,8 @@ class runScenario():
         p.setTimeStep(1./240.)
         # p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setRealTimeSimulation(0)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        planeId = p.loadURDF("plane.urdf", [0,0,.8])
 
         self.paths = {
             'Fish': 'models/articulate_fish.xacro', 
@@ -30,7 +33,7 @@ class runScenario():
             }
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 80
+        self.downsampleRate = 8
         self.endFrame = 600
 
         # load object and obstacle
@@ -57,7 +60,14 @@ class runScenario():
             meshScale=mesh_scale,
             flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
         )
-        mesh_visual_shape = -1  # Use the same shape for visualization
+        mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
+            fileName="models/bowl/small_bowl.obj",
+            rgbaColor=[1, 1, 1, 1],
+            specularColor=[0.4, .4, 0],
+            # visualFramePosition=shift,
+            meshScale=mesh_scale
+        )
+        # mesh_visual_shape = -1  # Use the same shape for visualization
         self.obstacleId = p.createMultiBody(
             baseCollisionShapeIndex=mesh_collision_shape,
             baseVisualShapeIndex=mesh_visual_shape,
@@ -78,13 +88,15 @@ class runScenario():
         jointPosSce = []
         basePosSce = []
         baseOrnSce = []
+        time.sleep(2)
+        
         while (1):
             p.stepSimulation()
             #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
             # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
             # print(gemPos, gemOrn)
             p.setGravity(0, 0, self.gravity)
-            time.sleep(5/240.)
+            time.sleep(30/240.)
             
             i += 1
             # print(i)
@@ -150,7 +162,9 @@ if __name__ == '__main__':
 
         elif args.search == 'EnergyMinimizeSearch':
             numInnerIter = 1
-            env.energy_minimize_search(numInnerIter)
+            isSolved = env.energy_minimize_search(numInnerIter)
+            if not isSolved:
+                continue
             # env.visualize_energy_minimize_search()
             bestCostsSce.append(min(env.sol_final_costs)) # list(numMainIter*list(numInnerIter))
             startCostSce.append(env.energy_minimize_paths_energies[0][0])
@@ -161,13 +175,13 @@ if __name__ == '__main__':
 
     # plot escape energy in the dynamic fall
     _, ax1 = plt.subplots()
-    ax1.plot(bestCostsSce, 'r--', label='escape energy')
-    ax1.plot(startCostSce, 'g-*', label='start energy')
+    ax1.plot(bestCostsSce, 'r--', label='Escape energy')
+    ax1.plot(startCostSce, 'g-*', label='Current energy')
     
     ax1.set_xlabel('# iterations')
-    ax1.set_ylabel('energy')
+    ax1.set_ylabel('G-potential energy')
     ax1.grid(True)
     ax1.legend()
     plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
     # plt.show()
-    plt.savefig('./images/fishFalls2.png')
+    plt.savefig('./images/fishFalls3.png')

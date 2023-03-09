@@ -82,7 +82,14 @@ class RigidObjectCaging():
                 meshScale=mesh_scale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
-            mesh_visual_shape = -1  # Use the same shape for visualization
+            mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
+                fileName="models/bowl/small_bowl.obj",
+                rgbaColor=[1, 1, 1, 1],
+                specularColor=[0.4, .4, 0],
+                # visualFramePosition=shift,
+                meshScale=mesh_scale
+            )
+            # mesh_visual_shape = -1  # Use the same shape for visualization
             mesh_position = pos  # The position of the mesh
             mesh_orientation = orn  # The orientation of the mesh
             self.obstacle_id = p.createMultiBody(
@@ -125,12 +132,18 @@ class RigidObjectCaging():
         # start planning
         self.energy_minimize_paths_energies = []
         self.sol_final_costs = []
+        solveds = []
         for i in range(numIter):
             self.robot.set_state(self.start)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-            _, _, sol_path_energy, sol_final_cost = self.execute_search()
+            solved, _, sol_path_energy, sol_final_cost = self.execute_search()
             self.energy_minimize_paths_energies.append(sol_path_energy)      
-            self.sol_final_costs.append(sol_final_cost)      
+            self.sol_final_costs.append(sol_final_cost)
+            solveds.append(solved)
+        if solveds.count(True) == 0:
+            return False
+        return True
+
 
     def visualize_energy_minimize_search(self):
         '''visualize the convergence of caging depth'''

@@ -39,7 +39,7 @@ def argument_parser():
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=2, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
