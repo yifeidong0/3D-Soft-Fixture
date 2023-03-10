@@ -31,7 +31,7 @@ class RigidObjectCaging():
     def load_object(self):
         """Load object for caging."""
         self.paths = {
-            'Fish': 'models/articulate_fish.xacro', 
+            'Fish': 'models/fish/articulate_fish.xacro', 
             'Hook': 'models/triple_hook/triple_hook.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',

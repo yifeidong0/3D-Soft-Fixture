@@ -11,19 +11,23 @@ import matplotlib.pyplot as plt
 from main import argument_parser
 import pybullet_data
 
+SCENARIOS = ['FishFallsInBowl', 'HookTrapsFish', 'GripperGraspsDonut']
+
 class runScenario():
-    def __init__(self, args):
+    def __init__(self, args, scenario='FishFallsInBowl'):
         p.connect(p.GUI)
         # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
         # p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
+        
         planeId = p.loadURDF("plane.urdf", [0,0,.8])
-
+        self.scenario = scenario
         self.paths = {
-            'Fish': 'models/articulate_fish.xacro', 
-            'Hook': 'models/triple_hook/triple_hook.urdf', 
+            'Fish': 'models/fish/articulate_fish.xacro', 
+            'FishWithRing': 'models/fish/fishWithRing.xacro', 
+            'Hook': 'models/triple_hook/triple_hook.stl', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
@@ -34,40 +38,55 @@ class runScenario():
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 8
-        self.endFrame = 600
+        self.endFrame = 1000
 
         # load object and obstacle
+        self.initializePoses()
         self.loadObject()
         self.loadObstacle()
-        
+    
+    def initializePoses(self):
+        match self.scenario:
+            case 'FishFallsInBowl':
+                self.object = 'Fish'
+                self.obstacle = 'Bowl'
+                self.objectPos = (0,0,4)
+                self.objectOrn = (0,1,0,1)
+                self.obstaclePos = [-0.5, 0.5, 0]
+                self.obstacleOrn = p.getQuaternionFromEuler([0, 0, 0])
+            case 'HookTrapsFish':
+                # self.object = 'FishWithEye'
+                self.object = 'FishWithRing'
+                self.obstacle = 'Hook'
+                self.objectPos = (0.5,-1.8,3)
+                self.objectOrn = p.getQuaternionFromEuler([0, 0, 0])
+                self.obstaclePos = [-0.5, 0.5, 1]
+                self.obstacleOrn = p.getQuaternionFromEuler([1.57, 0, 0])
+            # case 'GripperGraspDonut':
+
     def loadObject(self):
         # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
         # self.object = p.loadURDF('models/articulate_fish.xacro', (0,0,4), (0,0,1,1))
-        self.objectPos = (0,0,4)
-        self.objectOrn = (0,1,0,1)
-        self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectOrn)
+        self.objectId = p.loadURDF(self.paths[self.object], self.objectPos, self.objectOrn)
         # p.changeDynamics(bowl, -1, mass=0)
 
     def loadObstacle(self):
         # Upload the mesh data to PyBullet and create a static object
-        self.obstaclePos = [-0.5, 0.5, 0]  # The position of the mesh, [-0.5, 1.5, 0]
-        self.obstacleOrn = p.getQuaternionFromEuler([0, 0, 0])  # The orientation of the mesh, [.6, 0, 0]
-    
         mesh_scale = [.1, .1, .1]  # The scale of the mesh
         mesh_collision_shape = p.createCollisionShape(
             shapeType=p.GEOM_MESH,
-            fileName=self.paths[self.args.obstacle],
+            fileName=self.paths[self.obstacle],
             meshScale=mesh_scale,
             flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
         )
-        mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
-            fileName="models/bowl/small_bowl.obj",
-            rgbaColor=[1, 1, 1, 1],
-            specularColor=[0.4, .4, 0],
-            # visualFramePosition=shift,
-            meshScale=mesh_scale
-        )
-        # mesh_visual_shape = -1  # Use the same shape for visualization
+        # mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
+        #     fileName="models/bowl/small_bowl.obj",
+        #     rgbaColor=[1, 1, 1, 1],
+        #     specularColor=[0.4, .4, 0],
+        #     # visualFramePosition=shift,
+        #     meshScale=mesh_scale
+        # )
+        mesh_visual_shape = -1  # Use the same shape for visualization
         self.obstacleId = p.createMultiBody(
             baseCollisionShapeIndex=mesh_collision_shape,
             baseVisualShapeIndex=mesh_visual_shape,
@@ -89,14 +108,14 @@ class runScenario():
         basePosSce = []
         baseOrnSce = []
         time.sleep(2)
-        
+
         while (1):
             p.stepSimulation()
             #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
             # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
             # print(gemPos, gemOrn)
             p.setGravity(0, 0, self.gravity)
-            time.sleep(30/240.)
+            time.sleep(1/240.)
             
             i += 1
             # print(i)
@@ -119,7 +138,7 @@ if __name__ == '__main__':
     basePosBounds=[[-2,2], [-2,2], [0,3]] # searching bounds
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
-    sce = runScenario(args)
+    sce = runScenario(args, SCENARIOS[1])
     objJointPosSce, objBasePosSce, objBaseQtnSce, obsPos, obsOrn = sce.runDynamicFalling()
     objBaseOrnSce = [list(p.getEulerFromQuaternion(q)) for q in objBaseQtnSce]
     numMainIter = len(objJointPosSce)
