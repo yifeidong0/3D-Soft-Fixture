@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
 from object import ObjectToCage
+from utils import path_collector
 
 class RigidObjectCaging():
     def __init__(self, args, eps_thres=1e-2):
@@ -30,16 +31,7 @@ class RigidObjectCaging():
 
     def load_object(self):
         """Load object for caging."""
-        self.paths = {
-            'Fish': 'models/fish/articulate_fish.xacro', 
-            'Hook': 'models/triple_hook/triple_hook.urdf', 
-            'Donut': 'models/donut/donut.urdf',
-            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
-            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
-            'PlanarRobot': 'models/planar_robot_4_link.xacro',
-            'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/small_bowl.stl', 
-            }
+        self.paths = path_collector()
 
         self.robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(self.robot_id)
@@ -65,7 +57,7 @@ class RigidObjectCaging():
         
         return True # bounds valid check passed
 
-    def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1)):
+    def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1), scale=[.1, .1, .1]):
         if self.args.obstacle == 'Box':
             self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
             self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
@@ -73,21 +65,21 @@ class RigidObjectCaging():
             self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
             self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
         
-        elif self.args.obstacle == 'Bowl':
+        elif self.args.obstacle == 'Bowl' or 'Hook':
             # Upload the mesh data to PyBullet and create a static object
-            mesh_scale = [.1, .1, .1]  # The scale of the mesh
+            # mesh_scale = [.1, .1, .1]  # The scale of the mesh
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
-                meshScale=mesh_scale,
+                meshScale=scale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
             mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
-                fileName="models/bowl/small_bowl.obj",
+                fileName=self.paths[self.args.obstacle],
                 rgbaColor=[1, 1, 1, 1],
                 specularColor=[0.4, .4, 0],
                 # visualFramePosition=shift,
-                meshScale=mesh_scale
+                meshScale=scale
             )
             # mesh_visual_shape = -1  # Use the same shape for visualization
             mesh_position = pos  # The position of the mesh

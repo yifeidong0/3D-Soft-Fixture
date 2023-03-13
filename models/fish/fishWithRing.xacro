@@ -382,12 +382,12 @@
   <link name="link11">
     <visual>
       <geometry>
-        <mesh filename="package://fish/ring.dae" scale=".02 .02 .02"/>
+        <mesh filename="package://fish/ring2_vhacd.dae" scale=".02 .02 .02"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://fish/ring.stl" scale=".02 .02 .02"/>
+        <mesh filename="package://fish/ring2_vhacd.OBJ" scale=".02 .02 .02"/>
       </geometry>
     </collision>
   </link>

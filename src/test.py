@@ -308,23 +308,48 @@ p.setTimeStep(1./240.)
 GRAVITY = -10
 p.setRealTimeSimulation(0)
 # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
-fish = p.loadURDF('models/articulate_fish.xacro', (0,0,8), (0,0,1,1))
+fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
+
+# name_in = 'models/triple_hook/triple_hook.obj'
+# name_out = 'models/triple_hook/triple_hook_vhacd.obj'
+# name_log = "log.txt"
+# p.vhacd(name_in, name_out, name_log)
+# ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
 
 # p.changeDynamics(bowl, -1, mass=0)
 
 # Upload the mesh data to PyBullet and create a static object
+# mesh_scale = [.04, .04, .04]  # The scale of the mesh
+# mesh_collision_shape = p.createCollisionShape(
+#     shapeType=p.GEOM_MESH,
+#     fileName="models/fish/ring2_vhacd.OBJ",
+#     meshScale=mesh_scale,
+#     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+#     # meshData=mesh_data,
+# )
+# mesh_visual_shape = -1  # Use the same shape for visualization
+# mesh_position = [0.3, 0, 2]  # The position of the mesh
+# mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
+# ring = p.createMultiBody(
+#     baseMass=1.,
+#     baseCollisionShapeIndex=mesh_collision_shape,
+#     baseVisualShapeIndex=mesh_visual_shape,
+#     basePosition=mesh_position,
+#     baseOrientation=mesh_orientation,
+# )
+
 mesh_scale = [.1, .1, .1]  # The scale of the mesh
 mesh_collision_shape = p.createCollisionShape(
     shapeType=p.GEOM_MESH,
-    fileName="models/bowl/small_bowl.stl",
+    fileName="models/triple_hook/triple_hook_vhacd.obj",
     meshScale=mesh_scale,
-    flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+    # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
     # meshData=mesh_data,
 )
 mesh_visual_shape = -1  # Use the same shape for visualization
-mesh_position = [-0.5, 1.5, 0]  # The position of the mesh
-mesh_orientation = p.getQuaternionFromEuler([.6, 0, 0])  # The orientation of the mesh
-mesh_id = p.createMultiBody(
+mesh_position = [0, 0, 0]  # The position of the mesh
+mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
+hook = p.createMultiBody(
     baseCollisionShapeIndex=mesh_collision_shape,
     baseVisualShapeIndex=mesh_visual_shape,
     basePosition=mesh_position,
@@ -351,20 +376,23 @@ while (1):
     time.sleep(7/240.)
     i += 1
 
-    CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
-    if len(CP)>0:
-        dis = [CP[i][8] for i in range(len(CP))]
-        print('!!!!CP', dis)
+    # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
+    # if len(CP)>0:
+    #     dis = [CP[i][8] for i in range(len(CP))]
+    #     print('!!!!CP', dis)
 
-    if i % 20 == 0:
-        jointPositions,_,_ = getJointStates(fish) # list(11)
-        gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
-        jointPositionsSce.append(jointPositions)
-        gemPosAll.append(list(gemPos))
-        gemOrnAll.append(list(gemOrn))
+    # if i % 20 == 0:
+    #     jointPositions,_,_ = getJointStates(fish) # list(11)
+    #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
+    #     jointPositionsSce.append(jointPositions)
+    #     gemPosAll.append(list(gemPos))
+    #     gemOrnAll.append(list(gemOrn))
     
-    if i == 500:
-        break
-    # print(jointPositions)
+    # if i == 500:
+    #     break
+    # # print(jointPositions)
 
 # replay
+
+
+

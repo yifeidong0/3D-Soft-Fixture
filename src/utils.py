@@ -8,9 +8,72 @@ from __future__ import print_function
 import pybullet as p
 from collections import defaultdict, deque, namedtuple
 from itertools import product, combinations, count
+import argparse
 
 BASE_LINK = -1
 MAX_DISTANCE = -0.025
+
+def path_collector():
+    return {
+            'Fish': 'models/fish/articulate_fish.xacro', 
+            'FishWithRing': 'models/fish/fishWithRing.xacro', 
+            'Ring': 'models/fish/ring2_vhacd.OBJ', 
+            'Donut': 'models/donut/donut.urdf',
+            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
+            'PlanarRobot': 'models/planar_robot_4_link.xacro',
+            'Humanoid': 'models/humanoid.urdf',
+            'Bowl': 'models/bowl/small_bowl.stl', 
+            'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
+            }
+
+def argument_parser():
+    '''
+    Hyperparemeter setup.
+    '''
+    # Create an argument parser
+    parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
+
+    # Add a filename argument
+    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
+        choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
+        help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
+    
+    parser.add_argument('-p', '--planner', default='BITstar', \
+        choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
+        'SORRTstar', 'RRT'], \
+        help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
+    
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
+        choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
+        'PotentialAndPathLength'], \
+        help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
+
+    parser.add_argument('-j', '--object', default='FishWithRing', \
+        choices=['Fish', 'FishWithRing', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
+        help='(Optional) Specify the object to cage.')
+
+    parser.add_argument('-l', '--obstacle', default='Hook', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
+        help='(Optional) Specify the obstacle that cages the object.')
+    
+    parser.add_argument('-t', '--runtime', type=float, default=3, help=\
+        '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
+    
+    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
+        '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
+    
+    parser.add_argument('-f', '--file', default=None, \
+        help='(Optional) Specify anoutput path for the found solution path.')
+    
+    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
+        help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
+        ' Defaults to WARN.')
+
+    # Parse the arguments
+    args = parser.parse_args()
+
+    return args
 
 def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):  # 10000
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,

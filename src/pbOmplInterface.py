@@ -155,6 +155,7 @@ class PbOMPL():
 
         # Set the start and goal states;
         start = self.robot.get_cur_state()
+
         s = ob.State(self.space)
         g = ob.State(self.space)
         for i in range(len(start)):
@@ -176,7 +177,7 @@ class PbOMPL():
                 # else self.args.objective == 'PathLength' # default objective
 
             elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
-                potentialObjective = objective.minPathTotalPotentialObjective(self.si, start)
+                potentialObjective = objective.minPathTotalPotentialObjective(self.si, start, self.args)
                 self.pdef.setOptimizationObjective(potentialObjective)
             # else: self.args.objective == 'PathLength'
         
@@ -190,7 +191,7 @@ class PbOMPL():
         plan a path to goal from the given robot start state
         '''
         # print("start_planning")
-        # print(self.planner.params())
+        print(self.planner.params())
 
         orig_robot_state = self.robot.get_cur_state()
 

@@ -17,6 +17,7 @@ import numpy as np
 import sys
 import kinpy as kp
 from scipy.spatial.transform import Rotation as R
+from utils import path_collector
 
 class minPathPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
@@ -43,11 +44,12 @@ class minPathPotentialObjective(ob.OptimizationObjective):
 
 
 class minPathTotalPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start):
+    def __init__(self, si, start, args):
         super(minPathTotalPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
-        
+        self.args_ = args
+
         # parameters of articulated object
         self.numStateSpace = len(start)
         self.comDof = 6
@@ -58,7 +60,8 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         self.masses = [.1] * self.numLinks
         self.stiffnesss = [.0] * self.numJoints
         self.o = np.array([1.])
-        self.chain = kp.build_chain_from_urdf(open("models/articulate_fish.xacro").read())
+        self.path = path_collector()
+        self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)

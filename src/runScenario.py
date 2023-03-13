@@ -10,6 +10,7 @@ from articulatedObjCaging import ArticulatedObjectCaging
 import matplotlib.pyplot as plt
 from main import argument_parser
 import pybullet_data
+from utils import path_collector
 
 SCENARIOS = ['FishFallsInBowl', 'HookTrapsFish', 'GripperGraspsDonut']
 
@@ -22,23 +23,13 @@ class runScenario():
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         
-        planeId = p.loadURDF("plane.urdf", [0,0,.8])
+        # planeId = p.loadURDF("plane.urdf", [0,0,0])
         self.scenario = scenario
-        self.paths = {
-            'Fish': 'models/fish/articulate_fish.xacro', 
-            'FishWithRing': 'models/fish/fishWithRing.xacro', 
-            'Hook': 'models/triple_hook/triple_hook.stl', 
-            'Donut': 'models/donut/donut.urdf',
-            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
-            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
-            'PlanarRobot': 'models/planar_robot_4_link.xacro',
-            'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/small_bowl.stl', 
-            }
+        self.paths = path_collector()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 8
-        self.endFrame = 1000
+        self.downsampleRate = 100
+        self.endFrame = 800
 
         # load object and obstacle
         self.initializePoses()
@@ -54,29 +45,32 @@ class runScenario():
                 self.objectOrn = (0,1,0,1)
                 self.obstaclePos = [-0.5, 0.5, 0]
                 self.obstacleOrn = p.getQuaternionFromEuler([0, 0, 0])
+                self.obstacleScale = [.1, .1, .1]
+                self.basePosBounds=[[-2,2], [-2,2], [0,3]] # searching bounds
             case 'HookTrapsFish':
-                # self.object = 'FishWithEye'
                 self.object = 'FishWithRing'
                 self.obstacle = 'Hook'
-                self.objectPos = (0.5,-1.8,3)
-                self.objectOrn = p.getQuaternionFromEuler([0, 0, 0])
-                self.obstaclePos = [-0.5, 0.5, 1]
+                self.objectPos = (1,-2.1,3.4)
+                self.objectOrn = (0,1,0,1)
+                self.obstaclePos = [0, 0, 2]
                 self.obstacleOrn = p.getQuaternionFromEuler([1.57, 0, 0])
+                self.obstacleScale = [.1,.1,.1]
+                self.basePosBounds=[[-2,2], [-2.5,2.5], [-0.5,3.5]] # searching bounds
+            
             # case 'GripperGraspDonut':
 
     def loadObject(self):
         # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
         # self.object = p.loadURDF('models/articulate_fish.xacro', (0,0,4), (0,0,1,1))
-        self.objectId = p.loadURDF(self.paths[self.object], self.objectPos, self.objectOrn)
         # p.changeDynamics(bowl, -1, mass=0)
+        self.objectId = p.loadURDF(self.paths[self.object], self.objectPos, self.objectOrn)
 
     def loadObstacle(self):
         # Upload the mesh data to PyBullet and create a static object
-        mesh_scale = [.1, .1, .1]  # The scale of the mesh
         mesh_collision_shape = p.createCollisionShape(
             shapeType=p.GEOM_MESH,
             fileName=self.paths[self.obstacle],
-            meshScale=mesh_scale,
+            meshScale=self.obstacleScale,
             flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
         )
         # mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
@@ -88,6 +82,7 @@ class runScenario():
         # )
         mesh_visual_shape = -1  # Use the same shape for visualization
         self.obstacleId = p.createMultiBody(
+            # baseMass=1.,
             baseCollisionShapeIndex=mesh_collision_shape,
             baseVisualShapeIndex=mesh_visual_shape,
             basePosition=self.obstaclePos,
@@ -118,7 +113,6 @@ class runScenario():
             time.sleep(1/240.)
             
             i += 1
-            # print(i)
             if i % self.downsampleRate == 0 and i > 140:
                 jointPositions,_,_ = self.getJointStates() # list(11)
                 gemPos, gemOrn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
@@ -129,16 +123,17 @@ class runScenario():
             if i == self.endFrame:
                 p.disconnect()
                 return jointPosSce, basePosSce, baseOrnSce, self.obstaclePos, self.obstacleOrn
-            # print(jointPositions)
 
 
 if __name__ == '__main__':
+    # setup
+    scenarioId = 1
+
     args = argument_parser()
     rigidObjs = ['Donut', 'Hook', 'Bowl']
-    basePosBounds=[[-2,2], [-2,2], [0,3]] # searching bounds
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
-    sce = runScenario(args, SCENARIOS[1])
+    sce = runScenario(args, SCENARIOS[scenarioId])
     objJointPosSce, objBasePosSce, objBaseQtnSce, obsPos, obsOrn = sce.runDynamicFalling()
     objBaseOrnSce = [list(p.getEulerFromQuaternion(q)) for q in objBaseQtnSce]
     numMainIter = len(objJointPosSce)
@@ -151,8 +146,8 @@ if __name__ == '__main__':
         env = ArticulatedObjectCaging(args)
 
     # set searching bounds and add obstacles
-    env.robot.set_search_bounds(basePosBounds)
-    env.add_obstacles(obsPos, obsOrn)
+    env.robot.set_search_bounds(sce.basePosBounds)
+    env.add_obstacles(obsPos, obsOrn, sce.obstacleScale)
     bestCostsSce = []
     startCostSce = [] # start state energy
     # objBaseZs = []
@@ -167,10 +162,6 @@ if __name__ == '__main__':
         # print('Current object z_world: {}'.format(start[2]))
 
         env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
-        # CP = p.getClosestPoints(bodyA=env.robot_id, bodyB=env.obstacle_id, distance=-0.025)
-        # if len(CP)>0:
-        #     dis = [CP[i][8] for i in range(len(CP))]
-        #     print('!!!!CP', dis)
 
         # Choose from different searching methods
         if args.search == 'BoundShrinkSearch':
