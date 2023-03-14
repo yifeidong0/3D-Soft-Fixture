@@ -33,8 +33,8 @@ class RigidObjectCaging():
         """Load object for caging."""
         self.paths = path_collector()
 
-        self.robot_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
-        self.robot = ObjectToCage(self.robot_id)
+        self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
+        self.robot = ObjectToCage(self.object_id)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
@@ -58,14 +58,15 @@ class RigidObjectCaging():
         return True # bounds valid check passed
 
     def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1), scale=[.1, .1, .1]):
-        if self.args.obstacle == 'Box':
+        obst = self.args.obstacle
+        if  obst == 'Box':
             self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
             self.add_box([1, 0, 2.5], [0.01, 1, 1.0]) # add outer walls
             self.add_box([-1, 0, 2.5], [0.01, 1, 1.0])
             self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
             self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
         
-        elif self.args.obstacle == 'Bowl' or 'Hook':
+        elif obst == 'Bowl' or obst == 'Hook':
             # Upload the mesh data to PyBullet and create a static object
             # mesh_scale = [.1, .1, .1]  # The scale of the mesh
             mesh_collision_shape = p.createCollisionShape(
@@ -91,6 +92,9 @@ class RigidObjectCaging():
                 baseOrientation=mesh_orientation,
             )
             self.obstacles.append(self.obstacle_id)
+
+        elif obst == '3fGripper':
+            self.object_id = p.loadURDF(self.paths[self.args.obstacle], (0,0,0))
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)

@@ -167,7 +167,8 @@ class PbOMPL():
         self.pdef.setStartAndGoalStates(s, g)
      
         # Set customized optimization objective
-        rigidObjs = ['Donut', 'Hook', 'Bowl']
+        rigidObjs = utils.get_non_articulated_objects()
+        # rigidObjs = ['Donut', 'Hook', 'Bowl']
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 if self.args.objective == 'GravityPotential':
@@ -221,7 +222,6 @@ class PbOMPL():
                 self.objective = self.pdef.getOptimizationObjective()
                 sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
                 best_cost = self.planner.bestCost().value() # approximate solution?
-                print('!!!!!!!!bestCost', best_cost)
                 
                 # sol_final_cost = sol_path_geometric.cost(self.objective).value() # exact solution?
                 # print('!!!!!!!!sol_final_cost', sol_final_cost)
@@ -265,7 +265,7 @@ class PbOMPL():
             else:
                 self.robot.set_state(q)
             p.stepSimulation()
-            time.sleep(0.01)
+            time.sleep(0.03)
 
     # -------------
     # Configurations

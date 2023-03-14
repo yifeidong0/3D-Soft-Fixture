@@ -300,99 +300,99 @@ import argparse
 import pybullet as p
 import time
 
-p.connect(p.GUI)
-# p.setGravity(0, 0, -9.8)
-p.setTimeStep(1./240.)
-# p.setAdditionalSearchPath(pybullet_data.getDataPath())
+# p.connect(p.GUI)
+# # p.setGravity(0, 0, -9.8)
+# p.setTimeStep(1./240.)
+# # p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-GRAVITY = -10
-p.setRealTimeSimulation(0)
-# bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
-fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
+# GRAVITY = -10
+# p.setRealTimeSimulation(0)
+# # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
+# fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
 
-# name_in = 'models/triple_hook/triple_hook.obj'
-# name_out = 'models/triple_hook/triple_hook_vhacd.obj'
+# name_in = 'models/starfish/starfish2.obj'
+# name_out = 'models/starfish/starfish2_vhacd.obj'
 # name_log = "log.txt"
 # p.vhacd(name_in, name_out, name_log)
-# ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
+# # ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
 
-# p.changeDynamics(bowl, -1, mass=0)
+# # p.changeDynamics(bowl, -1, mass=0)
 
-# Upload the mesh data to PyBullet and create a static object
-# mesh_scale = [.04, .04, .04]  # The scale of the mesh
+# # Upload the mesh data to PyBullet and create a static object
+# # mesh_scale = [.04, .04, .04]  # The scale of the mesh
+# # mesh_collision_shape = p.createCollisionShape(
+# #     shapeType=p.GEOM_MESH,
+# #     fileName="models/fish/ring2_vhacd.OBJ",
+# #     meshScale=mesh_scale,
+# #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+# #     # meshData=mesh_data,
+# # )
+# # mesh_visual_shape = -1  # Use the same shape for visualization
+# # mesh_position = [0.3, 0, 2]  # The position of the mesh
+# # mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
+# # ring = p.createMultiBody(
+# #     baseMass=1.,
+# #     baseCollisionShapeIndex=mesh_collision_shape,
+# #     baseVisualShapeIndex=mesh_visual_shape,
+# #     basePosition=mesh_position,
+# #     baseOrientation=mesh_orientation,
+# # )
+
+# mesh_scale = [.1, .1, .1]  # The scale of the mesh
 # mesh_collision_shape = p.createCollisionShape(
 #     shapeType=p.GEOM_MESH,
-#     fileName="models/fish/ring2_vhacd.OBJ",
+#     fileName="models/triple_hook/triple_hook_vhacd.obj",
 #     meshScale=mesh_scale,
 #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
 #     # meshData=mesh_data,
 # )
 # mesh_visual_shape = -1  # Use the same shape for visualization
-# mesh_position = [0.3, 0, 2]  # The position of the mesh
-# mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
-# ring = p.createMultiBody(
-#     baseMass=1.,
+# mesh_position = [0, 0, 0]  # The position of the mesh
+# mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
+# hook = p.createMultiBody(
 #     baseCollisionShapeIndex=mesh_collision_shape,
 #     baseVisualShapeIndex=mesh_visual_shape,
 #     basePosition=mesh_position,
 #     baseOrientation=mesh_orientation,
 # )
 
-mesh_scale = [.1, .1, .1]  # The scale of the mesh
-mesh_collision_shape = p.createCollisionShape(
-    shapeType=p.GEOM_MESH,
-    fileName="models/triple_hook/triple_hook_vhacd.obj",
-    meshScale=mesh_scale,
-    # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-    # meshData=mesh_data,
-)
-mesh_visual_shape = -1  # Use the same shape for visualization
-mesh_position = [0, 0, 0]  # The position of the mesh
-mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
-hook = p.createMultiBody(
-    baseCollisionShapeIndex=mesh_collision_shape,
-    baseVisualShapeIndex=mesh_visual_shape,
-    basePosition=mesh_position,
-    baseOrientation=mesh_orientation,
-)
+# def getJointStates(robot):
+#   joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
+#   joint_positions = [state[0] for state in joint_states]
+#   joint_velocities = [state[1] for state in joint_states]
+#   joint_torques = [state[3] for state in joint_states]
+#   return joint_positions, joint_velocities, joint_torques
 
-def getJointStates(robot):
-  joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
-  joint_positions = [state[0] for state in joint_states]
-  joint_velocities = [state[1] for state in joint_states]
-  joint_torques = [state[3] for state in joint_states]
-  return joint_positions, joint_velocities, joint_torques
+# i = 0
+# jointPositionsSce = []
+# gemPosAll = []
+# gemOrnAll = []
+# while (1):
+#     p.stepSimulation()
+#     #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
+#     # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
+#     # print(gemPos, gemOrn)
+#     p.setGravity(0, 0, GRAVITY)
+#     time.sleep(7/240.)
+#     i += 1
 
-i = 0
-jointPositionsSce = []
-gemPosAll = []
-gemOrnAll = []
-while (1):
-    p.stepSimulation()
-    #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
-    # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
-    # print(gemPos, gemOrn)
-    p.setGravity(0, 0, GRAVITY)
-    time.sleep(7/240.)
-    i += 1
+#     # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
+#     # if len(CP)>0:
+#     #     dis = [CP[i][8] for i in range(len(CP))]
+#     #     print('!!!!CP', dis)
 
-    # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
-    # if len(CP)>0:
-    #     dis = [CP[i][8] for i in range(len(CP))]
-    #     print('!!!!CP', dis)
-
-    # if i % 20 == 0:
-    #     jointPositions,_,_ = getJointStates(fish) # list(11)
-    #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
-    #     jointPositionsSce.append(jointPositions)
-    #     gemPosAll.append(list(gemPos))
-    #     gemOrnAll.append(list(gemOrn))
+#     # if i % 20 == 0:
+#     #     jointPositions,_,_ = getJointStates(fish) # list(11)
+#     #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
+#     #     jointPositionsSce.append(jointPositions)
+#     #     gemPosAll.append(list(gemPos))
+#     #     gemOrnAll.append(list(gemOrn))
     
-    # if i == 500:
-    #     break
-    # # print(jointPositions)
+#     # if i == 500:
+#     #     break
+#     # # print(jointPositions)
 
-# replay
+# # replay
 
 
 

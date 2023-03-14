@@ -17,7 +17,8 @@ def path_collector():
     return {
             'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
-            'Ring': 'models/fish/ring2_vhacd.OBJ', 
+            'Starfish': 'models/starfish/starfish2.urdf', 
+            'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
@@ -26,6 +27,9 @@ def path_collector():
             'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             }
+
+def get_non_articulated_objects():
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish']
 
 def argument_parser():
     '''
@@ -44,20 +48,20 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
+    parser.add_argument('-o', '--objective', default='GravityPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='FishWithRing', \
-        choices=['Fish', 'FishWithRing', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
+    parser.add_argument('-j', '--object', default='Starfish', \
+        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=3, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=40, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\

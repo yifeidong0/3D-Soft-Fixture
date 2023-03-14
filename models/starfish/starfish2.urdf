@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot name="starfish">
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://starfish/starfish2_vhacd.dae" scale=".1 .1 .1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://starfish/starfish2_vhacd.obj" scale=".1 .1 .1" />
+      </geometry>
+    </collision>
+  </link>
+
+</robot>
