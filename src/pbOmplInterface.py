@@ -265,7 +265,7 @@ class PbOMPL():
             else:
                 self.robot.set_state(q)
             p.stepSimulation()
-            time.sleep(0.03)
+            time.sleep(0.01)
 
     # -------------
     # Configurations

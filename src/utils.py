@@ -1,5 +1,5 @@
 '''
-Adopted from
+Adapted from
 https://github.com/StanfordVL/iGibson/blob/master/igibson/external/pybullet_tools/utils.py
 '''
 
@@ -12,6 +12,7 @@ import argparse
 
 BASE_LINK = -1
 MAX_DISTANCE = -0.025
+SCENARIO_ID = 3
 
 def path_collector():
     return {
@@ -39,6 +40,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
+    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
+        choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
+        help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
+
     parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
@@ -61,18 +66,18 @@ def argument_parser():
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=40, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=15, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
     
-    parser.add_argument('-f', '--file', default=None, \
-        help='(Optional) Specify anoutput path for the found solution path.')
+    # parser.add_argument('-f', '--file', default=None, \
+    #     help='(Optional) Specify anoutput path for the found solution path.')
     
-    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
-        help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
-        ' Defaults to WARN.')
+    # parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
+    #     help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
+    #     ' Defaults to WARN.')
 
     # Parse the arguments
     args = parser.parse_args()

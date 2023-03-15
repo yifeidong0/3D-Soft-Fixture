@@ -2,8 +2,7 @@ import os.path as osp
 import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
-from rigidObjCaging import RigidObjectCaging
-from articulatedObjCaging import ArticulatedObjectCaging
+from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 # from runScenario import runScenario
 import pybullet as p
 import matplotlib.pyplot as plt

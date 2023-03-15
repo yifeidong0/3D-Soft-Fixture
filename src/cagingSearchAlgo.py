@@ -6,7 +6,7 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
-from object import ObjectToCage
+from object import ObjectToCage, CagingObstacle
 from utils import path_collector
 
 class RigidObjectCaging():
@@ -32,7 +32,6 @@ class RigidObjectCaging():
     def load_object(self):
         """Load object for caging."""
         self.paths = path_collector()
-
         self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectToCage(self.object_id)
 
@@ -57,7 +56,7 @@ class RigidObjectCaging():
         
         return True # bounds valid check passed
 
-    def add_obstacles(self, pos=[-0.5, 1.5, 0], orn=(1,0,0,1), scale=[.1, .1, .1]):
+    def add_obstacles(self, pos=[-0.5, 1.5, 0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
         obst = self.args.obstacle
         if  obst == 'Box':
             self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
@@ -84,7 +83,7 @@ class RigidObjectCaging():
             )
             # mesh_visual_shape = -1  # Use the same shape for visualization
             mesh_position = pos  # The position of the mesh
-            mesh_orientation = orn  # The orientation of the mesh
+            mesh_orientation = qtn  # The orientation of the mesh
             self.obstacle_id = p.createMultiBody(
                 baseCollisionShapeIndex=mesh_collision_shape,
                 baseVisualShapeIndex=mesh_visual_shape,
@@ -94,7 +93,11 @@ class RigidObjectCaging():
             self.obstacles.append(self.obstacle_id)
 
         elif obst == '3fGripper':
-            self.object_id = p.loadURDF(self.paths[self.args.obstacle], (0,0,0))
+            self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
+                                          pos, qtn, globalScaling=scale)
+            self.obstacle = CagingObstacle(self.obstacle_id)
+            self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
+            self.obstacles.append(self.obstacle_id)
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)
@@ -122,7 +125,7 @@ class RigidObjectCaging():
     def energy_minimize_search(self, numIter=1):
         # set upper bound of searching
         self.pb_ompl_interface.reset_robot_state_bound()
-        self.robot.set_state(self.start)
+        # self.robot.set_state(self.start)
         # self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
         
         # start planning
@@ -139,7 +142,6 @@ class RigidObjectCaging():
         if solveds.count(True) == 0:
             return False
         return True
-
 
     def visualize_energy_minimize_search(self):
         '''visualize the convergence of caging depth'''
@@ -266,3 +268,23 @@ class RigidObjectCaging():
         plt.show()
 
         return escape_energy, z_thres
+    
+    
+class ArticulatedObjectCaging(RigidObjectCaging):
+    def __init__(self, args):
+        self.args = args
+        self.obstacles = []
+
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)     
+
+        p.setTimeStep(1./240.)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+        self.load_object()
+        self.reset_start_and_goal()
+
+        self.max_z_escapes = [] # successful escapes

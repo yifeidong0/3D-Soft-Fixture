@@ -84,20 +84,22 @@ class ObjectToCage(ObjectBase):
         self.set_search_bounds()
 
     def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
-        self.joint_bounds =  basePosBounds # CoM pos
+        self.joint_bounds = basePosBounds # CoM pos
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
         
         for i in range(self.articulate_num): # articulated joints
             info = p.getJointInfo(self.id, i)
             jointType = info[2]
+
+            # record non-fixed joints' index and bounds
             if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
                 bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
                 if bounds[0] >= bounds[1]:
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
-   
+
     def set_bisec_thres(self, zmax):
         self.joint_bounds[2][1] = zmax
         
@@ -129,3 +131,27 @@ class ObjectToCage(ObjectBase):
     def _set_joint_positions(self, joints, positions):
         for joint, value in zip(joints, positions):
             p.resetJointState(self.id, joint, value, targetVelocity=0)
+
+
+# for articulated obstacle (3fGripper)
+class CagingObstacle(ObjectToCage):
+    def __init__(self, id) -> None:
+        self.id = id
+        self.comDof = 3 + 3 # SE3
+        self.articulate_num = p.getNumJoints(id)
+        self.num_dim = self.comDof + self.articulate_num
+        self.joint_idx = []
+        self.joint_bounds = []
+
+        self.set_joint_bounds()
+
+    def set_joint_bounds(self):
+        for i in range(self.articulate_num): # articulated joints
+            info = p.getJointInfo(self.id, i)
+            jointType = info[2]
+            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+                bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
+                if bounds[0] >= bounds[1]:
+                    continue
+                self.joint_idx.append(i)
+                self.joint_bounds.append(bounds) # joint_0-3

@@ -4,12 +4,12 @@
   <link name="base_link">
     <visual>
       <geometry>
-        <mesh filename="package://starfish/starfish2_vhacd.dae" scale=".1 .1 .1"/>
+        <mesh filename="package://starfish/starfish2_vhacd.dae" scale=".35 .35 .35"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://starfish/starfish2_vhacd.obj" scale=".1 .1 .1" />
+        <mesh filename="package://starfish/starfish2_vhacd.obj" scale=".35 .35 .35" />
       </geometry>
     </collision>
   </link>
