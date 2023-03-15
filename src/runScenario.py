@@ -28,7 +28,7 @@ class runScenario():
         self.paths = path_collector()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 300
+        self.downsampleRate = 200
         self.endFrame = 800
 
         # load object and obstacle
@@ -341,13 +341,18 @@ if __name__ == '__main__':
                                 sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i],
                                 sce.obsJointPosSce[i], [startEnergySce[i]], 
                                 [escapeEnergyCostSce[i]]]) for i in range(len(sce.idxSce))]
-    # save other info to txt
-    # sce.goalCoMPose
-    # args
-    # BITstar param
-    # fish ms and ks
 
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(i for i in headers)
-        writer.writerows(data)
+        writer.writerows(data)\
+
+    # save other info to txt
+    with open('{}/info.txt'.format(folderName), "w") as text_file:
+        text_file.write("*****Search goalCoMPose: {}\n".format(sce.goalCoMPose))
+        text_file.write("*****Search basePosBounds: {}\n".format(sce.basePosBounds))
+        text_file.write("*****args: {}\n".format(args))
+        text_file.write("*****BIT params: {}\n".format(env.pb_ompl_interface.planner.params()))
+        if args.object == 'Fish':
+            text_file.write("*****Fish links' mass: {}\n".format(env.pb_ompl_interface.potentialObjective.masses))
+            text_file.write("*****Fish joints' stiffness: {}\n".format(env.pb_ompl_interface.potentialObjective.stiffnesss))

@@ -58,7 +58,7 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         self.g = 9.81
         # TODO:
         self.masses = [.1] * self.numLinks
-        self.stiffnesss = [.0] * self.numJoints
+        self.stiffnesss = [.1] * self.numJoints
         self.o = np.array([1.])
         self.path = path_collector()
         self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())

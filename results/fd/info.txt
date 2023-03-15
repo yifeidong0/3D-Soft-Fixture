@@ -1,0 +1,3 @@
+goalCoMPose: 1
+goalCoMPose: 2
+goalCoMPose: 3

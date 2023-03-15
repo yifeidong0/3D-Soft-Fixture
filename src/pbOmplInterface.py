@@ -172,14 +172,14 @@ class PbOMPL():
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 if self.args.objective == 'GravityPotential':
-                    potentialObjective = objective.minPathPotentialObjective(self.si, start)
-                    self.pdef.setOptimizationObjective(potentialObjective)
+                    self.potentialObjective = objective.minPathPotentialObjective(self.si, start)
+                    self.pdef.setOptimizationObjective(self.potentialObjective)
                 # elif self.args.objective == 'GravityAndElasticPotential': # Not applied
                 # else self.args.objective == 'PathLength' # default objective
 
             elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
-                potentialObjective = objective.minPathTotalPotentialObjective(self.si, start, self.args)
-                self.pdef.setOptimizationObjective(potentialObjective)
+                self.potentialObjective = objective.minPathTotalPotentialObjective(self.si, start, self.args)
+                self.pdef.setOptimizationObjective(self.potentialObjective)
             # else: self.args.objective == 'PathLength'
         
         # else self.args.search == 'BoundShrinkSearch':

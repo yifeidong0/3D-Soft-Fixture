@@ -439,7 +439,7 @@ data = [
         ['One', 2, [3.4, ['Five', 6]]]
     ]
 
-print('@@@', flatten2(data))
+print('@@@', args)
 
 import numpy as np
 data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
@@ -462,6 +462,11 @@ import os
 with open('./results/fd/data.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerows(data)
+
+with open('./results/fd/info.txt', "w") as text_file:
+    text_file.write("goalCoMPose: {}\n".format(1))
+    text_file.write("goalCoMPose: {}\n".format(2))
+    text_file.write("goalCoMPose: {}\n".format(3))
 
 import matplotlib.pyplot as plt
 
