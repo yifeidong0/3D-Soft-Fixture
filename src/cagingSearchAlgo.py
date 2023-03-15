@@ -115,7 +115,8 @@ class RigidObjectCaging():
         # sleep(1240.)
         res, path, sol_path_energy, sol_final_cost = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
-            self.pb_ompl_interface.execute(path)
+            if self.args.visualization:
+                self.pb_ompl_interface.execute(path)
             if self.args.objective == 'GravityPotential':
                 self.track_path_cost(path)
         else:

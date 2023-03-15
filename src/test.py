@@ -396,3 +396,80 @@ import time
 
 
 
+from main import argument_parser
+
+args = argument_parser()
+
+def flatten(l):
+    """
+    Flatten a nested list.
+    """
+    for i in l:
+        if isinstance(i, (list, tuple)):
+            for j in flatten(i):
+                yield j
+        else:
+            yield i
+
+def flatten2(data):
+    flattened_data = []
+    for item in data:
+        if isinstance(item, list):
+            item = ','.join(map(str, item))
+        flattened_data.append(item)
+    return flattened_data
+
+def list2csv(l):
+    """
+    Return CSV-ish text for a nested list.
+    """
+    lines = []
+    for row in l:
+        if isinstance(row, (list, tuple)):
+            lines.append(",".join(str(i) for i in flatten(row)))
+        else:
+            lines.append(str(row))
+    return "\n".join(lines)
+
+data = [
+        1.0,
+        'One',
+        [1, 'Two'],
+        [1, 'Two', ['Three', 4.5]],
+        ['One', 2, [3.4, ['Five', 6]]]
+    ]
+
+print('@@@', flatten2(data))
+
+import numpy as np
+data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
+# data=[['serial', 'name', 'subject'],['1', 'atul','tpa'],['2', 'carl','CN']]
+print(list2csv(data))
+import csv
+from utils import flatten_nested_list
+
+print(flatten_nested_list(data))
+
+flattened_data = list2csv(data)
+
+# Save the flattened data to a CSV file
+import os
+# os.mkdir('./results/fd/')
+# with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     writer.writerow(data)
+
+with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerows(data)
+
+import matplotlib.pyplot as plt
+
+_, ax1 = plt.subplots()
+ax1.plot([1,2,3,np.inf,5,99], 'r--', label='Escape energy')
+ax1.set_xlabel('# iterations')
+ax1.set_ylabel('G-potential energy')
+ax1.grid(True)
+ax1.legend()
+plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
+plt.show()

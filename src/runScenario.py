@@ -9,8 +9,12 @@ from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 import matplotlib.pyplot as plt
 from main import argument_parser
 import pybullet_data
-from utils import path_collector, get_non_articulated_objects
+from utils import path_collector, get_non_articulated_objects, flatten_nested_list
 from object import ObjectToCage, CagingObstacle
+from datetime import datetime
+import os
+import csv
+import numpy as np
 
 class runScenario():
     def __init__(self, args):
@@ -20,11 +24,11 @@ class runScenario():
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         
-        # planeId = p.loadURDF("plane.urdf", [0,0,0.4])
+        planeId = p.loadURDF("plane.urdf", [0,0,-1])
         self.paths = path_collector()
         self.args = args
-        self.gravity = -9.8
-        self.downsampleRate = 100
+        self.gravity = -9.81
+        self.downsampleRate = 300
         self.endFrame = 800
 
         # load object and obstacle
@@ -32,13 +36,14 @@ class runScenario():
         self.loadObject()
         self.loadObstacle()
 
-        # data structure for object and obstacle configs
+        # data structures for object and obstacle configs
         self.objBasePosSce = []
         self.objBaseQtnSce = []
         self.objJointPosSce = []
         self.obsBasePosSce = []
         self.obsBaseQtnSce = []
         self.obsJointPosSce = []
+        self.idxSce = []
 
     def initializeParams(self):
         match self.args.scenario:
@@ -88,8 +93,8 @@ class runScenario():
                 self.obstacleEul = [1.57, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = 10.0 # float for loadURDF globalScaling
-                self.basePosBounds=[[-3,3], [-3,3], [-1,3.5]] # searching bounds
-                self.goalCoMPose = [0,0,-0.9] + [1.57, 0, 0]
+                self.basePosBounds=[[-2,2], [-2,2], [-.5,3]] # searching bounds
+                self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
    
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)
@@ -163,7 +168,7 @@ class runScenario():
             self.obstacle.set_state(obstacleState)
 
             i += 1
-            if i % self.downsampleRate == 0 and i > 140:
+            if i % self.downsampleRate == 0:
                 # record obstacle pose
                 self.obsJointPosSce.append(obstacleJointPos)
 
@@ -172,6 +177,7 @@ class runScenario():
                 self.objBasePosSce.append(list(gemPos))
                 self.objBaseQtnSce.append(list(gemQtn))
                 self.objJointPosSce.append([])
+                self.idxSce.append(i)
             
             if i == self.endFrame:
                 p.disconnect()
@@ -204,6 +210,7 @@ class runScenario():
                 self.objBasePosSce.append(list(gemPos))
                 self.objBaseQtnSce.append(list(gemQtn))
                 self.objJointPosSce.append(jointPositions)
+                self.idxSce.append(i)
 
             if i == self.endFrame:
                 p.disconnect()
@@ -241,7 +248,7 @@ if __name__ == '__main__':
     # set searching bounds and add obstacles
     env.robot.set_search_bounds(sce.basePosBounds)
     env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
-    bestCostSce = []
+    escapeEnergyCostSce = []
     startEnergySce = [] # start state energy
     
     # run the caging analysis algorithm over downsampled frames we extracted above
@@ -274,26 +281,73 @@ if __name__ == '__main__':
         elif args.search == 'EnergyMinimizeSearch':
             numInnerIter = 1
             isSolved = env.energy_minimize_search(numInnerIter)
+            
+            # complete cage
             if not isSolved:
+                escapeEnergyCostSce.append(np.inf)
+                startEnergySce.append(np.inf)
                 continue
+
+            # record start 
+            startEnergy = env.energy_minimize_paths_energies[0][0]
+            startEnergySce.append(startEnergy)
+            
             # env.visualize_energy_minimize_search()
-            bestCost = min(env.sol_final_costs)
-            startCost = env.energy_minimize_paths_energies[0][0]
-            bestCostSce.append(bestCost) # list(numMainIter*list(numInnerIter))
-            startEnergySce.append(startCost)
-            print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startCost,bestCost))
+            escapeEnergyCost = min(env.sol_final_costs)
+            escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
+            print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
 
     # shut down pybullet (GUI)
     p.disconnect()
 
+    # get current time
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+    print("date and time =", dt_string)
+    folderName = './results/{}_{}'.format(args.scenario, dt_string)
+    os.mkdir(folderName)
+
     # plot escape energy in the dynamic fall
     _, ax1 = plt.subplots()
-    ax1.plot(bestCostSce, 'r--', label='Escape energy')
+    ax1.plot(escapeEnergyCostSce, 'r-*', label='Escape energy cost')
     ax1.plot(startEnergySce, 'g-*', label='Current energy')
     ax1.set_xlabel('# iterations')
-    ax1.set_ylabel('G-potential energy')
+    ax1.set_ylabel('Potential energy')
     ax1.grid(True)
     ax1.legend()
-    plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
+    plt.xticks(range(len(escapeEnergyCostSce)))
+    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
     # plt.show()
-    plt.savefig('./images/fishFalls3.png')
+    plt.savefig('{}/energy_plot.png'.format(folderName))
+
+    # save to csv
+    objJointNum = len(sce.objJointPosSce[0])
+    obsJointNum = len(sce.obsJointPosSce[0])
+    headerObjJoint = []
+    headerObsJoint = []
+    for j in range(objJointNum):
+        headerObjJoint.append('obj_joint_{}_pos'.format(j))
+    for s in range(obsJointNum):
+        headerObsJoint.append('obs_joint_{}_pos'.format(s))
+
+    headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
+               'obj_qtn_0', 'obj_qtn_1', 'obj_qtn_2', 'obj_qtn_3'] + headerObjJoint
+    headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
+               'obs_qtn_0', 'obs_qtn_1', 'obs_qtn_2', 'obs_qtn_3'] + headerObsJoint
+    headersOther = ['start_energy', 'escape_energy_cost']
+    headers = headersObj + headersObs + headersOther
+    
+    data = [flatten_nested_list([[sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+                                sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i],
+                                sce.obsJointPosSce[i], [startEnergySce[i]], 
+                                [escapeEnergyCostSce[i]]]) for i in range(len(sce.idxSce))]
+    # save other info to txt
+    # sce.goalCoMPose
+    # args
+    # BITstar param
+    # fish ms and ks
+
+    with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(i for i in headers)
+        writer.writerows(data)
