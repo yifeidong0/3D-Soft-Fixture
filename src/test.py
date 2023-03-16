@@ -447,7 +447,8 @@ data = [
 
 import numpy as np
 data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
-# data=[['serial', 'name', 'subject'],['1', 'atul','tpa'],['2', 'carl','CN']]
+data=[['1', 'atul','tpa'],['2', 'carl','CN']]
+headers = ['serial', 'name', 'subject']
 print(list2csv(data))
 import csv
 from utils import flatten_nested_list
@@ -465,20 +466,27 @@ import os
 
 with open('./results/fd/data.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
-    writer.writerows(data)
+    writer.writerow(i for i in headers)
 
-with open('./results/fd/info.txt', "w") as text_file:
-    text_file.write("goalCoMPose: {}\n".format(1))
-    text_file.write("goalCoMPose: {}\n".format(2))
-    text_file.write("goalCoMPose: {}\n".format(3))
+with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(data[0])
+with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(data[1])
+# with open('./results/fd/info.txt', "w") as text_file:
+#     text_file.write("goalCoMPose: {}\n".format(1))
+#     text_file.write("goalCoMPose: {}\n".format(2))
+#     text_file.write("goalCoMPose: {}\n".format(3))
 
 import matplotlib.pyplot as plt
 
-_, ax1 = plt.subplots()
-ax1.plot([1,2,3,np.inf,5,99], 'r--', label='Escape energy')
-ax1.set_xlabel('# iterations')
-ax1.set_ylabel('G-potential energy')
-ax1.grid(True)
-ax1.legend()
-plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
-plt.show()
+# _, ax1 = plt.subplots()
+# ax1.plot([1,2,3,np.inf,5,991,3,5,7,8,9], 'r--', label='Escape energy')
+# ax1.set_xlabel('# iterations')
+# ax1.set_ylabel('G-potential energy')
+# ax1.grid(True)
+# plt.xticks(np.linspace(0,111,10).astype(int))
+# ax1.legend()
+# plt.title('Escape energy in a dynamic scenario - fish falls into a bowl')
+# plt.show()
