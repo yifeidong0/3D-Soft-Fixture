@@ -168,7 +168,6 @@ class PbOMPL():
      
         # Set customized optimization objective
         rigidObjs = utils.get_non_articulated_objects()
-        # rigidObjs = ['Donut', 'Hook', 'Bowl']
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 if self.args.objective == 'GravityPotential':
@@ -219,8 +218,8 @@ class PbOMPL():
                 
             # get cost of the solution path
             if self.args.search == 'EnergyMinimizeSearch':
-                self.objective = self.pdef.getOptimizationObjective()
-                sol_path_energy = [self.objective.stateEnergy(i) for i in sol_path_list_non_interp]
+                # self.objective = self.pdef.getOptimizationObjective()
+                sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
                 best_cost = self.planner.bestCost().value() # approximate solution?
                 
                 # sol_final_cost = sol_path_geometric.cost(self.objective).value() # exact solution?

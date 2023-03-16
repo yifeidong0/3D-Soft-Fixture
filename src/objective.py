@@ -18,6 +18,7 @@ import sys
 import kinpy as kp
 from scipy.spatial.transform import Rotation as R
 from utils import path_collector
+import pybullet as p
 
 class minPathPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
@@ -58,8 +59,8 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         self.g = 9.81
         # TODO:
         self.masses = [.1] * self.numLinks
-        self.stiffnesss = [.1] * self.numJoints
-        self.o = np.array([1.])
+        self.stiffnesss = [1] * self.numJoints
+        self.o = np.array([5.])
         self.path = path_collector()
         self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
         
@@ -73,20 +74,21 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
 
         # get elastic potential energy
         jointEnergies = [self.stiffnesss[i] * jointAngles[i]**2 for i in range(self.numJoints)]
-        energyElastic = 0.5*sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
+        energyElastic = 0.5 * sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
 
         return energyElastic
 
     def getGravityEnergy(self, state):
         # extract positions of links
-        # jnames = chain.get_joint_parameter_names()
         jointAngles = state[self.comDof:] # rad
         linkPosesInBase = self.chain.forward_kinematics(jointAngles) # dictionary
 
         # get object's base transform
         basePositionInWorld = state[0:3]
-        baseOrientationInWorld = state[3:self.comDof] # euler
-        r = R.from_euler('zyx', baseOrientationInWorld, degrees=False)
+        baseEulInWorld = state[3:self.comDof] # euler
+        baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
+        # r = R.from_euler('zyx', baseEulInWorld, degrees=False)
+        r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
         mat = r.as_matrix() # 3*3
         thirdRow = (mat[2,:].reshape((1,3)), np.array(basePositionInWorld[2]).reshape((1,1)))
         baseTInWorld = np.hstack(thirdRow) # 1*4. 3rd row of Transform matrix
@@ -99,7 +101,7 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
 
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
-        energyGravity = 0.5 * self.g * sum(linkEnergies) # sigma(.5 * g * m_i * z_i)
+        energyGravity = self.g * sum(linkEnergies) # sigma(g * m_i * z_i)
         
         return energyGravity
       

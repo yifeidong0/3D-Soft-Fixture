@@ -229,7 +229,6 @@ def get_link_descendants(body, link, test=lambda l: True):
             descendants.extend(get_link_descendants(body, child, test=test))
     return descendants
 
-
 def get_link_subtree(body, link, **kwargs):
     return [link] + get_link_descendants(body, link, **kwargs)
 
@@ -237,3 +236,43 @@ def are_links_adjacent(body, link1, link2):
     return (get_link_parent(body, link1) == link2) or \
            (get_link_parent(body, link2) == link1)
 
+import numpy as np
+import kinpy as kp
+from scipy.spatial.transform import Rotation as R
+def getGravityEnergy(state, args, path):
+    comDof = 6
+    numStateSpace = len(state)
+    numJoints = numStateSpace - comDof
+    numLinks = numJoints + 1
+    g = 9.81
+    masses = [.1] * numLinks
+    chain = kp.build_chain_from_urdf(open(path[args.object]).read())
+    
+    # extract positions of links
+    # jnames = chain.get_joint_parameter_names()
+    jointAngles = state[comDof:] # rad
+    linkPosesInBase = chain.forward_kinematics(jointAngles) # dictionary
+    # print('\njointAngles:', jointAngles)
+
+    # get object's base transform
+    basePositionInWorld = state[0:3]
+    baseOrientationInWorld = state[3:comDof] # euler
+    quat = p.getQuaternionFromEuler(baseOrientationInWorld)
+    # r = R.from_euler('zyx', baseOrientationInWorld, degrees=False)
+    r = R.from_quat(quat) # BUG: quat to euler translation causes mistakes!
+    mat = r.as_matrix() # 3*3
+    thirdRow = (mat[2,:].reshape((1,3)), np.array(basePositionInWorld[2]).reshape((1,1)))
+    baseTInWorld = np.hstack(thirdRow) # 1*4. 3rd row of Transform matrix
+    # baseTransformInWorld = np.vstack(baseTInWorld, np.array([.0, .0, .0, 1.0])) # 4*4
+
+    # get link heights in World frame
+    linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
+    linkPositionsInBase = [np.array(np.concatenate((i.pos,np.array([1.])))).reshape((4,1)) for i in linkPosesInBase]
+    linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
+
+    # get links' gravitational potential energy
+    linkEnergies = [linkZsInWorld[i] * masses[i] for i in range(numLinks)]
+    energyGravity = g * sum(linkEnergies) # sigma(g * m_i * z_i)
+    
+    return energyGravity
+      
