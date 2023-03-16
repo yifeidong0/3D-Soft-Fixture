@@ -28,7 +28,7 @@ class runScenario():
         self.paths = path_collector()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 200
+        self.downsampleRate = 8
         self.endFrame = 800
 
         # load object and obstacle
@@ -81,8 +81,8 @@ class runScenario():
                 self.obstacleEul = [1.57, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-3,3], [-3,3], [-1,3.5]] # searching bounds
-                self.goalCoMPose = [0,0,-0.9] + [1.57, 0, 0]
+                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
             case 'GripperClenchesStarfish':
                 self.object = 'Starfish'
                 self.objectPos = [.1,.1,2.3]
@@ -131,7 +131,7 @@ class runScenario():
                                           globalScaling=self.obstacleScale
                                           )
             self.obstacle = CagingObstacle(self.obstacleId)
-            print('@@@self.articulate_num', self.obstacle.articulate_num)
+            # print('@@@self.articulate_num', self.obstacle.articulate_num)
             # print('@@@self.joint_bounds', self.obstacle.joint_bounds)
             # self.obstacle.set_state(self.start)
 
@@ -154,6 +154,13 @@ class runScenario():
         # print('@@@initial joint positions: ', self.getJointStates(self.obstacleId))
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
+        # set initial joint states
+        jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
+        # obstacleJointPos = [j+1/1000 for j in jointPositions]
+        obstacleJointPos = [jointPositions[i]-450/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
+        obstacleState = self.obstaclePose + obstacleJointPos
+        self.obstacle.set_state(obstacleState)
+        
         # start simulation of clenching the fist
         while (1):
             p.stepSimulation()
@@ -163,7 +170,7 @@ class runScenario():
             # get obstacle joint positions and update them
             jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
             # obstacleJointPos = [j+1/1000 for j in jointPositions]
-            obstacleJointPos = [jointPositions[i]+1/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
+            obstacleJointPos = [jointPositions[i]+.9/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
             obstacleState = self.obstaclePose + obstacleJointPos
             self.obstacle.set_state(obstacleState)
 
@@ -228,7 +235,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    args = argument_parser()
+    args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
@@ -254,6 +261,7 @@ if __name__ == '__main__':
     # run the caging analysis algorithm over downsampled frames we extracted above
     numMainIter = len(sce.objJointPosSce)
     for i in range(numMainIter):
+        print('@@@i',i)
         # set obstacle's state
         # obsState = sce.obsBasePosSce[i] + sce.obsBaseEulSce[i] + sce.obsJointPosSce[i]
         if args.scenario in ['GripperClenchesStarfish']:
@@ -352,7 +360,7 @@ if __name__ == '__main__':
         text_file.write("*****Search goalCoMPose: {}\n".format(sce.goalCoMPose))
         text_file.write("*****Search basePosBounds: {}\n".format(sce.basePosBounds))
         text_file.write("*****args: {}\n".format(args))
-        text_file.write("*****BIT params: {}\n".format(env.pb_ompl_interface.planner.params()))
+        text_file.write("*****BIT params: {}".format(env.pb_ompl_interface.planner.params()))
         if args.object == 'Fish':
             text_file.write("*****Fish links' mass: {}\n".format(env.pb_ompl_interface.potentialObjective.masses))
             text_file.write("*****Fish joints' stiffness: {}\n".format(env.pb_ompl_interface.potentialObjective.stiffnesss))

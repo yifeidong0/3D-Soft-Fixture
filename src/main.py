@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from utils import argument_parser, get_non_articulated_objects
 
 if __name__ == '__main__':
-    args = argument_parser()
+    args, parser = argument_parser()
     basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
     # create caging environment and items in pybullet

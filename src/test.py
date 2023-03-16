@@ -397,8 +397,13 @@ import time
 
 
 from main import argument_parser
+import argparse
 
-args = argument_parser()
+args, parser = argument_parser()
+print('@@@', args)
+
+parser.set_defaults(object='Fish')
+args = parser.parse_args()
 
 def flatten(l):
     """
@@ -439,7 +444,6 @@ data = [
         ['One', 2, [3.4, ['Five', 6]]]
     ]
 
-print('@@@', args)
 
 import numpy as np
 data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
