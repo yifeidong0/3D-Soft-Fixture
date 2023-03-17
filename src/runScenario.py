@@ -2,18 +2,14 @@ import pybullet as p
 import time
 import os.path as osp
 import sys
-import argparse
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
-import matplotlib.pyplot as plt
 from main import argument_parser
 import pybullet_data
-from utils import path_collector, get_non_articulated_objects, flatten_nested_list, getGravityEnergy
+from utils import path_collector, get_non_articulated_objects
 from object import ObjectToCage, CagingObstacle
-from datetime import datetime
-import os
-import csv
+from visualization import *
 import numpy as np
 
 class runScenario():
@@ -28,8 +24,8 @@ class runScenario():
         self.paths = path_collector()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 5
-        self.endFrame = 500
+        self.downsampleRate = 8
+        self.endFrame = 800
 
         # load object and obstacle
         self.initializeParams()
@@ -167,7 +163,7 @@ class runScenario():
             # get obstacle joint positions and update them
             jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
             # obstacleJointPos = [j+1/1000 for j in jointPositions]
-            obstacleJointPos = [jointPositions[i]+.9/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
+            obstacleJointPos = [jointPositions[i]+.8/1000 for i in range(len(jointPositions))]
             obstacleState = self.obstaclePose + obstacleJointPos
             self.obstacle.set_state(obstacleState)
 
@@ -204,7 +200,7 @@ class runScenario():
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(5/240.)
+            time.sleep(1/240.)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
@@ -213,7 +209,8 @@ class runScenario():
                 # Calculate G potential energy
                 # state = list(gemPos) + list(p.getEulerFromQuaternion(gemQtn)) + list(jointPositions)
                 # gravityEnergy = getGravityEnergy(state, self.args, self.paths)
-                
+                # print('@@@gravityEnergy', gravityEnergy)
+
                 # record objects' DoF
                 self.objBasePosSce.append(list(gemPos))
                 self.objBaseQtnSce.append(list(gemQtn))
@@ -235,79 +232,12 @@ class runScenario():
         # quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
-def record_data_init(sce, args, env):
-    # get current time
-    now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
-    print("date and time =", dt_string)
-    folderName = './results/{}_{}'.format(args.scenario, dt_string)
-    os.mkdir(folderName)
-
-    # create csv headers
-    objJointNum = len(sce.objJointPosSce[0])
-    obsJointNum = len(sce.obsJointPosSce[0])
-    headerObjJoint = []
-    headerObsJoint = []
-    for j in range(objJointNum):
-        headerObjJoint.append('obj_joint_{}_pos'.format(j))
-    for s in range(obsJointNum):
-        headerObsJoint.append('obs_joint_{}_pos'.format(s))
-
-    headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
-               'obj_qtn_0', 'obj_qtn_1', 'obj_qtn_2', 'obj_qtn_3'] + headerObjJoint
-    headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
-               'obs_qtn_0', 'obs_qtn_1', 'obs_qtn_2', 'obs_qtn_3'] + headerObsJoint
-    headersOther = ['start_energy', 'start_gravity_energy', 'start_elastic_energy', 'escape_energy_cost']
-    headers = headersObj + headersObs + headersOther
-
-    # write headers to csv
-    with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(i for i in headers)
-        # writer.writerows(data)
-
-    # save other info to txt
-    with open('{}/info.txt'.format(folderName), "w") as text_file:
-        text_file.write("*****Search goalCoMPose: {}\n".format(sce.goalCoMPose))
-        text_file.write("*****Search basePosBounds: {}\n".format(sce.basePosBounds))
-        text_file.write("*****args: {}\n".format(args))
-        text_file.write("*****BIT params: {}".format(env.pb_ompl_interface.planner.params()))
-        if args.object == 'Fish':
-            text_file.write("*****Fish links' mass: {}\n".format(env.pb_ompl_interface.potentialObjective.masses))
-            text_file.write("*****Fish joints' stiffness: {}\n".format(env.pb_ompl_interface.potentialObjective.stiffnesss))
-
-    return folderName
-
-def record_data_loop(sce, energyData, folderName, i):
-    data = flatten_nested_list([
-        [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
-        sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i],
-        sce.obsJointPosSce[i], energyData
-        ])
-
-    with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(data)
-
-def plot_escape_energy(startEnergySce, escapeEnergyCostSce, args, folderName):
-    # plot escape energy in the dynamic fall
-    _, ax1 = plt.subplots()
-    ax1.plot(escapeEnergyCostSce, 'r-*', label='Escape energy cost')
-    ax1.plot(startEnergySce, 'g-*', label='Current energy')
-    ax1.set_xlabel('# iterations')
-    ax1.set_ylabel('Potential energy')
-    ax1.grid(True)
-    ax1.legend()
-    plt.xticks(np.linspace(0,len(escapeEnergyCostSce),10).astype(int))
-    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
-    # plt.show()
-    plt.savefig('{}/energy_plot.png'.format(folderName))
-
 
 if __name__ == '__main__':
     args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
-
+    isArticulatedObj = False if args.object in rigidObjectList else True
+    
     # run a dynamic falling scenario and analyze frame-wise escape energy
     sce = runScenario(args)
     if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
@@ -327,6 +257,8 @@ if __name__ == '__main__':
     env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
     escapeEnergyCostSce = []
     startEnergySce = [] # start state energy
+    startGEnergySce = [] # start G potential energy
+    startEEnergySce = [] # start E potential energy
     
     # Run the caging analysis algorithm over downsampled frames we extracted above
     numMainIter = len(sce.objJointPosSce)
@@ -359,7 +291,7 @@ if __name__ == '__main__':
             # env.visualize_energy_minimize_search()
 
             # Record start and escape energy
-            if args.object == 'Fish': # or other articulated objects
+            if isArticulatedObj:
                 startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
                 startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
                 startEnergy = startGEnergy + startEEnergy
@@ -368,6 +300,8 @@ if __name__ == '__main__':
                 startGEnergy, startEEnergy = None, None
                 startEnergy = objStartState[2]
             startEnergySce.append(startEnergy)
+            startGEnergySce.append(startGEnergy)
+            startEEnergySce.append(startEEnergy)
             
             escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
             escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
@@ -386,4 +320,5 @@ if __name__ == '__main__':
     p.disconnect()
 
     # Plot
-    plot_escape_energy(startEnergySce, escapeEnergyCostSce, args, folderName)
+    energyData = (startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce)
+    plot_escape_energy(energyData, args, folderName, isArticulatedObj)

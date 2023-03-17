@@ -40,7 +40,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
+    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
         choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
@@ -53,16 +53,16 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
+    parser.add_argument('-o', '--objective', default='GravityPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Starfish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Bowl', \
+    parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     

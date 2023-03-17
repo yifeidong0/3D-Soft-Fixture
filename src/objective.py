@@ -59,8 +59,8 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         self.g = 9.81
         # TODO:
         self.masses = [.1] * self.numLinks
-        self.stiffnesss = [1] * self.numJoints
-        self.o = np.array([5.])
+        self.stiffnesss = [10] * self.numJoints
+        self.o = np.array([1.])
         self.path = path_collector()
         self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
         
@@ -98,7 +98,8 @@ class minPathTotalPotentialObjective(ob.OptimizationObjective):
         linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-
+        # print('@@linkZsInWorld', linkZsInWorld)
+        
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
         energyGravity = self.g * sum(linkEnergies) # sigma(g * m_i * z_i)

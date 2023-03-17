@@ -453,9 +453,9 @@ print(list2csv(data))
 import csv
 from utils import flatten_nested_list
 
-print(flatten_nested_list(data))
+# print(flatten_nested_list(data))
 
-flattened_data = list2csv(data)
+# flattened_data = list2csv(data)
 
 # Save the flattened data to a CSV file
 import os
@@ -464,23 +464,26 @@ import os
 #     writer = csv.writer(csvfile)
 #     writer.writerow(data)
 
-with open('./results/fd/data.csv', 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(i for i in headers)
+# with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     writer.writerow(i for i in headers)
 
-with open('./results/fd/data.csv', 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(data[0])
-with open('./results/fd/data.csv', 'w', newline='') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(data[1])
+# with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     writer.writerow(data[0])
+# with open('./results/fd/data.csv', 'w', newline='') as csvfile:
+#     writer = csv.writer(csvfile)
+#     writer.writerow(data[1])
 # with open('./results/fd/info.txt', "w") as text_file:
 #     text_file.write("goalCoMPose: {}\n".format(1))
 #     text_file.write("goalCoMPose: {}\n".format(2))
 #     text_file.write("goalCoMPose: {}\n".format(3))
 
 import matplotlib.pyplot as plt
+from visualization import *
 
+folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
+plot_escape_energy_from_csv(args, folderName, isArticulatedObject=1)
 # _, ax1 = plt.subplots()
 # ax1.plot([1,2,3,np.inf,5,991,3,5,7,8,9], 'r--', label='Escape energy')
 # ax1.set_xlabel('# iterations')
