@@ -40,7 +40,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
+    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
         choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
@@ -58,11 +58,11 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Starfish', \
+    parser.add_argument('-j', '--object', default='Ring', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
+    parser.add_argument('-l', '--obstacle', default='Hook', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     

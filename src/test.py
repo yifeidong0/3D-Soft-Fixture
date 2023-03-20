@@ -482,8 +482,8 @@ import os
 import matplotlib.pyplot as plt
 from visualization import *
 
-folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
-plot_escape_energy_from_csv(args, folderName, isArticulatedObject=1)
+folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
+plot_escape_energy_from_csv(args, folderName, isArticulatedObject=0)
 # _, ax1 = plt.subplots()
 # ax1.plot([1,2,3,np.inf,5,991,3,5,7,8,9], 'r--', label='Escape energy')
 # ax1.set_xlabel('# iterations')

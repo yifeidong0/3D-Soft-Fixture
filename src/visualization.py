@@ -61,7 +61,7 @@ def record_data_loop(sce, energyData, folderName, i):
 
 def plot_escape_energy(energy_data, args, folderName, isArticulatedObject=False):
     # color codes
-    cls = ['#f03b20', '#31a354', '#756bb1', '#2b8cbe'] # r,g,p,b
+    cls = ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # b,g,p,r
     
     # unpack the piled datasets
     startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce = energy_data
