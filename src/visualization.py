@@ -1,9 +1,16 @@
 from datetime import datetime
 import os
+import subprocess
+import glob
 import csv
 import numpy as np
 from utils import flatten_nested_list
 import matplotlib.pyplot as plt
+from utils import path_collector, get_non_articulated_objects
+from main import argument_parser
+import pybullet as p
+import pybullet_data
+import time
 
 def record_data_init(sce, args, env):
     # get current time
@@ -83,9 +90,8 @@ def plot_escape_energy(energy_data, args, folderName, isArticulatedObject=False)
     # plt.show()
     plt.savefig('{}/energy_plot2.png'.format(folderName))
 
-def plot_escape_energy_from_csv(args, folderName, isArticulatedObject=False):
-    '''Plot escape energy after running the algorithm.
-    '''
+def get_results_from_csv(folderName, isArticulatedObject=False):
+    indices = []
     start_energy = []
     start_gravity_energy = []
     start_elastic_energy = []
@@ -95,10 +101,30 @@ def plot_escape_energy_from_csv(args, folderName, isArticulatedObject=False):
         csvreader = csv.DictReader(csvfile)
 
         for row in csvreader:
+            indices.append(float(row['index']))
             start_energy.append(float(row['start_energy']))
             escape_energy_cost.append(float(row['escape_energy_cost']))
             if isArticulatedObject:
                 start_gravity_energy.append(float(row['start_gravity_energy']))
                 start_elastic_energy.append(float(row['start_elastic_energy']))
     energy_data = (start_energy, start_gravity_energy, start_elastic_energy, escape_energy_cost)
+
+    return energy_data, indices
+
+def plot_escape_energy_from_csv(args, folderName, isArticulatedObject=False):
+    '''Plot escape energy after running the algorithm.
+    '''
+    # get energy data from csv
+    energy_data, _ = get_results_from_csv(folderName, isArticulatedObject)
+    
+    # escape energy plots
     plot_escape_energy(energy_data, args, folderName, isArticulatedObject)
+
+
+if __name__ == '__main__':
+    args, parser = argument_parser()
+    rigidObjectList = get_non_articulated_objects()
+    isArticulatedObj = False if args.object in rigidObjectList else True
+    folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
+
+    plot_escape_energy_from_csv(args, folderName, isArticulatedObj)

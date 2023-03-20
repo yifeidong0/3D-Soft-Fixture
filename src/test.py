@@ -281,7 +281,7 @@ import argparse
 
 
 #########################################################################
-
+# FORWARD KINEMATICS
 
 # import kinpy as kp
 # import math
@@ -296,169 +296,215 @@ import argparse
 
 
 #########################################################################
-
-import pybullet as p
-import time
-
-# p.connect(p.GUI)
-# # p.setGravity(0, 0, -9.8)
-# p.setTimeStep(1./240.)
-# # p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-# GRAVITY = -10
-# p.setRealTimeSimulation(0)
-# # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
-# fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
-
+# CREATE CONCAVE SHAPES
+#  
 # name_in = 'models/starfish/starfish2.obj'
 # name_out = 'models/starfish/starfish2_vhacd.obj'
 # name_log = "log.txt"
 # p.vhacd(name_in, name_out, name_log)
-# # ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
 
-# # p.changeDynamics(bowl, -1, mass=0)
+#########################################################################
+# FISH WITH RING GOT HOOKED
 
-# # Upload the mesh data to PyBullet and create a static object
-# # mesh_scale = [.04, .04, .04]  # The scale of the mesh
-# # mesh_collision_shape = p.createCollisionShape(
-# #     shapeType=p.GEOM_MESH,
-# #     fileName="models/fish/ring2_vhacd.OBJ",
-# #     meshScale=mesh_scale,
-# #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-# #     # meshData=mesh_data,
-# # )
-# # mesh_visual_shape = -1  # Use the same shape for visualization
-# # mesh_position = [0.3, 0, 2]  # The position of the mesh
-# # mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
-# # ring = p.createMultiBody(
-# #     baseMass=1.,
-# #     baseCollisionShapeIndex=mesh_collision_shape,
-# #     baseVisualShapeIndex=mesh_visual_shape,
-# #     basePosition=mesh_position,
-# #     baseOrientation=mesh_orientation,
-# # )
+import pybullet as p
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import subprocess
+import glob
 
-# mesh_scale = [.1, .1, .1]  # The scale of the mesh
+p.connect(p.GUI)
+# p.setGravity(0, 0, -9.8)
+p.setTimeStep(1./240.)
+# p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+GRAVITY = -10
+p.setRealTimeSimulation(0)
+# bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
+fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
+
+
+# ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
+
+# p.changeDynamics(bowl, -1, mass=0)
+
+# Upload the mesh data to PyBullet and create a static object
+# mesh_scale = [.04, .04, .04]  # The scale of the mesh
 # mesh_collision_shape = p.createCollisionShape(
 #     shapeType=p.GEOM_MESH,
-#     fileName="models/triple_hook/triple_hook_vhacd.obj",
+#     fileName="models/fish/ring2_vhacd.OBJ",
 #     meshScale=mesh_scale,
 #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
 #     # meshData=mesh_data,
 # )
 # mesh_visual_shape = -1  # Use the same shape for visualization
-# mesh_position = [0, 0, 0]  # The position of the mesh
-# mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
-# hook = p.createMultiBody(
+# mesh_position = [0.3, 0, 2]  # The position of the mesh
+# mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
+# ring = p.createMultiBody(
+#     baseMass=1.,
 #     baseCollisionShapeIndex=mesh_collision_shape,
 #     baseVisualShapeIndex=mesh_visual_shape,
 #     basePosition=mesh_position,
 #     baseOrientation=mesh_orientation,
 # )
 
-# def getJointStates(robot):
-#   joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
-#   joint_positions = [state[0] for state in joint_states]
-#   joint_velocities = [state[1] for state in joint_states]
-#   joint_torques = [state[3] for state in joint_states]
-#   return joint_positions, joint_velocities, joint_torques
+mesh_scale = [.1, .1, .1]  # The scale of the mesh
+mesh_collision_shape = p.createCollisionShape(
+    shapeType=p.GEOM_MESH,
+    fileName="models/triple_hook/triple_hook_vhacd.obj",
+    meshScale=mesh_scale,
+    # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+    # meshData=mesh_data,
+)
+mesh_visual_shape = -1  # Use the same shape for visualization
+mesh_position = [0, 0, 0]  # The position of the mesh
+mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
+hook = p.createMultiBody(
+    baseCollisionShapeIndex=mesh_collision_shape,
+    baseVisualShapeIndex=mesh_visual_shape,
+    basePosition=mesh_position,
+    baseOrientation=mesh_orientation,
+)
 
-# i = 0
-# jointPositionsSce = []
-# gemPosAll = []
-# gemOrnAll = []
-# while (1):
-#     p.stepSimulation()
-#     #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
-#     # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
-#     # print(gemPos, gemOrn)
-#     p.setGravity(0, 0, GRAVITY)
-#     time.sleep(7/240.)
-#     i += 1
+def getJointStates(robot):
+  joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
+  joint_positions = [state[0] for state in joint_states]
+  joint_velocities = [state[1] for state in joint_states]
+  joint_torques = [state[3] for state in joint_states]
+  return joint_positions, joint_velocities, joint_torques
 
-#     # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
-#     # if len(CP)>0:
-#     #     dis = [CP[i][8] for i in range(len(CP))]
-#     #     print('!!!!CP', dis)
+i = 0
+jointPositionsSce = []
+gemPosAll = []
+gemOrnAll = []
 
-#     # if i % 20 == 0:
-#     #     jointPositions,_,_ = getJointStates(fish) # list(11)
-#     #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
-#     #     jointPositionsSce.append(jointPositions)
-#     #     gemPosAll.append(list(gemPos))
-#     #     gemOrnAll.append(list(gemOrn))
+viewMat = [
+    0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+    0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+    0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+]
+width = 512 # 128
+height = 512 # 128
+folderName = './results/test/'
+
+while (1):
+    p.stepSimulation()
+    #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
+    # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
+    # print(gemPos, gemOrn)
+    p.setGravity(0, 0, GRAVITY)
+    dep = i
+    images = p.getCameraImage(width, height, viewMatrix=viewMat,
+                              )
+    rgb_tiny = np.reshape(images[2], (height, width, 4)) * 1. / 255.
+    # fig = plt.figure(num=1, clear=True)
+    # ax = fig.add_subplot() 
+    plt.text(width+10, height, 'Caging depth:{}'.format(dep))
+    plt.text(width+10, height-20, 'curr depth:{}'.format(dep))
+    plt.title('RGB')
+    plt.imshow(rgb_tiny)
+    plt.savefig(folderName + "file%03d.png" % i)
+    plt.close()
+
+    # if i == 50:
+    #     os.chdir(folderName)
+    #     subprocess.call([
+    #         'ffmpeg', '-framerate', '8', '-i', 'file%03d.png', '-r', '30', '-pix_fmt', 'yuv420p',
+    #         'video_name.mp4'
+    #     ])
+    #     for file_name in glob.glob("*.png"):
+    #         os.remove(file_name)
     
-#     # if i == 500:
-#     #     break
-#     # # print(jointPositions)
+    time.sleep(5/240.)
+
+    i += 1
+    print(i)
+    # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
+    # if len(CP)>0:
+    #     dis = [CP[i][8] for i in range(len(CP))]
+    #     print('!!!!CP', dis)
+
+    # if i % 20 == 0:
+    #     jointPositions,_,_ = getJointStates(fish) # list(11)
+    #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
+    #     jointPositionsSce.append(jointPositions)
+    #     gemPosAll.append(list(gemPos))
+    #     gemOrnAll.append(list(gemOrn))
+    
+    # if i == 500:
+    #     break
+    # # print(jointPositions)
 
 # # replay
 
 
+#########################################################################
+# SAVE TO CSV
 
-from main import argument_parser
-import argparse
+# from main import argument_parser
+# import argparse
 
-args, parser = argument_parser()
-print('@@@', args)
+# args, parser = argument_parser()
+# print('@@@', args)
 
-parser.set_defaults(object='Fish')
-args = parser.parse_args()
+# parser.set_defaults(object='Fish')
+# args = parser.parse_args()
 
-def flatten(l):
-    """
-    Flatten a nested list.
-    """
-    for i in l:
-        if isinstance(i, (list, tuple)):
-            for j in flatten(i):
-                yield j
-        else:
-            yield i
+# def flatten(l):
+#     """
+#     Flatten a nested list.
+#     """
+#     for i in l:
+#         if isinstance(i, (list, tuple)):
+#             for j in flatten(i):
+#                 yield j
+#         else:
+#             yield i
 
-def flatten2(data):
-    flattened_data = []
-    for item in data:
-        if isinstance(item, list):
-            item = ','.join(map(str, item))
-        flattened_data.append(item)
-    return flattened_data
+# def flatten2(data):
+#     flattened_data = []
+#     for item in data:
+#         if isinstance(item, list):
+#             item = ','.join(map(str, item))
+#         flattened_data.append(item)
+#     return flattened_data
 
-def list2csv(l):
-    """
-    Return CSV-ish text for a nested list.
-    """
-    lines = []
-    for row in l:
-        if isinstance(row, (list, tuple)):
-            lines.append(",".join(str(i) for i in flatten(row)))
-        else:
-            lines.append(str(row))
-    return "\n".join(lines)
+# def list2csv(l):
+#     """
+#     Return CSV-ish text for a nested list.
+#     """
+#     lines = []
+#     for row in l:
+#         if isinstance(row, (list, tuple)):
+#             lines.append(",".join(str(i) for i in flatten(row)))
+#         else:
+#             lines.append(str(row))
+#     return "\n".join(lines)
 
-data = [
-        1.0,
-        'One',
-        [1, 'Two'],
-        [1, 'Two', ['Three', 4.5]],
-        ['One', 2, [3.4, ['Five', 6]]]
-    ]
+# data = [
+#         1.0,
+#         'One',
+#         [1, 'Two'],
+#         [1, 'Two', ['Three', 4.5]],
+#         ['One', 2, [3.4, ['Five', 6]]]
+#     ]
 
 
-import numpy as np
-data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
-data=[['1', 'atul','tpa'],['2', 'carl','CN']]
-headers = ['serial', 'name', 'subject']
-print(list2csv(data))
-import csv
-from utils import flatten_nested_list
+# import numpy as np
+# data = [[1,2,None], [np.inf,2,3], [1,7,3,8], [1,2,4],[]]
+# data=[['1', 'atul','tpa'],['2', 'carl','CN']]
+# headers = ['serial', 'name', 'subject']
+# print(list2csv(data))
+# import csv
+# from utils import flatten_nested_list
 
-# print(flatten_nested_list(data))
+# # print(flatten_nested_list(data))
 
-# flattened_data = list2csv(data)
+# # flattened_data = list2csv(data)
 
-# Save the flattened data to a CSV file
-import os
+# # Save the flattened data to a CSV file
+# import os
 # os.mkdir('./results/fd/')
 # with open('./results/fd/data.csv', 'w', newline='') as csvfile:
 #     writer = csv.writer(csvfile)
@@ -479,11 +525,15 @@ import os
 #     text_file.write("goalCoMPose: {}\n".format(2))
 #     text_file.write("goalCoMPose: {}\n".format(3))
 
-import matplotlib.pyplot as plt
-from visualization import *
 
-folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
-plot_escape_energy_from_csv(args, folderName, isArticulatedObject=0)
+#########################################################################
+# PLOT ESCAPE CURVES
+
+# import matplotlib.pyplot as plt
+# from visualization import *
+
+# folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
+# plot_escape_energy_from_csv(args, folderName, isArticulatedObject=0)
 # _, ax1 = plt.subplots()
 # ax1.plot([1,2,3,np.inf,5,991,3,5,7,8,9], 'r--', label='Escape energy')
 # ax1.set_xlabel('# iterations')

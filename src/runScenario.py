@@ -8,7 +8,7 @@ from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 from main import argument_parser
 import pybullet_data
 from utils import path_collector, get_non_articulated_objects
-from object import ObjectToCage, CagingObstacle
+from object import CagingObstacle
 from visualization import *
 import numpy as np
 
