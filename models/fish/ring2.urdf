@@ -6,6 +6,11 @@
       <geometry>
         <mesh filename="package://fish/ring2_vhacd.dae" scale=".1 .1 .1"/>
       </geometry>
+      <material name="metal">
+        <texture filename="package://triple_hook/metal_texture.png"/>
+        <!-- <color rgba="1 1 1 1"/> -->
+        <!-- <specular rgb="11 1 1"/> -->
+      </material>
     </visual>
     <collision>
       <geometry>

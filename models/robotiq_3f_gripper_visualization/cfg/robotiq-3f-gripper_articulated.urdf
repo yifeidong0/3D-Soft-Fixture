@@ -14,18 +14,18 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_0.dae"/>
       </geometry>
-      <material name="green">
+      <!-- <material name="green">
         <color rgba="0 1 0 1"/>
-      </material>
+      </material> -->
     </visual>
     <collision>
       <origin rpy="0 3.1416 -1.57" xyz="-0.0455 0.0414 0.036"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_0.STL"/>
       </geometry>
-      <material name="yellow">
+      <!-- <material name="yellow">
         <color rgba="0 1 1 1"/>
-      </material>
+      </material> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -39,14 +39,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_1.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 -0.52" xyz="0.050 -.028 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_1.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -65,14 +65,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_2.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.039 0 0.0075"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_2.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -86,14 +86,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_3.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0.52" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_3.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -128,18 +128,18 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_0.dae"/>
       </geometry>
-      <material name="green">
+      <!-- <material name="green">
         <color rgba="0 1 0 1"/>
-      </material>
+      </material> -->
     </visual>
     <collision>
       <origin rpy="0 3.1416 -1.57" xyz="-0.0455 0.0414 0.036"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_0.STL"/>
       </geometry>
-      <material name="yellow">
+      <!-- <material name="yellow">
         <color rgba="0 1 1 1"/>
-      </material>
+      </material> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -153,14 +153,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_1.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 -0.52" xyz="0.050 -.028 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_1.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -179,14 +179,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_2.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.039 0 0.0075"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_2.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -200,14 +200,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_3.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0.52" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_3.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -242,18 +242,18 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_0.dae"/>
       </geometry>
-      <material name="green">
+      <!-- <material name="green">
         <color rgba="0 1 0 1"/>
-      </material>
+      </material> -->
     </visual>
     <collision>
       <origin rpy="0 3.1416 -1.57" xyz="-0.0455 0.0414 0.036"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_0.STL"/>
       </geometry>
-      <material name="yellow">
+      <!-- <material name="yellow">
         <color rgba="0 1 1 1"/>
-      </material>
+      </material> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -267,14 +267,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_1.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 -0.52" xyz="0.050 -.028 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_1.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -293,14 +293,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_2.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.039 0 0.0075"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_2.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -314,14 +314,14 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/link_3.dae"/>
       </geometry>
-      <material name="green"/>
+      <!-- <material name="green"/> -->
     </visual>
     <collision>
       <origin rpy="0 0 0.52" xyz="0 0 0"/>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/link_3.STL"/>
       </geometry>
-      <material name="yellow"/>
+      <!-- <material name="yellow"/> -->
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -355,17 +355,17 @@ robotiq-3f-gripper_articulated - articulated version of the robotiq robotiq-3f-g
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/visual/palm.dae"/>
       </geometry>
-      <material name="green">
+      <!-- <material name="green">
         <color rgba="0 1 0 1"/>
-      </material>
+      </material> -->
     </visual>
     <collision>
       <geometry>
         <mesh filename="package://robotiq_3f_gripper_visualization/meshes/robotiq-3f-gripper_articulated/collision/palm.STL"/>
       </geometry>
-      <material name="yellow">
+      <!-- <material name="yellow">
         <color rgba="0 1 1 1"/>
-      </material>
+      </material> -->
     </collision>
   </link>
   <inertial>

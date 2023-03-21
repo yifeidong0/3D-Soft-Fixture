@@ -31,6 +31,17 @@ class generateVideo(runScenario):
         self.img_height = 512
         self.img_width = 512
 
+        # pybullet camera matrices param
+        self.viewMat = [
+            0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+            0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+            0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+        ]
+        self.projMat = [
+            0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
+            0.0, 0.0, -0.02000020071864128, 0.0
+        ]
+
         # load object and obstacle
         self.paths = path_collector()
         self.initializeParams()
@@ -43,18 +54,21 @@ class generateVideo(runScenario):
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
-        i = 0
+        i = 0 # sim no.
+        k = 0 # results data no.
+        lenRes = len(self.indices)
+        start_energy, escape_energy = None, None
         # time.sleep(1)
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # set initial joint states
         jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
-        # obstacleJointPos = [j+1/1000 for j in jointPositions]
         obstacleJointPos = [jointPositions[i]-450/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
         obstacleState = self.obstaclePose + obstacleJointPos
         self.obstacle.set_state(obstacleState)
         
         # start simulation of clenching the fist
+        time.sleep(5)
         while (1):
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
@@ -67,7 +81,29 @@ class generateVideo(runScenario):
             obstacleState = self.obstaclePose + obstacleJointPos
             self.obstacle.set_state(obstacleState)
 
-            if i == self.endFrame:
+            # update energy texts
+            if i == self.indices[k]:
+                start_energy = np.round(self.startEnergySce[k],decimals=3)
+                escape_energy = np.round(self.escapeEnergyCostSce[k],decimals=3)
+                k += 1
+            
+            # get RGB of camera view
+            images = p.getCameraImage(self.img_width, 
+                                      self.img_height,
+                                    #   viewMatrix=self.viewMat,
+                                    #   projectionMatrix=self.projMat,
+                                      renderer=p.ER_BULLET_HARDWARE_OPENGL,
+                                    #   flags=p.ER_USE_PROJECTIVE_TEXTURE,
+                                    #   projectiveTextureView=self.viewMat,
+                                    #   projectiveTextureProj=self.projMat
+                                    )
+            rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
+
+            # plot   
+            self.saveIntermImages(rgb_array, start_energy, escape_energy, i)
+
+            # stop iterations
+            if k >= lenRes:
                 p.disconnect()
                 break
             i += 1
@@ -79,7 +115,7 @@ class generateVideo(runScenario):
         lenRes = len(self.indices)
         start_energy, escape_energy = None, None
 
-        # time.sleep(1)
+        time.sleep(5)
         while (1):
             # print(i)
             p.stepSimulation()
@@ -97,21 +133,24 @@ class generateVideo(runScenario):
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # plot   
-            plt.title('Caging formation with escape energy')
-            plt.text(self.img_width+10, self.img_height-20, 'E_start:{}'.format(start_energy))
-            plt.text(self.img_width+10, self.img_height, 'E_escape:{}'.format(escape_energy))
-            plt.imshow(rgb_array)
-            plt.xticks([])
-            plt.yticks([])
-
-            plt.savefig(folderName + "file%03d.png" % i)
-            plt.close()
+            self.saveIntermImages(rgb_array, start_energy, escape_energy, i)
 
             # stop iterations
             if k >= lenRes:
                 p.disconnect()
                 break
             i += 1
+
+    def saveIntermImages(self, rgb_array, start_energy, escape_energy, i):
+        plt.title('Caging formation with escape energy')
+        plt.text(self.img_width+10, self.img_height-20, 'E_start:{}'.format(start_energy))
+        plt.text(self.img_width+10, self.img_height, 'E_escape:{}'.format(escape_energy))
+        plt.imshow(rgb_array)
+        plt.xticks([])
+        plt.yticks([])
+
+        plt.savefig(self.path + "file%03d.png" % i)
+        plt.close()
 
     def imagesToVideo(self):
         os.chdir(self.path)
@@ -127,7 +166,9 @@ if __name__ == '__main__':
     args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
     isArticulatedObj = False if args.object in rigidObjectList else True
-    folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
+    # folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
+    # folderName = './results/GripperClenchesStarfish_17-03-2023-08-20-10/'
+    folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
     sce = generateVideo(args, folderName, isArticulatedObj)

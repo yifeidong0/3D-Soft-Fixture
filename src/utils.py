@@ -14,24 +14,6 @@ BASE_LINK = -1
 MAX_DISTANCE = -0.025
 SCENARIO_ID = 3
 
-def path_collector():
-    return {
-            'Fish': 'models/fish/articulate_fish.xacro', 
-            'FishWithRing': 'models/fish/fishWithRing.xacro', 
-            'Starfish': 'models/starfish/starfish2.urdf', 
-            'Ring': 'models/fish/ring2.urdf', 
-            'Donut': 'models/donut/donut.urdf',
-            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
-            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
-            'PlanarRobot': 'models/planar_robot_4_link.xacro',
-            'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/small_bowl.stl', 
-            'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
-            }
-
-def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish']
-
 def argument_parser():
     '''
     Hyperparemeter setup.
@@ -40,7 +22,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
+    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
         choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
@@ -53,16 +35,16 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Ring', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='Bowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
@@ -84,11 +66,36 @@ def argument_parser():
 
     return args, parser
 
+def path_collector():
+    return {
+            'Fish': 'models/fish/articulate_fish.xacro', 
+            'FishWithRing': 'models/fish/fishWithRing.xacro', 
+            'Starfish': 'models/starfish/starfish2.urdf', 
+            'Ring': 'models/fish/ring2.urdf', 
+            'Donut': 'models/donut/donut.urdf',
+            '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+            'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
+            'PlanarRobot': 'models/planar_robot_4_link.xacro',
+            'Humanoid': 'models/humanoid.urdf',
+            'Bowl': 'models/bowl/small_bowl.stl', 
+            'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
+            }
+
+def texture_path_list():
+    return {
+            'Hook': 'models/triple_hook/metal_texture.png', 
+            }
+
+def get_non_articulated_objects():
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish']
+
 def flatten_nested_list(input):
     '''Input in the format of [[1], [2, 3], [4, 5, 6, 7]].
         Two nested layers at most.
     '''
     return [num for sublist in input for num in sublist]
+
+#####################################
 
 def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):  # 10000
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,

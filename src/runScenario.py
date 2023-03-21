@@ -7,7 +7,7 @@ from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 from main import argument_parser
 import pybullet_data
-from utils import path_collector, get_non_articulated_objects
+from utils import *
 from object import CagingObstacle
 from visualization import *
 import numpy as np
@@ -22,6 +22,7 @@ class runScenario():
         
         planeId = p.loadURDF("plane.urdf", [0,0,-1])
         self.paths = path_collector()
+        self.pathsTex = texture_path_list()
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 8
@@ -79,6 +80,7 @@ class runScenario():
                 self.obstacleScale = [.1,.1,.1]
                 self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
                 self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+
             case 'GripperClenchesStarfish':
                 self.object = 'Starfish'
                 self.objectPos = [.1,.1,2.3]
@@ -95,6 +97,8 @@ class runScenario():
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)
         self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
+        # texUid = p.loadTexture(self.pathsTex[self.object])
+        # p.changeVisualShape(self.objectId, -1, textureUniqueId=texUid)
 
     def loadObstacle(self):
         obst = self.args.obstacle
@@ -127,6 +131,10 @@ class runScenario():
                                           globalScaling=self.obstacleScale
                                           )
             self.obstacle = CagingObstacle(self.obstacleId)
+
+        # Load texture file - png
+        # texObsId = p.loadTexture(self.pathsTex[self.obstacle])
+        # p.changeVisualShape(self.obstacleId, -1, textureUniqueId=texObsId)
 
     def getJointStates(self, id):
         numJoints = p.getNumJoints(id)
@@ -200,7 +208,7 @@ class runScenario():
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(1/240.)
+            time.sleep(6/240.)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)

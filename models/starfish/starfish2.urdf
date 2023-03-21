@@ -1,11 +1,20 @@
 <?xml version="1.0"?>
 <robot name="starfish">
+  
+  <material name="yellow">
+    <color rgba="0.839, 0.604, 0.251, 1.0"/>
+    <!-- <ambient>0 0 0 1</ambient>
+    <diffuse>0 0 0 1</diffuse>
+    <specular>0 1 1 0</specular>
+    <emissive>0 1 0 1</emissive>   -->
+  </material>
 
   <link name="base_link">
     <visual>
       <geometry>
         <mesh filename="package://starfish/starfish2_vhacd.dae" scale=".4 .4 .4"/>
       </geometry>
+      <material name="yellow"/>
     </visual>
     <collision>
       <geometry>
