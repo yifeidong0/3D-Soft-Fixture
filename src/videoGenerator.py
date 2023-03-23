@@ -1,12 +1,12 @@
 from visualization import *
-from datetime import datetime
+# from datetime import datetime
 import os
 import subprocess
 import glob
-import csv
+# import csv
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import path_collector, get_non_articulated_objects
+from utils import *
 from main import argument_parser
 from runScenario import runScenario
 import pybullet as p
@@ -32,15 +32,13 @@ class generateVideo(runScenario):
         self.img_width = 512
 
         # pybullet camera matrices param
-        self.viewMat = [
-            0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
-            0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
-            0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
-        ]
-        self.projMat = [
-            0.7499999403953552, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.0000200271606445, -1.0,
-            0.0, 0.0, -0.02000020071864128, 0.0
-        ]
+        fov = 60
+        aspect = self.img_width / self.img_height
+        near = 0.02
+        far = 1
+
+        self.viewMat = p.computeViewMatrix([0, 0, 0.5], [0, 0, 0], [1, 0, 0])
+        self.projMat = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
         # load object and obstacle
         self.paths = path_collector()
@@ -57,7 +55,7 @@ class generateVideo(runScenario):
         i = 0 # sim no.
         k = 0 # results data no.
         lenRes = len(self.indices)
-        start_energy, escape_energy = None, None
+        e_total, e_escape = None, None
         # time.sleep(1)
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
@@ -83,8 +81,8 @@ class generateVideo(runScenario):
 
             # update energy texts
             if i == self.indices[k]:
-                start_energy = np.round(self.startEnergySce[k],decimals=3)
-                escape_energy = np.round(self.escapeEnergyCostSce[k],decimals=3)
+                e_total = np.round(self.startEnergySce[k],decimals=3)
+                e_escape = np.round(self.escapeEnergyCostSce[k],decimals=3)
                 k += 1
             
             # get RGB of camera view
@@ -92,15 +90,17 @@ class generateVideo(runScenario):
                                       self.img_height,
                                     #   viewMatrix=self.viewMat,
                                     #   projectionMatrix=self.projMat,
-                                      renderer=p.ER_BULLET_HARDWARE_OPENGL,
+                                      renderer=p.ER_TINY_RENDERER,
+                                      shadow=1,
                                     #   flags=p.ER_USE_PROJECTIVE_TEXTURE,
                                     #   projectiveTextureView=self.viewMat,
                                     #   projectiveTextureProj=self.projMat
                                     )
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
-            # plot   
-            self.saveIntermImages(rgb_array, start_energy, escape_energy, i)
+            # plot
+            energy_tuple = (None, None, e_total, e_escape)
+            self.saveIntermImages(rgb_array, energy_tuple, i)
 
             # stop iterations
             if k >= lenRes:
@@ -113,7 +113,7 @@ class generateVideo(runScenario):
         i = 0 # sim no.
         k = 0 # results data no.
         lenRes = len(self.indices)
-        start_energy, escape_energy = None, None
+        e_grav, e_bend, e_total, e_escape = None, None, None, None
 
         time.sleep(5)
         while (1):
@@ -124,16 +124,25 @@ class generateVideo(runScenario):
             
             # update energy texts
             if i == self.indices[k]:
-                start_energy = np.round(self.startEnergySce[k],decimals=3)
-                escape_energy = np.round(self.escapeEnergyCostSce[k],decimals=3)
+                e_total = np.round(self.startEnergySce[k],decimals=3)
+                e_escape = np.round(self.escapeEnergyCostSce[k],decimals=3)
+                if self.isArticulatedObj:
+                    e_grav = np.round(self.startGEnergySce[k],decimals=3)
+                    e_bend = np.round(self.startEEnergySce[k],decimals=3)                 
                 k += 1
             
             # get RGB of camera view
-            images = p.getCameraImage(self.img_width, self.img_height) # list
+            images = p.getCameraImage(self.img_width, 
+                                      self.img_height,
+                                    #   viewMatrix=self.viewMat,
+                                    #   projectionMatrix=self.projMat,
+                                    #   renderer=p.ER_BULLET_HARDWARE_OPENGL,
+                                      ) # list
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # plot   
-            self.saveIntermImages(rgb_array, start_energy, escape_energy, i)
+            energy_tuple = (e_grav, e_bend, e_total, e_escape)
+            self.saveIntermImages(rgb_array, energy_tuple, i)
 
             # stop iterations
             if k >= lenRes:
@@ -141,10 +150,14 @@ class generateVideo(runScenario):
                 break
             i += 1
 
-    def saveIntermImages(self, rgb_array, start_energy, escape_energy, i):
+    def saveIntermImages(self, rgb_array, energy_tuple, i):
+        e_grav, e_bend, e_total, e_escape = energy_tuple
         plt.title('Caging formation with escape energy')
-        plt.text(self.img_width+10, self.img_height-20, 'E_start:{}'.format(start_energy))
-        plt.text(self.img_width+10, self.img_height, 'E_escape:{}'.format(escape_energy))
+        if self.isArticulatedObj:
+            plt.text(self.img_width+10, self.img_height-60, 'E_grav:{}'.format(e_grav))
+            plt.text(self.img_width+10, self.img_height-40, 'E_bend:{}'.format(e_bend))
+        plt.text(self.img_width+10, self.img_height-20, 'E_total:{}'.format(e_total))
+        plt.text(self.img_width+10, self.img_height, 'E_escape:{}'.format(e_escape),color='red')
         plt.imshow(rgb_array)
         plt.xticks([])
         plt.yticks([])
@@ -167,8 +180,8 @@ if __name__ == '__main__':
     rigidObjectList = get_non_articulated_objects()
     isArticulatedObj = False if args.object in rigidObjectList else True
     # folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
-    # folderName = './results/GripperClenchesStarfish_17-03-2023-08-20-10/'
-    folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
+    folderName = './results/GripperClenchesStarfish_17-03-2023-08-20-10/'
+    # folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
     sce = generateVideo(args, folderName, isArticulatedObj)

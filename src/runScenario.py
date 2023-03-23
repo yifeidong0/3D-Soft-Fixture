@@ -291,7 +291,7 @@ if __name__ == '__main__':
             useBisecSearch = True # True: bisection search; False: Conservative search
             env.bound_shrink_search(useBisecSearch)
             escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
-            print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+            # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
         elif args.search == 'EnergyMinimizeSearch':
             numInnerIter = 1
@@ -317,12 +317,12 @@ if __name__ == '__main__':
             # Create txt, csv for data recording
             if i == 0:
                 folderName = record_data_init(sce, args, env)
-            print('@@@i: ',i)
+            # print('@@@i: ',i)
             
             # Record data in this loop 
             energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
             record_data_loop(sce, energyData, folderName, i)
-            print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
+            # print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
 
     # Shut down pybullet (GUI)
     p.disconnect()

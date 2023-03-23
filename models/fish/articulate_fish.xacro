@@ -81,7 +81,8 @@
           <box size="0.1 0.2 0.3" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.3"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
@@ -112,7 +113,8 @@
           <box size="0.12 0.2 0.4" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.4"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
@@ -143,7 +145,8 @@
           <box size="0.14 0.2 0.5" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.5"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
@@ -174,7 +177,8 @@
           <box size="0.16 0.2 0.6" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.5"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
@@ -205,7 +209,8 @@
           <box size="0.18 0.2 0.7" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.5"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
@@ -236,7 +241,8 @@
           <box size="0.21 0.2 0.75" />
         </geometry>
         <material name="">
-            <color rgba="0 0 1 0.5"/>
+          <texture filename="package://triple_hook/metal_texture.png"/>
+          <!-- <color rgba="0 0 1 0.3"/> -->
         </material>
     </visual>
     <collision>
