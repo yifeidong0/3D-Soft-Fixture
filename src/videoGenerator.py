@@ -14,7 +14,7 @@ import pybullet_data
 import time
 
 class generateVideo(runScenario):
-    def __init__(self, args, path, isArticulatedObj):
+    def __init__(self, args, dataPaths, isArticulatedObj):
         p.connect(p.GUI)
         p.setTimeStep(1./240.)
         # p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -24,7 +24,7 @@ class generateVideo(runScenario):
         # planeId = p.loadURDF("plane.urdf", [0,0,-1])
         # self.paths = path_collector()
         self.args = args
-        self.path = path # results path
+        self.dataPaths = dataPaths # results path
         self.isArticulatedObj = isArticulatedObj
         self.gravity = -9.81
         self.endFrame = 800
@@ -36,27 +36,30 @@ class generateVideo(runScenario):
         aspect = self.img_width / self.img_height
         near = 0.02
         far = 1
-
         self.viewMat = p.computeViewMatrix([0, 0, 0.5], [0, 0, 0], [1, 0, 0])
         self.projMat = p.computeProjectionMatrixFOV(fov, aspect, near, far)
 
         # load object and obstacle
         self.paths = path_collector()
         self.initializeParams()
+        os.chdir('./../')
         self.loadObject()
         self.loadObstacle()
+        os.chdir('./results/')
         
         # get results
-        self.energy_data, self.indices = get_results_from_csv(self.path, self.isArticulatedObj)
-        self.startEnergySce, self.startGEnergySce, self.startEEnergySce, self.escapeEnergyCostSce = self.energy_data
+        self.energyDataAnalysis, self.minDataLen = analyze_energy_data(self.dataPaths, self.isArticulatedObj)
+        print('self.minDataLen', self.minDataLen)
+        _, self.indices = get_results_from_csv(self.dataPaths[0], self.isArticulatedObj)
+        # self.startEnergySce, self.startGEnergySce, self.startEEnergySce, self.escapeEnergyCostSce = self.energy_data
+
+        # get colors
+        self.cls = get_colors()
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
         i = 0 # sim no.
         k = 0 # results data no.
-        lenRes = len(self.indices)
-        e_total, e_escape = None, None
-        # time.sleep(1)
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # set initial joint states
@@ -66,7 +69,7 @@ class generateVideo(runScenario):
         self.obstacle.set_state(obstacleState)
         
         # start simulation of clenching the fist
-        time.sleep(5)
+        time.sleep(7)
         while (1):
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
@@ -74,17 +77,19 @@ class generateVideo(runScenario):
             
             # get obstacle joint positions and update them
             jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
-            # obstacleJointPos = [j+1/1000 for j in jointPositions]
             obstacleJointPos = [jointPositions[i]+.8/1000 for i in range(len(jointPositions))]
             obstacleState = self.obstaclePose + obstacleJointPos
             self.obstacle.set_state(obstacleState)
 
             # update energy texts
             if i == self.indices[k]:
-                e_total = np.round(self.startEnergySce[k],decimals=3)
-                e_escape = np.round(self.escapeEnergyCostSce[k],decimals=3)
                 k += 1
             
+            # stop iterations
+            if k >= self.minDataLen:
+                p.disconnect()
+                break
+
             # get RGB of camera view
             images = p.getCameraImage(self.img_width, 
                                       self.img_height,
@@ -99,21 +104,13 @@ class generateVideo(runScenario):
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # plot
-            energy_tuple = (None, None, e_total, e_escape)
-            self.saveIntermImages(rgb_array, energy_tuple, i)
-
-            # stop iterations
-            if k >= lenRes:
-                p.disconnect()
-                break
+            self.saveIntermImages(rgb_array, i, k)
             i += 1
 
     def runDynamicFalling(self):
         '''For the tasks of articulated fish or ring falling'''
         i = 0 # sim no.
         k = 0 # results data no.
-        lenRes = len(self.indices)
-        e_grav, e_bend, e_total, e_escape = None, None, None, None
 
         time.sleep(5)
         while (1):
@@ -123,53 +120,50 @@ class generateVideo(runScenario):
             time.sleep(1/240.)
             
             # update energy texts
-            if i == self.indices[k]:
-                e_total = np.round(self.startEnergySce[k],decimals=3)
-                e_escape = np.round(self.escapeEnergyCostSce[k],decimals=3)
-                if self.isArticulatedObj:
-                    e_grav = np.round(self.startGEnergySce[k],decimals=3)
-                    e_bend = np.round(self.startEEnergySce[k],decimals=3)                 
+            if i == self.indices[k]:               
                 k += 1
             
+            # stop iterations
+            if k >= self.minDataLen:
+                p.disconnect()
+                break
+
             # get RGB of camera view
             images = p.getCameraImage(self.img_width, 
                                       self.img_height,
-                                    #   viewMatrix=self.viewMat,
-                                    #   projectionMatrix=self.projMat,
-                                    #   renderer=p.ER_BULLET_HARDWARE_OPENGL,
                                       ) # list
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # plot   
-            energy_tuple = (e_grav, e_bend, e_total, e_escape)
-            self.saveIntermImages(rgb_array, energy_tuple, i)
-
-            # stop iterations
-            if k >= lenRes:
-                p.disconnect()
-                break
+            self.saveIntermImages(rgb_array, i, k)
             i += 1
 
-    def saveIntermImages(self, rgb_array, energy_tuple, i):
-        e_grav, e_bend, e_total, e_escape = energy_tuple
-        plt.title('Caging formation with escape energy')
-        if self.isArticulatedObj:
-            plt.text(self.img_width+10, self.img_height-60, 'E_grav:{}'.format(e_grav))
-            plt.text(self.img_width+10, self.img_height-40, 'E_bend:{}'.format(e_bend))
-        plt.text(self.img_width+10, self.img_height-20, 'E_total:{}'.format(e_total))
-        plt.text(self.img_width+10, self.img_height, 'E_escape:{}'.format(e_escape),color='red')
-        plt.imshow(rgb_array)
-        plt.xticks([])
-        plt.yticks([])
+    def saveIntermImages(self, rgb_array, i, k):
+        e_total,e_grav,e_bend,e_escape,_,_,_,_,_,_,_,_ = self.energyDataAnalysis
+        _, (ax1, ax2) = plt.subplots(1,2,width_ratios=[1,1.2],figsize=(16,9))
+        ax1.imshow(rgb_array)
+        ax1.set_xticks([])
+        ax1.set_yticks([])
 
-        plt.savefig(self.path + "file%03d.png" % i)
+        # plot data values
+        ax1.text(self.img_width-100, self.img_height+20, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=14, color=self.cls[0])
+        e_escape = np.round(e_escape[k],decimals=3) if e_escape[k] is not np.nan else np.inf
+        ax1.text(self.img_width-100, self.img_height+45, 'E_escape:{}'.format(e_escape), fontsize=14, color=self.cls[3])
+        if self.isArticulatedObj:
+            ax1.text(self.img_width-250, self.img_height+20, 'E_grav:{}'.format(np.round(e_grav[k],decimals=3)), fontsize=14, color=self.cls[1])
+            ax1.text(self.img_width-250, self.img_height+45, 'E_bend:{}'.format(np.round(e_bend[k],decimals=3)), fontsize=14, color=self.cls[2])
+
+        # plot energy curves
+        plot_escape_energy(ax2, self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=k)
+        plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
+        plt.savefig(self.dataPaths[0] + "file%03d.png" % i)
         plt.close()
 
     def imagesToVideo(self):
-        os.chdir(self.path)
+        os.chdir(self.dataPaths[0])
         subprocess.call([
             'ffmpeg', '-framerate', '30', '-i', 'file%03d.png', '-r', '30', '-pix_fmt', 'yuv420p',
-            'cage_with_escape_energy.mp4'
+            'cage_with_escape_energy_parallel.mp4'
         ])
         for file_name in glob.glob("file*"):
             os.remove(file_name)
@@ -179,12 +173,16 @@ if __name__ == '__main__':
     args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
     isArticulatedObj = False if args.object in rigidObjectList else True
-    # folderName = './results/HookTrapsRing_16-03-2023-09-48-19/'
-    folderName = './results/GripperClenchesStarfish_17-03-2023-08-20-10/'
-    # folderName = './results/FishFallsInBowl_17-03-2023-01-26-47/'
+    
+    # get folders of the same task
+    folderList = []
+    path = './results/'
+    os.chdir(path)
+    for folderName in glob.glob("GripperClenchesStarfish*"):
+        folderList.append(folderName + '/')
 
     # run a dynamic falling scenario and analyze frame-wise escape energy
-    sce = generateVideo(args, folderName, isArticulatedObj)
+    sce = generateVideo(args, folderList, isArticulatedObj)
     if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
         sce.runDynamicFalling()
     elif args.scenario in ['GripperClenchesStarfish']:

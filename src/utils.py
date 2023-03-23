@@ -91,6 +91,9 @@ def texture_path_list():
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish']
 
+def get_colors():
+    return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
+
 def flatten_nested_list(input):
     '''Input in the format of [[1], [2, 3], [4, 5, 6, 7]].
         Two nested layers at most.
