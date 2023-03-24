@@ -25,13 +25,13 @@ if __name__ == '__main__':
  
     # Choose from different searching methods
     if args.search == 'BoundShrinkSearch':
-        useBisecSearch = True # True: bisection search; False: Conservative search
-        env.bound_shrink_search(useBisecSearch)
-        escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
-        print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+        useGreedySearch = False # True: bisection search; False: Conservative search
+        env.bound_shrink_search(useGreedySearch)
+        env.visualize_bound_shrink_search(useGreedySearch) # visualize
+        # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
     elif args.search == 'EnergyMinimizeSearch':
-        numInnerIter = 3
+        numInnerIter = 1
         env.energy_minimize_search(numInnerIter)
         env.visualize_energy_minimize_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))

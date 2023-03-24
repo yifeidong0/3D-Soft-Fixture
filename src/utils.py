@@ -22,7 +22,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
+    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
         choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
@@ -35,20 +35,20 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['PathLength', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Ring', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='Bowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=12, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\

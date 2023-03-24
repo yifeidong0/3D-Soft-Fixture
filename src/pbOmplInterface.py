@@ -218,11 +218,9 @@ class PbOMPL():
                 
             # get cost of the solution path
             if self.args.search == 'EnergyMinimizeSearch':
-                # self.objective = self.pdef.getOptimizationObjective()
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
                 best_cost = self.planner.bestCost().value() # approximate solution?
-                
-                # sol_final_cost = sol_path_geometric.cost(self.objective).value() # exact solution?
+                # sol_final_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
                 # print('!!!!!!!!sol_final_cost', sol_final_cost)
 
             # make sure goal is reached
@@ -264,7 +262,7 @@ class PbOMPL():
             else:
                 self.robot.set_state(q)
             p.stepSimulation()
-            time.sleep(0.01)
+            time.sleep(1/240)
 
     # -------------
     # Configurations

@@ -178,12 +178,12 @@ if __name__ == '__main__':
     folderList = []
     path = './results/'
     os.chdir(path)
-    for folderName in glob.glob("GripperClenchesStarfish*"):
+    for folderName in glob.glob(args.scenario + "*"):
         folderList.append(folderName + '/')
-
+    
     # run a dynamic falling scenario and analyze frame-wise escape energy
     sce = generateVideo(args, folderList, isArticulatedObj)
-    if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
+    if args.scenario in ['FishFallsInBowl', 'HookTrapsRing']:
         sce.runDynamicFalling()
     elif args.scenario in ['GripperClenchesStarfish']:
         sce.runClenchFist()
