@@ -81,7 +81,7 @@ class ObjectToCage(ObjectBase):
         self.joint_idx = []
         # self.reset()
 
-        self.set_search_bounds()
+        # self.set_search_bounds()
 
     def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
         self.joint_bounds = basePosBounds # CoM pos
@@ -143,7 +143,7 @@ class CagingObstacle(ObjectToCage):
         self.joint_idx = []
         self.joint_bounds = []
 
-        self.set_joint_bounds()
+        # self.set_joint_bounds()
 
     def set_joint_bounds(self):
         for i in range(self.articulate_num): # articulated joints

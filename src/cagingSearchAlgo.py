@@ -24,7 +24,7 @@ class RigidObjectCaging():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-        self.reset_start_and_goal()
+        # self.reset_start_and_goal()
 
         self.max_z_escapes = [] # successful escapes
         self.eps_thres = eps_thres # bi-section search resolution
@@ -48,6 +48,8 @@ class RigidObjectCaging():
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
+        print('@@@@self.start', self.start)
+        print('@@@@jbounds', jbounds)
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
@@ -286,6 +288,6 @@ class ArticulatedObjectCaging(RigidObjectCaging):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-        self.reset_start_and_goal()
+        # self.reset_start_and_goal()
 
         self.max_z_escapes = [] # successful escapes

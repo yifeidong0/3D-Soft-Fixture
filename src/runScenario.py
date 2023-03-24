@@ -56,18 +56,18 @@ class runScenario():
                 self.obstacleScale = [.1, .1, .1]
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
                 self.goalCoMPose = [0,0,0.01] + [0]*3
-            case 'HookTrapsFish':
-                self.object = 'FishWithRing'
-                self.objectPos = [.7,-2.1,3.4]
-                self.objectQtn = [0,1,0,1]
-                self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
-                self.obstacle = 'Hook'
-                self.obstaclePos = [0, 0, 2]
-                self.obstacleEul = [1.57, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2.5,2.5], [-0.5,3.5]] # searching bounds
-                self.goalCoMPose = [0,0,-0.49] + [0]*3
+            # case 'HookTrapsFish':
+            #     self.object = 'FishWithRing'
+            #     self.objectPos = [.7,-2.1,3.4]
+            #     self.objectQtn = [0,1,0,1]
+            #     self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+            #     self.obstacle = 'Hook'
+            #     self.obstaclePos = [0, 0, 2]
+            #     self.obstacleEul = [1.57, 0, 0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = [.1,.1,.1]
+            #     self.basePosBounds=[[-2,2], [-2.5,2.5], [-0.5,3.5]] # searching bounds
+            #     self.goalCoMPose = [0,0,-0.49] + [0]*3
             case 'HookTrapsRing':
                 self.object = 'Ring'
                 self.objectPos = [1.3,-.1,3.4]
@@ -80,7 +80,6 @@ class runScenario():
                 self.obstacleScale = [.1,.1,.1]
                 self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
                 self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
-
             case 'GripperClenchesStarfish':
                 self.object = 'Starfish'
                 self.objectPos = [.1,.1,2.3]
@@ -208,7 +207,7 @@ class runScenario():
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(6/240.)
+            time.sleep(1/240.)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
@@ -242,91 +241,95 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    args, parser = argument_parser()
-    rigidObjectList = get_non_articulated_objects()
-    isArticulatedObj = False if args.object in rigidObjectList else True
+    for n in range(1):
+        args, parser = argument_parser()
+        rigidObjectList = get_non_articulated_objects()
+        isArticulatedObj = False if args.object in rigidObjectList else True
     
-    # run a dynamic falling scenario and analyze frame-wise escape energy
-    sce = runScenario(args)
-    if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
-        sce.runDynamicFalling()
-    elif args.scenario in ['GripperClenchesStarfish']:
-        sce.runClenchFist()
+        # run a dynamic falling scenario and analyze frame-wise escape energy
+        sce = runScenario(args)
+        if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
+            sce.runDynamicFalling()
+        elif args.scenario in ['GripperClenchesStarfish']:
+            sce.runClenchFist()
 
-    # create caging environment and items in pybullet
-    if args.object in rigidObjectList:
-        eps_thres = 1e-2 # threshold of loop terminating
-        env = RigidObjectCaging(args, eps_thres)
-    else:
-        env = ArticulatedObjectCaging(args)
+        # create caging environment and items in pybullet
+        if args.object in rigidObjectList:
+            eps_thres = 1e-2 # threshold of loop terminating
+            env = RigidObjectCaging(args, eps_thres)
+        else:
+            env = ArticulatedObjectCaging(args)
 
-    # set searching bounds and add obstacles
-    env.robot.set_search_bounds(sce.basePosBounds)
-    env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
-    escapeEnergyCostSce = []
-    startEnergySce = [] # start state energy
-    startGEnergySce = [] # start G potential energy
-    startEEnergySce = [] # start E potential energy
-    
-    # Run the caging analysis algorithm over downsampled frames we extracted above
-    numMainIter = len(sce.objJointPosSce)
-    for i in range(numMainIter):
-        # Set obstacle's state
-        if args.scenario in ['GripperClenchesStarfish']:
-            env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
-            p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+        # set searching bounds and add obstacles
+        env.robot.set_search_bounds(sce.basePosBounds)
+        env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
+        escapeEnergyCostSce = []
+        startEnergySce = [] # start state energy
+        startGEnergySce = [] # start G potential energy
+        startEEnergySce = [] # start E potential energy
+        
+        # Run the caging analysis algorithm over downsampled frames we extracted above
+        numMainIter = len(sce.objJointPosSce)
+        for i in range(numMainIter):
+            # Set obstacle's state
+            if args.scenario in ['GripperClenchesStarfish']:
+                env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
 
-        # Set object's start and goal states
-        objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + sce.objJointPosSce[i]
-        objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
-        isValidStartAndGoal = env.reset_start_and_goal(objStartState, objGoalState)
-        if not isValidStartAndGoal: # start or goal state invalid
-            continue
+            # Set object's start and goal states
+            objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + sce.objJointPosSce[i]
+            objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
+            isValidStartAndGoal = env.reset_start_and_goal(objStartState, objGoalState)
+            if not isValidStartAndGoal: # start or goal state invalid
+                continue
 
-        # Create OMPL interface
-        env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+            # Create OMPL interface
+            env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
-        # Choose a searching method
-        if args.search == 'BoundShrinkSearch':
-            useBisecSearch = True # True: bisection search; False: Conservative search
-            env.bound_shrink_search(useBisecSearch)
-            escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
-            # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+            # Choose a searching method
+            if args.search == 'BoundShrinkSearch':
+                useBisecSearch = True # True: bisection search; False: Conservative search
+                env.bound_shrink_search(useBisecSearch)
+                escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
+                # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
-        elif args.search == 'EnergyMinimizeSearch':
-            numInnerIter = 1
-            isSolved = env.energy_minimize_search(numInnerIter)
-            # env.visualize_energy_minimize_search()
+            elif args.search == 'EnergyMinimizeSearch':
+                numInnerIter = 1
+                isSolved = env.energy_minimize_search(numInnerIter)
+                # env.visualize_energy_minimize_search()
 
-            # Record start and escape energy
-            if isArticulatedObj:
-                startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
-                startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
-                startEnergy = startGEnergy + startEEnergy
-            else: # non-articulated objects' z_world
-                # startEnergy = env.energy_minimize_paths_energies[0][0] if isSolved else np.inf
-                startGEnergy, startEEnergy = None, None
-                startEnergy = objStartState[2]
-            startEnergySce.append(startEnergy)
-            startGEnergySce.append(startGEnergy)
-            startEEnergySce.append(startEEnergy)
-            
-            escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
-            escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
-            
-            # Create txt, csv for data recording
-            if i == 0:
-                folderName = record_data_init(sce, args, env)
-            # print('@@@i: ',i)
-            
-            # Record data in this loop 
-            energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
-            record_data_loop(sce, energyData, folderName, i)
-            # print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
+                # Record start and escape energy
+                if isArticulatedObj:
+                    startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
+                    startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
+                    startEnergy = startGEnergy + startEEnergy
+                else: # non-articulated objects' z_world
+                    # startEnergy = env.energy_minimize_paths_energies[0][0] if isSolved else np.inf
+                    startGEnergy, startEEnergy = None, None
+                    startEnergy = objStartState[2]
+                startEnergySce.append(startEnergy)
+                startGEnergySce.append(startGEnergy)
+                startEEnergySce.append(startEEnergy)
+                
+                escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
+                escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
+                
+                # Create txt, csv for data recording
+                if i == 0:
+                    folderName = record_data_init(sce, args, env)
+                # print('@@@i: ',i)
+                
+                # Record data in this loop 
+                energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
+                record_data_loop(sce, energyData, folderName, i)
+                # print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
 
-    # Shut down pybullet (GUI)
-    p.disconnect()
+        # Shut down pybullet (GUI)
+        p.disconnect()
+        # del(sce)
+        # del(env)
+        # time.sleep(300)
 
-    # Plot
-    energyData = (startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce)
-    plot_escape_energy(energyData, args, folderName, isArticulatedObj)
+        # # Plot
+        # energyData = (startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce)
+        # plot_escape_energy(energyData, args, folderName, isArticulatedObj)
