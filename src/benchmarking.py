@@ -42,7 +42,8 @@ if __name__ == '__main__':
     
     # Run the caging analysis algorithm over downsampled frames we extracted above
     numMainIter = len(sce.objJointPosSce)
-    for i in [2]:
+    for i in [50]:
+        print('@@@@@index: ', sce.idxSce[i])
         # Set obstacle's state
         if args.scenario in ['GripperClenchesStarfish']:
             env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         # Choose a searching method
         if args.search == 'BoundShrinkSearch':
             useGreedySearch = 0 # True: bisection search; False: Conservative search
-            env.bound_shrink_search(useGreedySearch)
+            env.bound_shrink_search(useGreedySearch, initSearchBound=sce.basePosBounds, numIter=10)
             env.visualize_bound_shrink_search(useGreedySearch) # visualize
             # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 

@@ -196,7 +196,9 @@ class PbOMPL():
         orig_robot_state = self.robot.get_cur_state()
 
         # attempt to solve the problem within allowed planning time
+        t0 = time.time()
         solved = self.planner.solve(allowed_time)
+        time_taken = time.time() - t0
         res = False
         sol_path_list = []
         sol_path_energy, best_cost = None, None
@@ -233,7 +235,7 @@ class PbOMPL():
         # reset robot state
         self.robot.set_state(orig_robot_state)
 
-        return res, sol_path_list, sol_path_energy, best_cost
+        return res, sol_path_list, sol_path_energy, best_cost, time_taken
 
     def plan(self, goal, allowed_time=10.0):
         '''
