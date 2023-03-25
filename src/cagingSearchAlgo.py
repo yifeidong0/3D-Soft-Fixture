@@ -9,6 +9,9 @@ from time import sleep
 from object import ObjectToCage, CagingObstacle
 from utils import path_collector
 import copy
+import datetime
+import os
+import csv
 
 class RigidObjectCaging():
     def __init__(self, args, eps_thres=1e-2):
@@ -25,7 +28,7 @@ class RigidObjectCaging():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-        self.reset_start_and_goal()
+        self.reset_start_and_goal() # TODO
 
         self.eps_thres = eps_thres # bi-section search resolution
 
@@ -122,7 +125,8 @@ class RigidObjectCaging():
             if self.args.objective == 'GravityPotential':
                 self.track_path_cost(path)
         else:
-            self.escape_cost_list.append(self.escape_cost_list[-1])
+            if self.args.search == 'BoundShrinkSearch':
+               self.escape_cost_list.append(self.escape_cost_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
     def energy_minimize_search(self, numIter=1):
@@ -134,6 +138,7 @@ class RigidObjectCaging():
         # start planning
         self.energy_minimize_paths_energies = []
         self.sol_final_costs = []
+        self.escape_cost_list = [] # successful escapes
         solveds = []
         for i in range(numIter):
             self.robot.set_state(self.start)
@@ -161,7 +166,7 @@ class RigidObjectCaging():
         plt.title('Iterative BIT* energy minimize search')
         plt.show()
 
-    def bound_shrink_search(self, useGreedySearch=False, initSearchBound=None, numIter=2):
+    def bound_shrink_search(self, useGreedySearch=False, initSearchBound=None, numIter=2, maxTimeTaken=30):
         '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path'''
         self.time_taken_list_runs, self.escape_cost_list_runs = [], [] # record over several runs
         initUpperBound = copy.deepcopy(initSearchBound[2][1])
@@ -223,13 +228,15 @@ class RigidObjectCaging():
                         moveOn = False
 
                 else: # slower but guaranteed lower bound
-                    # eps = np.inf if len(self.epss)==0 else self.epss[-1]
+                    # Update upper bound
                     if res: # solution found
                         cUpper = curr_cost
 
                     # stop if invalid search appears twice
-                    maxNumInfs = 3
-                    if self.times_of_no_solution >= maxNumInfs:
+                    # maxNumInfs = 3
+                    # if self.times_of_no_solution >= maxNumInfs:
+                    #     moveOn = False
+                    if self.time_taken_list[-1] > maxTimeTaken:
                         moveOn = False
 
                 # reset z upper bound
@@ -242,14 +249,12 @@ class RigidObjectCaging():
                 # print("----------joint_bounds z: ", self.robot.joint_bounds[2])
             
             # record data over runs
-            print('@@@@@@@@@A run finished!!')
             self.time_taken_list_runs.append(self.time_taken_list) 
             self.escape_cost_list_runs.append(self.escape_cost_list)
 
             # reset and prepare for the next run
             self.robot.set_bisec_thres(initUpperBound)
-
-
+            
     def visualize_bound_shrink_search(self, useGreedySearch=False):
         '''visualize the convergence of caging depth'''
 

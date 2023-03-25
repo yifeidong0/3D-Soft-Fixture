@@ -66,6 +66,19 @@ def record_data_loop(sce, energyData, folderName, i):
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
+def record_data_benchmark_bound_shrink(costListRuns, timeTakenListRuns, frameId, folderName):
+    with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for i in range(len(costListRuns)):
+            dataCost = flatten_nested_list([
+                [frameId], [i], costListRuns[i]
+                ])
+            dataTime = flatten_nested_list([
+                [frameId], [i], timeTakenListRuns[i]
+                ])
+            writer.writerow(dataTime)
+            writer.writerow(dataCost)
+        
 def analyze_energy_data(folderList, isArticulatedObject):
     # Get energy data from multiple csv files
     energyDataList = []

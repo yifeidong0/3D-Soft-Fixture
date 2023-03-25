@@ -241,7 +241,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(1):
+    for n in range(2):
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True

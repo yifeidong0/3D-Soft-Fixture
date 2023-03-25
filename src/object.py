@@ -81,7 +81,7 @@ class ObjectToCage(ObjectBase):
         self.joint_idx = []
         # self.reset()
 
-        self.set_search_bounds()
+        self.set_search_bounds() # TODO: why joint bounds appear when running scenario multiple times
 
     def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
         self.joint_bounds = basePosBounds # CoM pos

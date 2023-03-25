@@ -6,19 +6,25 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 from main import argument_parser
-import pybullet_data
 from utils import *
-from object import CagingObstacle
 from visualization import *
 import numpy as np
 from runScenario import runScenario
 
 if __name__ == '__main__':
+    # Hyperparameters
+    numInnerIter = 6
+    frames = [18,19,20,21,22]
+    maxTimeTaken = 480
+    useGreedySearch = 0 # True: bisection search; False: Conservative search
+
+    # Settings and paths
     args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
     isArticulatedObj = False if args.object in rigidObjectList else True
-
-    # run a dynamic falling scenario and analyze frame-wise escape energy
+    folderName = None
+    
+    # Run a dynamic falling scenario and analyze frame-wise escape energy
     sce = runScenario(args)
     if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
         sce.runDynamicFalling()
@@ -35,15 +41,12 @@ if __name__ == '__main__':
     # set searching bounds and add obstacles
     env.robot.set_search_bounds(sce.basePosBounds)
     env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
-    # escapeEnergyCostSce = []
-    # startEnergySce = [] # start state energy
-    # startGEnergySce = [] # start G potential energy
-    # startEEnergySce = [] # start E potential energy
     
     # Run the caging analysis algorithm over downsampled frames we extracted above
-    numMainIter = len(sce.objJointPosSce)
-    for i in [50]:
+    for i in frames:
         print('@@@@@index: ', sce.idxSce[i])
+        frameId = sce.idxSce[i]
+
         # Set obstacle's state
         if args.scenario in ['GripperClenchesStarfish']:
             env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
@@ -61,42 +64,26 @@ if __name__ == '__main__':
 
         # Choose a searching method
         if args.search == 'BoundShrinkSearch':
-            useGreedySearch = 0 # True: bisection search; False: Conservative search
-            env.bound_shrink_search(useGreedySearch, initSearchBound=sce.basePosBounds, numIter=10)
-            env.visualize_bound_shrink_search(useGreedySearch) # visualize
-            # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+            env.bound_shrink_search(useGreedySearch, initSearchBound=sce.basePosBounds, numIter=numInnerIter, maxTimeTaken=maxTimeTaken)
+            
+            # # Visualization
+            # env.visualize_bound_shrink_search(useGreedySearch) # visualize
+            
+            # Create new folder
+            createFolder = 1 if i == frames[0] else 0
+            if createFolder:
+                now = datetime.now()
+                dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+                folderName = './results/Benchmarking/{}'.format(dt_string)
+                os.mkdir(folderName)
+
+            # Record data to the folder
+            record_data_benchmark_bound_shrink(env.escape_cost_list_runs, env.time_taken_list_runs, frameId, folderName)
 
         elif args.search == 'EnergyMinimizeSearch':
-            numInnerIter = 1
             isSolved = env.energy_minimize_search(numInnerIter)
             # env.visualize_energy_minimize_search()
             print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
-
-            # # Record start and escape energy
-            # if isArticulatedObj:
-            #     startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
-            #     startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
-            #     startEnergy = startGEnergy + startEEnergy
-            # else: # non-articulated objects' z_world
-            #     # startEnergy = env.energy_minimize_paths_energies[0][0] if isSolved else np.inf
-            #     startGEnergy, startEEnergy = None, None
-            #     startEnergy = objStartState[2]
-            # startEnergySce.append(startEnergy)
-            # startGEnergySce.append(startGEnergy)
-            # startEEnergySce.append(startEEnergy)
-            
-            # escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
-            # escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
-            
-            # # Create txt, csv for data recording
-            # if i == 0:
-            #     folderName = record_data_init(sce, args, env)
-            # # print('@@@i: ',i)
-            
-            # # Record data in this loop 
-            # energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
-            # record_data_loop(sce, energyData, folderName, i)
-            # # print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
 
     # Shut down pybullet (GUI)
     p.disconnect()

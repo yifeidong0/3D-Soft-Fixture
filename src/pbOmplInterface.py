@@ -112,6 +112,14 @@ class PbOMPL():
             bounds.setHigh(i, bound[1])
         self.space.setBounds(bounds)
 
+    # def solution_callback(self, data):
+    #     ''' Define a callback function to print the solution path
+    #     '''
+    #     print('@@@@@data callback', data)
+    #     solution = data['solution']
+    #     print('New solution found with cost', solution.cost)
+    #     solution.printAsMatrix()
+        
     def set_planner(self, planner_name, goal):
         '''
         Planner setup.
@@ -183,6 +191,10 @@ class PbOMPL():
         
         # else self.args.search == 'BoundShrinkSearch':
 
+        # # Register the callback function with the planner
+        # if self.args.search == 'EnergyMinimizeSearch':
+        #     self.pdef.getIntermediateSolutionCallback().set(self.solution_callback)
+
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
 
@@ -206,7 +218,7 @@ class PbOMPL():
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # solution_path = self.planner.bestPathFromGoalToStart() # TODO: expose the corresponding C++ protected function
-            
+            # print('@@@callback', self.pdef.getIntermediateSolutionCallback(self.solution_callback))
             sol_path_geometric = self.pdef.getSolutionPath()
             sol_path_states_non_interp = sol_path_geometric.getStates()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
@@ -221,7 +233,7 @@ class PbOMPL():
             # get cost of the solution path
             if self.args.search == 'EnergyMinimizeSearch':
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
-                best_cost = self.planner.bestCost().value() # approximate solution?
+                best_cost = self.planner.bestCost().value() # approximate solution? available for BITstar
                 # sol_final_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
                 # print('!!!!!!!!sol_final_cost', sol_final_cost)
 
