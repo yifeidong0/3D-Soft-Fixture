@@ -49,7 +49,6 @@ class generateVideo(runScenario):
         
         # get results
         self.energyDataAnalysis, self.minDataLen = analyze_energy_data(self.dataPaths, self.isArticulatedObj)
-        print('self.minDataLen', self.minDataLen)
         _, self.indices = get_results_from_csv(self.dataPaths[0], self.isArticulatedObj)
         # self.startEnergySce, self.startGEnergySce, self.startEEnergySce, self.escapeEnergyCostSce = self.energy_data
 
@@ -112,7 +111,7 @@ class generateVideo(runScenario):
         i = 0 # sim no.
         k = 0 # results data no.
 
-        time.sleep(5)
+        time.sleep(8)
         while (1):
             # print(i)
             p.stepSimulation()
@@ -145,7 +144,7 @@ class generateVideo(runScenario):
         ax1.set_xticks([])
         ax1.set_yticks([])
 
-        # plot data values
+        # plot data text values
         ax1.text(self.img_width-100, self.img_height+20, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=14, color=self.cls[0])
         e_escape = np.round(e_escape[k],decimals=3) if e_escape[k] is not np.nan else np.inf
         ax1.text(self.img_width-100, self.img_height+45, 'E_escape:{}'.format(e_escape), fontsize=14, color=self.cls[3])

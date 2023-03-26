@@ -28,7 +28,7 @@ class RigidObjectCaging():
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.load_object()
-        self.reset_start_and_goal() # TODO
+        # self.reset_start_and_goal() # TODO
 
         self.eps_thres = eps_thres # bi-section search resolution
 
