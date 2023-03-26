@@ -7,10 +7,11 @@ import numpy as np
 from utils import flatten_nested_list
 import matplotlib.pyplot as plt
 from utils import *
-from main import argument_parser
+# from main import argument_parser
 # import pybullet as p
 # import pybullet_data
 # import time
+from scipy import interpolate
 
 def record_data_init(sce, args, env):
     # get current time
@@ -208,7 +209,7 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
 ###############################For Benchmark Plot#################################
 ##################################################################################
 
-def get_benckmark_results_from_csv(folderName, cInit, noIter=6):
+def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIter=6):
     tOneIter = [0.0]
     cOneIter = [float(cInit)]
     timeTickList = []
@@ -227,12 +228,11 @@ def get_benckmark_results_from_csv(folderName, cInit, noIter=6):
             i += 1
 
             # Break when the data for next frame appear
-            if i >= 2*noIter:
+            if getOnlyOneFrame and i >= 2*noIter:
                 break
 
     return timeTickList, escapeEnergyList
 
-from scipy import interpolate
 
 def plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, maxTimeB=480, maxTimeE=180):
     # Color codes
@@ -284,10 +284,78 @@ def plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, tim
     # Settings for plot
     ax.set_xlabel('Time / sec')
     ax.set_ylabel('Escape energy cost / J')
-    plt.title('Comparison of two search algorithms over time')
+    plt.title('Comparison of two search algorithms over time in keyframe 18')
     plt.legend()
     plt.show()
 #     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+
+def plot_escape_cost_benchmark(CostBSFrames, startKeyFrame=18, noFrame=5):
+    '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
+    '''
+    cls = get_colors()
+    noIter = 6
+
+    # Retrieve data of bound shrink
+    finalCostBSFrames = [i[-1] for i in CostBSFrames]
+    noFrame = int(len(finalCostBSFrames) / noIter)
+    escapeCostBS = np.asarray(finalCostBSFrames).reshape((noIter, noFrame),order='F')
+    
+    # escapeCostBS = np.array([[0.45025702185899963, 0.5915012943170859, 0.6719123923001322, 0.7735863827527942, 0.785051268832875],
+    #                          [0.481972542785559, 0.5636373344189609, 0.6741576765567308, 0.7332705210811064, 0.7996321487651066],
+    #                          [0.4553680397479556, 0.5905980326911671, 0.6842830970146712, 0.7198166066778611, 0.8085316450950402],
+    #                          [0.47555393052735173, 0.6147857512958415, 0.7081607814510331, 0.7483660149387235, 0.8098032935455455],
+    #                          [0.4678509164335769, 0.5737395261611726, 0.6929649648052636, 0.74044356419313, 0.8688147146705869],
+    #                          [0.4387410015250195, 0.5805851902200394, 0.7031255907974177, 0.7509081343810613, 0.8095806233424241]])
+        
+    # Get folders of the same task
+    args, parser = argument_parser()
+    path = './results/'
+    os.chdir(path)
+    folderList = []
+    for folderName in glob.glob(args.scenario + "*"):
+        folderList.append(folderName + '/')
+    noFolder = len(folderList)
+
+    # Retrieve data of energy minimization
+    escapeCostEM = np.zeros((noFolder, noFrame))
+    for i,folder in enumerate(folderList):
+        # Get energy data from single csv file
+        energyData, _ = get_results_from_csv(folder)
+        row = energyData[3][startKeyFrame:startKeyFrame+noFrame]
+        escapeCostEM[i,:] = np.asarray(row)
+
+    # escapeCostEM = np.array([[0.503038952510821, 0.547912463013799, 0.7012221525887803, 0.7519621064815385, 0.8479040445692292],
+    #                          [0.44607892836510166, 0.5687563975876864, 0.6441269911276293, 0.7492176594749811, 0.8162846877214063],
+    #                          [0.4529189648896712, 0.5390504882394556, 0.6994367257609473, 0.745929806795294, 0.8191514545831937],
+    #                          [0.42075575266931553, 0.5851642457220465, 0.6870412986235142, 0.7422303958324803, 0.8129333940640022]])
+
+    # Retrieve indices of keyframes
+    id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
+    
+    # Retrieve mean and std
+    escapeCostBSmean = np.mean(escapeCostBS, axis=0)
+    escapeCostEMmean = np.mean(escapeCostEM, axis=0)
+    escapeCostBSstd = np.std(escapeCostBS, axis=0)
+    escapeCostEMstd = np.std(escapeCostEM, axis=0)
+
+    # Plot mean escape energy cost
+    _, ax = plt.subplots()
+    # ax.set_yscale('log')
+    # ax.set_ylim(0.4, 1.0)
+    ax.plot(id, escapeCostBSmean, '-o', color=cls[0], linewidth=3, label='Bound shrink search') # (8 min run time for each keyframe)
+    ax.plot(id, escapeCostEMmean, '-o', color=cls[3], linewidth=3, label='Energy minimization search') # (2 min run time for each keyframe)
+
+    # Plot std shade
+    ax.fill_between(id, escapeCostBSmean-escapeCostBSstd, escapeCostBSmean+escapeCostBSstd, alpha=0.3, color=cls[0])
+    ax.fill_between(id, escapeCostEMmean-escapeCostEMstd, escapeCostEMmean+escapeCostEMstd, alpha=0.3, color=cls[3])
+
+    # Settings for plot
+    ax.set_xticks(id.astype(int))
+    ax.set_xlabel('Index of keyframes')
+    ax.set_ylabel('Escape energy cost / J')
+    plt.title('Comparison of two search algorithms in adjacent keyframes of a dynamic scene')
+    plt.legend()
+    plt.show()
 
 
 '''Compare bound shrink search and energy minimization search over 8min and 3min search time, respectively, in one frame'''
@@ -298,9 +366,17 @@ if __name__ == '__main__':
     # Read from csv
     folderNameB = './results/Benchmarking/25-03-2023-23-17-34_BoundShrink'
     folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization'
-    timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit)
-    timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit)
+    timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
+    timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
     # print(timeTickListB)
     # print(escapeEnergyListB)
 
+    # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
     plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE)
+
+    # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
+    startKeyFrame = 18 
+    noFrame = 5
+    _, CostBSFrames = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=0)
+    # print('@@@@finalCostBSFrames', finalCostBSFrames)
+    plot_escape_cost_benchmark(CostBSFrames, startKeyFrame, noFrame)

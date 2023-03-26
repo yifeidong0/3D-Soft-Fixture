@@ -242,7 +242,6 @@ class runScenario():
 
 if __name__ == '__main__':
     for n in range(1):
-        folderName = './results/HookTrapsRing_26-03-2023-07-27-39'
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
@@ -271,7 +270,7 @@ if __name__ == '__main__':
         
         # Run the caging analysis algorithm over downsampled frames we extracted above
         numMainIter = len(sce.objJointPosSce)
-        for i in range(32,numMainIter):
+        for i in range(numMainIter):
             # Set obstacle's state
             if args.scenario in ['GripperClenchesStarfish']:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])

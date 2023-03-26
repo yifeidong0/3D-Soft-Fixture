@@ -22,15 +22,15 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
-        choices=['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing', 'GripperClenchesStarfish'], \
+    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
+        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
-    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
+    parser.add_argument('-s', '--search', default='BoundShrinkSearch', \
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='RRT', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -40,15 +40,15 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Ring', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Bowl', \
+    parser.add_argument('-l', '--obstacle', default='Hook', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=240, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
