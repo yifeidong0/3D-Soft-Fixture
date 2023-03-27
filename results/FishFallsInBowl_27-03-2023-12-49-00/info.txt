@@ -1,0 +1,16 @@
+*****Search goalCoMPose: [0, 0, 0.01, 0, 0, 0]
+*****Search basePosBounds: [[-2, 2], [-2, 2], [0, 3], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5), (-0.5, 0.5)]
+*****args: Namespace(scenario='FishFallsInBowl', search='EnergyMinimizeSearch', planner='BITstar', objective='GravityPotential', object='Fish', obstacle='Bowl', runtime=12, visualization=0)
+*****BIT params: delay_rewiring_to_first_solution = 0
+drop_unconnected_samples_on_prune = 0
+find_approximate_solutions = 0
+prune_threshold_as_fractional_cost_change = 0.05
+rewire_factor = 1.1
+samples_per_batch = 10000
+stop_on_each_solution_improvement = 0
+use_graph_pruning = 1
+use_just_in_time_sampling = 0
+use_k_nearest = 1
+use_strict_queue_ordering = 1
+*****Fish links' mass: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+*****Fish joints' stiffness: [10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10]

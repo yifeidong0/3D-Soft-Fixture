@@ -25,8 +25,8 @@ class runScenario():
         self.pathsTex = texture_path_list()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 8
-        self.endFrame = 800
+        self.downsampleRate = 3
+        self.endFrame = 500
 
         # load object and obstacle
         self.initializeParams()
