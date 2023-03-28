@@ -14,7 +14,7 @@ from runScenario import runScenario
 if __name__ == '__main__':
     # Hyperparameters
     numInnerIter = 6
-    frames = list(range(28,36))
+    frames = list(range(45,50))
     maxTimeTaken = 480
     useGreedySearch = 0 # True: bisection search; False: Conservative search
 

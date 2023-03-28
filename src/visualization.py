@@ -235,7 +235,7 @@ def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIt
 
 from matplotlib.ticker import FormatStrFormatter
 
-def plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, maxTimeB=480, maxTimeE=180):
+def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, maxTimeB=480, maxTimeE=180):
     # Color codes
     cls = get_colors()
     noIter = len(timeTickListE)
@@ -291,7 +291,7 @@ def plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, tim
     # plt.show()
     plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=500)
 
-def plot_escape_cost_benchmark(CostBSFrames, SaveFolderName, startKeyFrame=18):
+def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
     '''
     cls = get_colors()
@@ -310,7 +310,7 @@ def plot_escape_cost_benchmark(CostBSFrames, SaveFolderName, startKeyFrame=18):
     for folderName in glob.glob(args.scenario + "*"):
         folderList.append(folderName + '/')
     noFolder = len(folderList)
-
+    
     # Retrieve data of energy minimization
     escapeCostEM = np.zeros((noFolder, noFrame))
     for i,folder in enumerate(folderList):
@@ -324,10 +324,12 @@ def plot_escape_cost_benchmark(CostBSFrames, SaveFolderName, startKeyFrame=18):
     id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
     
     # Retrieve mean and std
+    print(escapeCostEM)
+    escapeCostEM[np.isinf(escapeCostEM)] = np.nan
     escapeCostBSmean = np.mean(escapeCostBS, axis=0)
-    escapeCostEMmean = np.mean(escapeCostEM, axis=0)
+    escapeCostEMmean = np.nanmean(escapeCostEM, axis=0)
     escapeCostBSstd = np.std(escapeCostBS, axis=0)
-    escapeCostEMstd = np.std(escapeCostEM, axis=0)
+    escapeCostEMstd = np.nanstd(escapeCostEM, axis=0)
 
     # Plot mean escape energy cost
     _, ax = plt.subplots()
@@ -365,10 +367,10 @@ if __name__ == '__main__':
     # print(escapeEnergyListB)
 
     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
-    plot_escape_cost_decrease_in_benckmark(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName)
+    plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName)
 
     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
     startKeyFrame = 18 
     _, CostBSFrames = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=0)
     # print('@@@@finalCostBSFrames', finalCostBSFrames)
-    plot_escape_cost_benchmark(CostBSFrames, folderName, startKeyFrame)
+    plot_acurracy_test(CostBSFrames, folderName, startKeyFrame)
