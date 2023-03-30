@@ -91,7 +91,7 @@ def analyze_energy_data(folderList, isArticulatedObject):
         minDataLen = min(minDataLen, len(energyData[3]))
 
     # unpack the piled datasets
-    totalEnergySce = energyDataList[1][0][:minDataLen]
+    totalEnergySce = energyDataList[3][0][:minDataLen]
     GEnergySce, EEnergySce, escapeEnergyCostSce = [], [], []
     for d in range(len(energyDataList)):
         _, GEnergy, EEnergy, escapeEnergyCost = energyDataList[d]
@@ -116,7 +116,7 @@ def analyze_energy_data(folderList, isArticulatedObject):
 
     return (minTot, minG, minE, minEsc, meanTot, meanG, meanE, meanEsc, stdTot, stdG, stdE, stdEsc), minDataLen
 
-def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=False, axvline=None):
+def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=False, axvline=None, addAxvLabel=1, labelNames=['A','B','C','D']):
     # TODO: use broken axis to represent inf.
     # Color codes
     cls = get_colors()
@@ -139,11 +139,16 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
     
     # Optional: plot vertical line of current no. of iteration
     if axvline is not None:
-        ax.axvline(x=axvline, color='k')
+        for i in range(len(axvline)):
+            ax.axvline(x=axvline[i], color='k', linestyle='--', linewidth=1)
+
+            # Add A, B, C... labels to vertical lines (For workshop paper)
+            if addAxvLabel:
+                ax.text(axvline[i]+.5, -0.1, labelNames[i], fontsize=14, color='k')
 
     ax.set_xlabel('# iterations',fontsize=14)
     ax.set_ylabel('Potential energy',fontsize=14)
-    ax.set_aspect(5)
+    # ax.set_aspect(30)
     ax.grid(True)
     ax.legend()
     ax.set_xticks(np.arange(0,minDataLen,10).astype(int))
@@ -271,8 +276,8 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     fig, ax = plt.subplots()
     # ax.set_yscale('log')
     ax.set_ylim(0.4, 1.0)
-    ax.plot(timeTickB, escapeEnergyBmean, '-', color=cls[0], linewidth=3, label='Bound shrink search')
-    ax.plot(timeTickE, escapeEnergyEmean, '-', color=cls[3], linewidth=3, label='Energy minimization search')
+    ax.plot(timeTickB, escapeEnergyBmean, '-', color=cls[0], linewidth=3, label='Baseline: bisectional search')
+    ax.plot(timeTickE, escapeEnergyEmean, '-', color=cls[3], linewidth=3, label='BIT*-based search')
 
     # Plot std shade
     ax.fill_between(timeTickB, escapeEnergyBmean-escapeEnergyBstd, escapeEnergyBmean+escapeEnergyBstd, alpha=0.3, color=cls[0])
@@ -286,10 +291,10 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     ax.set_xlabel('Time / sec')
     ax.set_ylabel('Escape energy cost / J')
     # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    plt.title('Comparison of search algorithms over time in keyframe 18')
+    plt.title('Convergence of search algorithms over time')
     plt.legend()
     # plt.show()
-    plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=500)
+    plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=800)
 
 def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
@@ -322,9 +327,9 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
 
     # Retrieve indices of keyframes
     id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
+    xticks = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame, 4)))
     
     # Retrieve mean and std
-    print(escapeCostEM)
     escapeCostEM[np.isinf(escapeCostEM)] = np.nan
     escapeCostBSmean = np.mean(escapeCostBS, axis=0)
     escapeCostEMmean = np.nanmean(escapeCostEM, axis=0)
@@ -335,21 +340,21 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     _, ax = plt.subplots()
     # ax.set_yscale('log')
     # ax.set_ylim(0.4, 1.0)
-    ax.plot(id, escapeCostBSmean, '-o', color=cls[0], linewidth=3, label='Bound shrink search') # (8 min run time for each keyframe)
-    ax.plot(id, escapeCostEMmean, '-o', color=cls[3], linewidth=3, label='Energy minimization search') # (2 min run time for each keyframe)
+    ax.plot(id, escapeCostBSmean, '-', color=cls[0], linewidth=2, label='Baseline: bisectional search') # (8 min run time for each keyframe)
+    ax.plot(id, escapeCostEMmean, '-', color=cls[3], linewidth=2, label='BIT*-based search') # (2 min run time for each keyframe)
 
     # Plot std shade
     ax.fill_between(id, escapeCostBSmean-escapeCostBSstd, escapeCostBSmean+escapeCostBSstd, alpha=0.3, color=cls[0])
     ax.fill_between(id, escapeCostEMmean-escapeCostEMstd, escapeCostEMmean+escapeCostEMstd, alpha=0.3, color=cls[3])
 
     # Settings for plot
-    ax.set_xticks(id.astype(int))
+    ax.set_xticks(xticks.astype(int))
     ax.set_xlabel('Index of keyframes')
     ax.set_ylabel('Escape energy cost / J')
-    plt.title('Comparison of search algorithms over keyframes of a dynamic scene')
+    plt.title('Accuracy of search algorithms over keyframes')
     plt.legend()
     # plt.show()
-    plt.savefig('{}benchmark_accuracy_keyframe18-35.png'.format(SaveFolderName), dpi=500)
+    plt.savefig('{}benchmark_accuracy_keyframe18-35.png'.format(SaveFolderName), dpi=800)
 
 
 '''Compare bound shrink search and energy minimization search over 8min and 3min search time, respectively, in one frame'''
