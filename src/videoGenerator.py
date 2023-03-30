@@ -57,7 +57,8 @@ class generateVideo(runScenario):
 
         # Data structure for selected key-frames
         self.rgb_arrays = []
-        self.ids_selected = [1, 25, 40, 62]
+        self.ids_selected = [6, 25, 41, 62]
+        # self.ids_selected = [2, 28, 88, 155]
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
@@ -120,7 +121,7 @@ class generateVideo(runScenario):
         k = 0 # results data no.
         last_k = -1
 
-        time.sleep(8)
+        time.sleep(13)
         while (1):
             # print(i)
             p.stepSimulation()
@@ -161,10 +162,10 @@ class generateVideo(runScenario):
         cameraImgNames = ['A', 'B', 'C', 'D']
         axs = fig.subplot_mosaic([['Left', 'A', 'B'],['Left', 'C', 'D']],
                                 gridspec_kw={'width_ratios':[2,1,1]},)
-        axs['Left'].set_title('Escape energy plots')
+        axs['Left'].set_title('Escape energy plots', fontsize=18)
 
         for i, name in enumerate(cameraImgNames):
-            axs[name].set_title(name)
+            axs[name].set_title(name, fontsize=18)
             axs[name].imshow(self.rgb_arrays[i])
             axs[name].set_xticks([])
             axs[name].set_yticks([])
@@ -180,7 +181,7 @@ class generateVideo(runScenario):
         # plot energy curves
         plot_escape_energy(axs['Left'], self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=self.ids_selected)
         # plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
-        plt.savefig(self.dataPaths[0] + "ICRAfigure.png", dpi=1000)
+        plt.savefig(self.dataPaths[0] + "ICRAfigure2.png", dpi=1000)
         plt.close()
 
 

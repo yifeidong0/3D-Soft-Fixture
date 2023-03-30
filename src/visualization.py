@@ -144,13 +144,14 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
 
             # Add A, B, C... labels to vertical lines (For workshop paper)
             if addAxvLabel:
-                ax.text(axvline[i]+.5, -0.1, labelNames[i], fontsize=14, color='k')
+                ax.text(axvline[i]+.5, -.1, labelNames[i], fontsize=18, color='k')
+                # ax.text(axvline[i]+.5, -1, labelNames[i], fontsize=18, color='k')
 
-    ax.set_xlabel('# iterations',fontsize=14)
-    ax.set_ylabel('Potential energy',fontsize=14)
+    ax.set_xlabel('# iterations',fontsize=18)
+    ax.set_ylabel('Potential energy',fontsize=18)
     # ax.set_aspect(30)
     ax.grid(True)
-    ax.legend()
+    ax.legend(fontsize=16,loc='upper right')
     ax.set_xticks(np.arange(0,minDataLen,10).astype(int))
 
 def get_results_from_csv(folderName, isArticulatedObject=False):
