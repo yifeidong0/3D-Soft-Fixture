@@ -11,7 +11,7 @@ from itertools import product, combinations, count
 import argparse
 
 BASE_LINK = -1
-MAX_DISTANCE = -0.025
+MAX_DISTANCE = -0.027
 SCENARIO_ID = 3
 
 def argument_parser():
@@ -26,11 +26,11 @@ def argument_parser():
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
-    parser.add_argument('-s', '--search', default='BoundShrinkSearch', \
+    parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRT', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -48,7 +48,7 @@ def argument_parser():
         choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=240, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\

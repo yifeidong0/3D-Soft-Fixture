@@ -328,7 +328,7 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
 
     # Retrieve indices of keyframes
     id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
-    xticks = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame, 4)))
+    xticks = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame, 8)))
     
     # Retrieve mean and std
     escapeCostEM[np.isinf(escapeCostEM)] = np.nan
@@ -358,7 +358,8 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     plt.savefig('{}benchmark_accuracy_keyframe18-35.png'.format(SaveFolderName), dpi=800)
 
 
-'''Compare bound shrink search and energy minimization search over 8min and 3min search time, respectively, in one frame'''
+'''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
+'''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
 if __name__ == '__main__':
     # Insert initial escape energy cost
     cInit = 3.5 - 1.9201135113652428

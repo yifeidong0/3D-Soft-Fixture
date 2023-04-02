@@ -194,6 +194,8 @@ class RigidObjectCaging():
                 # set upper bound of searching
                 self.pb_ompl_interface.reset_robot_state_bound()
                 self.robot.set_state(self.start)
+                # print('@@@@@@DIST', len(p.getClosestPoints(bodyA=self.object_id, bodyB=self.obstacle_id, distance=-0.027)))
+
                 self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
                 
                 # start planning

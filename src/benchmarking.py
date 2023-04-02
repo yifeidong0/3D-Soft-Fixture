@@ -14,7 +14,7 @@ from runScenario import runScenario
 if __name__ == '__main__':
     # Hyperparameters
     numInnerIter = 6
-    frames = list(range(64,67))
+    frames = [63,76]
     maxTimeTaken = 480
     useGreedySearch = 0 # True: bisection search; False: Conservative search
 
@@ -43,6 +43,7 @@ if __name__ == '__main__':
     env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
     
     # Run the caging analysis algorithm over downsampled frames we extracted above
+    costs = []
     for i in frames:
         print('@@@@@index: ', sce.idxSce[i])
         frameId = sce.idxSce[i]
@@ -58,7 +59,7 @@ if __name__ == '__main__':
         isValidStartAndGoal = env.reset_start_and_goal(objStartState, objGoalState)
         if not isValidStartAndGoal: # start or goal state invalid
             continue
-
+        
         # Create OMPL interface
         env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
@@ -84,6 +85,10 @@ if __name__ == '__main__':
             isSolved = env.energy_minimize_search(numInnerIter)
             # env.visualize_energy_minimize_search()
             print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
+
+        costs.append((i, env.sol_final_costs))
+
+    print(costs)
 
     # Shut down pybullet (GUI)
     p.disconnect()
