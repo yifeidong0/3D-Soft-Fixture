@@ -289,10 +289,10 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     ax.axhline(y=escapeEnergyEmean[-1], color=cls[3], linestyle = '--')
 
     # Settings for plot
-    ax.set_xlabel('Time / sec')
-    ax.set_ylabel('Escape energy cost / J')
+    ax.set_xlabel('Time / sec',fontsize=16)
+    ax.set_ylabel('Escape energy cost / J',fontsize=16)
     # ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    plt.title('Convergence of search algorithms over time')
+    plt.title('Convergence of search algorithms over time',fontsize=16)
     plt.legend()
     # plt.show()
     plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=800)
@@ -328,7 +328,7 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
 
     # Retrieve indices of keyframes
     id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
-    xticks = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame, 8)))
+    xticks = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame+1, 10)))
     
     # Retrieve mean and std
     escapeCostEM[np.isinf(escapeCostEM)] = np.nan
@@ -350,12 +350,12 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
 
     # Settings for plot
     ax.set_xticks(xticks.astype(int))
-    ax.set_xlabel('Index of keyframes')
-    ax.set_ylabel('Escape energy cost / J')
-    plt.title('Accuracy of search algorithms over keyframes')
+    ax.set_xlabel('Index of keyframes',fontsize=16)
+    ax.set_ylabel('Escape energy cost / J',fontsize=16)
+    plt.title('Accuracy of search algorithms over keyframes',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}benchmark_accuracy_keyframe18-35.png'.format(SaveFolderName), dpi=800)
+    plt.savefig('{}benchmark_accuracy_keyframe0-100.png'.format(SaveFolderName), dpi=800)
 
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
@@ -366,8 +366,8 @@ if __name__ == '__main__':
 
     # Read from csv
     folderName = './results/Benchmarking/'
-    folderNameB = './results/Benchmarking/25-03-2023-23-17-34_BoundShrink'
-    folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization'
+    folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
+    folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
     timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
     timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
     # print(timeTickListB)
@@ -377,7 +377,8 @@ if __name__ == '__main__':
     plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName)
 
     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
-    startKeyFrame = 18 
+    startKeyFrame = 0
+    folderNameB = './results/Benchmarking/25-03-2023-23-17-34_BoundShrink'
     _, CostBSFrames = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=0)
     # print('@@@@finalCostBSFrames', finalCostBSFrames)
     plot_acurracy_test(CostBSFrames, folderName, startKeyFrame)

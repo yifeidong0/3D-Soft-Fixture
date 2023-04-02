@@ -209,7 +209,6 @@ class RigidObjectCaging():
 
                 # update bounds
                 curr_cost = self.escape_cost_list[-1]
-                # curr_max_z = self.max_z_escapes[-1]
                 noinf.append(curr_cost) if curr_cost!=np.inf else None
 
                 if useGreedySearch: # greedy but no lower bound guarantee
@@ -234,20 +233,21 @@ class RigidObjectCaging():
                     if res: # solution found
                         cUpper = curr_cost
 
-                    # stop if invalid search appears twice
-                    # maxNumInfs = 3
-                    # if self.times_of_no_solution >= maxNumInfs:
-                    #     moveOn = False
+                    # Cost already zero
+                    if cUpper <= 0.0:
+                        moveOn = False
+
+                    # Time up
                     if self.time_taken_list[-1] > maxTimeTaken:
                         moveOn = False
 
-                # reset z upper bound
+                # Reset z upper bound
                 self.robot.set_bisec_thres(cUpper+self.start[2])
                 idx += 1
 
                 print("----------escape_cost_list: ", self.escape_cost_list)
                 print("----------time_taken_list: ", self.time_taken_list)
-                print('----------cUpper, cLower, eps: ', cUpper, cLower, eps)
+                # print('----------cUpper, cLower, eps: ', cUpper, cLower, eps)
                 # print("----------joint_bounds z: ", self.robot.joint_bounds[2])
             
             # record data over runs
