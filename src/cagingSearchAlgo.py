@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
 from object import ObjectToCage, CagingObstacle, ElasticObjectToCage
-from utils import path_collector
+from utils import *
 import copy
 import datetime
 import os
@@ -17,6 +17,7 @@ class RigidObjectCaging():
     def __init__(self, args):
         self.args = args
         self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
 
         if args.visualization:
             vis = p.GUI
@@ -61,7 +62,7 @@ class RigidObjectCaging():
         
         return True # bounds valid check passed
 
-    def add_obstacles(self, pos=[-0.5, 1.5, 0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
+    def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
         obst = self.args.obstacle
         if  obst == 'Box':
             self.add_box([0, 0, 2], [1, 1, 0.01]) # add bottom
@@ -70,7 +71,7 @@ class RigidObjectCaging():
             self.add_box([0, 1, 2.5], [1, 0.01, 1.0])
             self.add_box([0, -1, 2.5], [1, 0.01, 1.0])
         
-        elif obst == 'Bowl' or obst == 'Hook':
+        elif obst in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
             # mesh_scale = [.1, .1, .1]  # The scale of the mesh
             mesh_collision_shape = p.createCollisionShape(
@@ -299,6 +300,7 @@ class ArticulatedObjectCaging(RigidObjectCaging):
     def __init__(self, args):
         self.args = args
         self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
 
         if args.visualization:
             vis = p.GUI
@@ -316,9 +318,10 @@ class ArticulatedObjectCaging(RigidObjectCaging):
 
 
 class ElasticObjectCaging(RigidObjectCaging):
-    def __init__(self, args, numCtrlPoint):
+    def __init__(self, args, numCtrlPoint, start, goal):
         self.args = args
         self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
 
         if args.visualization:
             vis = p.GUI
@@ -330,8 +333,10 @@ class ElasticObjectCaging(RigidObjectCaging):
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
         self.numCtrlPoint = numCtrlPoint
+        self.start = start
+        self.goal = goal
         self.load_object()
-        self.reset_start_and_goal()
+        self.reset_start_and_goal(start, goal)
 
     def load_object(self):
         """Load object for caging."""

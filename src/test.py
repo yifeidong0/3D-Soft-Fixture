@@ -298,10 +298,10 @@
 #########################################################################
 # CREATE CONCAVE SHAPES
 #  
-# name_in = 'models/starfish/starfish2.obj'
-# name_out = 'models/starfish/starfish2_vhacd.obj'
-# name_log = "log.txt"
-# p.vhacd(name_in, name_out, name_log)
+from utils import *
+name_in = 'models/bust/female_bust.obj'
+name_out = 'models/bust/female_bust_vhacd.obj'
+create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 # FISH WITH RING GOT HOOKED

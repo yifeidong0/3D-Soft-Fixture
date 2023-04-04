@@ -135,6 +135,8 @@ class ObjectToCage(ObjectBase):
 
 
 class ElasticObjectToCage(ObjectToCage):
+    '''An elastic band composed of several control points.
+    '''
     def __init__(self, id) -> None:
         self.id = id # a list
         self.numCtrlPoint = len(self.id)
@@ -157,7 +159,6 @@ class ElasticObjectToCage(ObjectToCage):
         for i in range(self.numCtrlPoint):
             pos = state[i*3:i*3+3]
             p.resetBasePositionAndOrientation(self.id[i], pos, quat)
-        # self._set_joint_positions(self.joint_idx, state[6:])
 
         self.state = state
 

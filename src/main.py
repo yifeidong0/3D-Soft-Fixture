@@ -19,10 +19,12 @@ if __name__ == '__main__':
         env = ArticulatedObjectCaging(args)
     elif args.object == 'Band':
         numCtrlPoint = 3
-        env = ElasticObjectCaging(args,numCtrlPoint)
+        start = [-0.2,-0.2,1.8, 0.2,-0.2,1.8, 0,0.4,1.8] 
+        goal = [0,0,4] * numCtrlPoint
+        env = ElasticObjectCaging(args, numCtrlPoint, start, goal)
 
     # set searching bounds and add obstacles
-    env.add_obstacles()
+    env.add_obstacles(scale=[.05]*3)
     env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
  
     # Choose from different searching methods

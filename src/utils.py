@@ -44,14 +44,14 @@ def argument_parser():
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl'], \
+    parser.add_argument('-l', '--obstacle', default='Bust', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
     parser.add_argument('-t', '--runtime', type=float, default=10, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
     
     # parser.add_argument('-f', '--file', default=None, \
@@ -79,6 +79,7 @@ def path_collector():
             'Humanoid': 'models/humanoid.urdf',
             'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
+            'Bust': 'models/bust/female_bust.obj'
             }
 
 def texture_path_list():
@@ -89,7 +90,7 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish']
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -99,6 +100,12 @@ def flatten_nested_list(input):
         Two nested layers at most.
     '''
     return [num for sublist in input for num in sublist]
+
+def create_convex_vhacd(name_in, name_out, resolution=int(1e5)):
+    '''Create concave obj files using pybullet vhacd function
+    '''
+    name_log = "log.txt"
+    p.vhacd(name_in, name_out, name_log, resolution=resolution)
 
 #####################################
 
