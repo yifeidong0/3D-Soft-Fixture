@@ -6,7 +6,7 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 import matplotlib.pyplot as plt
 import numpy as np
 from time import sleep
-from object import ObjectToCage, CagingObstacle
+from object import ObjectToCage, CagingObstacle, ElasticObjectToCage
 from utils import path_collector
 import copy
 import datetime
@@ -14,7 +14,7 @@ import os
 import csv
 
 class RigidObjectCaging():
-    def __init__(self, args, eps_thres=1e-2):
+    def __init__(self, args):
         self.args = args
         self.obstacles = []
 
@@ -30,7 +30,7 @@ class RigidObjectCaging():
         self.load_object()
         self.reset_start_and_goal() # TODO
 
-        self.eps_thres = eps_thres # bi-section search resolution
+        self.eps_thres = 1e-2 # bi-section search resolution
 
     def load_object(self):
         """Load object for caging."""
@@ -136,7 +136,7 @@ class RigidObjectCaging():
         # self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
         
         # start planning
-        self.energy_minimize_paths_energies = []
+        self.state_energy_escape_path_iter = []
         self.sol_final_costs = []
         self.escape_cost_list = [] # successful escapes
         solveds = []
@@ -144,7 +144,7 @@ class RigidObjectCaging():
             self.robot.set_state(self.start)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             solved, _, sol_path_energy, sol_final_cost, time_taken = self.execute_search()
-            self.energy_minimize_paths_energies.append(sol_path_energy)      
+            self.state_energy_escape_path_iter.append(sol_path_energy)      
             self.sol_final_costs.append(sol_final_cost)
             solveds.append(solved)
         if solveds.count(True) == 0:
@@ -155,7 +155,7 @@ class RigidObjectCaging():
         '''visualize the convergence of caging depth'''
 
         _, ax1 = plt.subplots()
-        energy_curves = self.energy_minimize_paths_energies
+        energy_curves = self.state_energy_escape_path_iter
         for i in range(len(energy_curves)):
             ax1.plot(energy_curves[i], label='path {}'.format(i)) # max z's along successful escape paths
         ax1.set_xlabel('vertices of solution paths')
@@ -313,3 +313,54 @@ class ArticulatedObjectCaging(RigidObjectCaging):
         self.reset_start_and_goal()
 
         self.escape_cost_list = [] # successful escapes
+
+
+class ElasticObjectCaging(RigidObjectCaging):
+    def __init__(self, args, numCtrlPoint):
+        self.args = args
+        self.obstacles = []
+
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)
+        # p.setGravity(0, 0, -9.8)
+        p.setTimeStep(1./240.)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+        self.numCtrlPoint = numCtrlPoint
+        self.load_object()
+        self.reset_start_and_goal()
+
+    def load_object(self):
+        """Load object for caging."""
+        self.paths = path_collector()
+        self.object_id = []
+        for i in range(self.numCtrlPoint):
+           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=10)) # radius 0.5cm
+        
+        self.robot = ElasticObjectToCage(self.object_id)
+
+    def reset_start_and_goal(self, start=None, goal=None):
+        # Set start and goal nodes of searching algorithms
+        if start is None:
+            self.start = [0,0,2] * self.numCtrlPoint
+        else:
+            self.start = start
+        if goal is None:
+            self.goal = [0,0,3] * self.numCtrlPoint
+        else:
+            self.goal = goal
+
+        # make sure states are within search bounds
+        jbounds = self.robot.get_joint_bounds()
+        # print('@@@@self.start', self.start)
+        # print('@@@@jbounds', jbounds)
+        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+            print('The start or goal states violates search boundary conditions!')
+            return False 
+        
+        return True # bounds valid check passed

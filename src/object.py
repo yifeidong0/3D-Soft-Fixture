@@ -134,6 +134,33 @@ class ObjectToCage(ObjectBase):
             p.resetJointState(self.id, joint, value, targetVelocity=0)
 
 
+class ElasticObjectToCage(ObjectToCage):
+    def __init__(self, id) -> None:
+        self.id = id # a list
+        self.numCtrlPoint = len(self.id)
+        self.comDof = 3
+        self.joint_idx = []
+        # self.articulate_num = p.getNumJoints(id)
+        self.num_dim = self.comDof * self.numCtrlPoint
+        # self.joint_idx = []
+        # self.reset()
+
+        self.set_search_bounds()
+
+    def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
+        self.joint_bounds = self.numCtrlPoint * basePosBounds
+
+    def set_state(self, state):
+        eulerRot = [0,0,0]
+        quat = p.getQuaternionFromEuler(eulerRot)
+
+        for i in range(self.numCtrlPoint):
+            pos = state[i*3:i*3+3]
+            p.resetBasePositionAndOrientation(self.id[i], pos, quat)
+        # self._set_joint_positions(self.joint_idx, state[6:])
+
+        self.state = state
+
 # for articulated obstacle (3fGripper)
 class CagingObstacle(ObjectToCage):
     def __init__(self, id) -> None:

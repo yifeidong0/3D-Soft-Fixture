@@ -2,7 +2,7 @@ import os.path as osp
 import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
-from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
+from cagingSearchAlgo import *
 # from runScenario import runScenario
 import pybullet as p
 import matplotlib.pyplot as plt
@@ -10,14 +10,16 @@ from utils import argument_parser, get_non_articulated_objects
 
 if __name__ == '__main__':
     args, parser = argument_parser()
-    basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
+    # basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
     # create caging environment and items in pybullet
     if args.object in get_non_articulated_objects():
-        eps_thres = 1e-2 # threshold of loop terminating
-        env = RigidObjectCaging(args, eps_thres)
-    else:
+        env = RigidObjectCaging(args)
+    elif args.object == 'Fish':
         env = ArticulatedObjectCaging(args)
+    elif args.object == 'Band':
+        numCtrlPoint = 3
+        env = ElasticObjectCaging(args,numCtrlPoint)
 
     # set searching bounds and add obstacles
     env.add_obstacles()

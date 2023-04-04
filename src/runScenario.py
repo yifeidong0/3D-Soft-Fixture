@@ -255,8 +255,7 @@ if __name__ == '__main__':
 
         # create caging environment and items in pybullet
         if args.object in rigidObjectList:
-            eps_thres = 1e-2 # threshold of loop terminating
-            env = RigidObjectCaging(args, eps_thres)
+            env = RigidObjectCaging(args)
         else:
             env = ArticulatedObjectCaging(args)
 
@@ -304,7 +303,7 @@ if __name__ == '__main__':
                     startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
                     startEnergy = startGEnergy + startEEnergy
                 else: # non-articulated objects' z_world
-                    # startEnergy = env.energy_minimize_paths_energies[0][0] if isSolved else np.inf
+                    # startEnergy = env.state_energy_escape_path_iter[0][0] if isSolved else np.inf
                     startGEnergy, startEEnergy = None, None
                     startEnergy = objStartState[2]
                 startEnergySce.append(startEnergy)

@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 500
+INTERPOLATE_NUM = 100
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -63,15 +63,15 @@ class PbOMPL():
         self.robot_id = robot.id
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
-        self.set_obstacles(self.obstacles)
+        self.set_obstacles()
 
         # self.reset_robot_state_bound()
   
-    def set_obstacles(self, obstacles):
-        self.obstacles = obstacles
+    def set_obstacles(self):
+        # self.obstacles = obstacles
 
         # update collision detection
-        self.setup_collision_detection(self.robot, self.obstacles)
+        self.setup_collision_detection()
 
     def add_obstacles(self, obstacle_id):
         self.obstacles.append(obstacle_id)
@@ -95,14 +95,18 @@ class PbOMPL():
                 return False
         return True
 
-    def setup_collision_detection(self, robot, obstacles, self_collisions = False):
-        self.check_link_pairs = utils.get_self_link_pairs(robot.id, robot.joint_idx) if self_collisions else []
-        # moving_links = frozenset(
-        #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
-        moving_bodies = [robot.id] # for deformable ball
-        # moving_bodies = [(robot.id, moving_links)] # original 
-        # print('moving_bodies: ', moving_bodies)
-        self.check_body_pairs = list(product(moving_bodies, obstacles))
+    def setup_collision_detection(self, self_collisions = False):
+        if self.args.object == "Band":
+            self.check_link_pairs = [] # do not check self-collision
+            self.check_body_pairs = list(product(self.robot.id, self.obstacles))
+        else:
+            self.check_link_pairs = utils.get_self_link_pairs(self.robot.id, self.robot.joint_idx) if self_collisions else []
+            # moving_links = frozenset(
+            #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
+            moving_bodies = [self.robot.id] # for deformable ball
+            # moving_bodies = [(robot.id, moving_links)] # original 
+            # print('moving_bodies: ', moving_bodies)
+            self.check_body_pairs = list(product(moving_bodies, self.obstacles))
       
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
@@ -179,13 +183,18 @@ class PbOMPL():
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 if self.args.objective == 'GravityPotential':
-                    self.potentialObjective = objective.minPathPotentialObjective(self.si, start)
+                    self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
                     self.pdef.setOptimizationObjective(self.potentialObjective)
                 # elif self.args.objective == 'GravityAndElasticPotential': # Not applied
                 # else self.args.objective == 'PathLength' # default objective
 
-            elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
-                self.potentialObjective = objective.minPathTotalPotentialObjective(self.si, start, self.args)
+            # elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
+            elif self.args.object == "Fish":
+                self.potentialObjective = objective.TotalPotentialObjective(self.si, start, self.args)
+                self.pdef.setOptimizationObjective(self.potentialObjective)
+
+            elif self.args.object == "Band":
+                self.potentialObjective = objective.ElasticPotentialObjective(self.si, start, self.args)
                 self.pdef.setOptimizationObjective(self.potentialObjective)
             # else: self.args.objective == 'PathLength'
         

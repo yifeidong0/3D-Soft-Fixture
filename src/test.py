@@ -1,19 +1,19 @@
 
-import sys
-try:
-    from ompl import util as ou
-    from ompl import base as ob
-    from ompl import geometric as og
-except ImportError:
-    # if the ompl module is not in the PYTHONPATH assume it is installed in a
-    # subdirectory of the parent directory called "py-bindings."
-    from os.path import abspath, dirname, join
-    sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
-    from ompl import util as ou
-    from ompl import base as ob
-    from ompl import geometric as og
-from math import sqrt
-import argparse
+# import sys
+# try:
+#     from ompl import util as ou
+#     from ompl import base as ob
+#     from ompl import geometric as og
+# except ImportError:
+#     # if the ompl module is not in the PYTHONPATH assume it is installed in a
+#     # subdirectory of the parent directory called "py-bindings."
+#     from os.path import abspath, dirname, join
+#     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
+#     from ompl import util as ou
+#     from ompl import base as ob
+#     from ompl import geometric as og
+# from math import sqrt
+# import argparse
 
 # ## @cond IGNORE
 # # Our "collision checker". For this demo, our robot's state space
@@ -547,16 +547,54 @@ import argparse
 
 
 
-import matplotlib.pyplot as plt
-fig = plt.figure(constrained_layout=True)
-fig.set_size_inches(16,7)
-axs = fig.subplot_mosaic([['Left', 'A', 'B'],['Left', 'C', 'D']],
-                          gridspec_kw={'width_ratios':[2,1,1]})
-axs['Left'].set_title('Plot on Left')
-axs['Left'].set_aspect(30)
+# import matplotlib.pyplot as plt
+# fig = plt.figure(constrained_layout=True)
+# fig.set_size_inches(16,7)
+# axs = fig.subplot_mosaic([['Left', 'A', 'B'],['Left', 'C', 'D']],
+#                           gridspec_kw={'width_ratios':[2,1,1]})
+# axs['Left'].set_title('Plot on Left')
+# axs['Left'].set_aspect(30)
 
-axs['A'].set_title('A')
-axs['B'].set_title('B')
-axs['C'].set_title('C')
-axs['D'].set_title('D')
-plt.show()
+# axs['A'].set_title('A')
+# axs['B'].set_title('B')
+# axs['C'].set_title('C')
+# axs['D'].set_title('D')
+# plt.show()
+
+
+#########################################################################
+
+import pybullet as p
+import pybullet_data
+import time 
+
+p.connect(p.GUI)
+p.setAdditionalSearchPath(pybullet_data.getDataPath())
+useMaximalCoordinates = False
+id1 = p.loadURDF("plane.urdf", useMaximalCoordinates=useMaximalCoordinates)
+id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=10)
+# p.loadURDF("cube.urdf", [0, 0, 1], useMaximalCoordinates=useMaximalCoordinates)
+p.setGravity(0, 0, -10)
+while (1):
+  p.stepSimulation()
+  print(p.getClosestPoints(id1,id2,0))
+  time.sleep(1/240)
+
+#   print("num pts=", len(pts))
+#   totalNormalForce = 0
+#   totalFrictionForce = [0, 0, 0]
+#   totalLateralFrictionForce = [0, 0, 0]
+#   for pt in pts:
+#     #print("pt.normal=",pt[7])
+#     #print("pt.normalForce=",pt[9])
+#     totalNormalForce += pt[9]
+#     #print("pt.lateralFrictionA=",pt[10])
+#     #print("pt.lateralFrictionADir=",pt[11])
+#     #print("pt.lateralFrictionB=",pt[12])
+#     #print("pt.lateralFrictionBDir=",pt[13])
+#     totalLateralFrictionForce[0] += pt[11][0] * pt[10] + pt[13][0] * pt[12]
+#     totalLateralFrictionForce[1] += pt[11][1] * pt[10] + pt[13][1] * pt[12]
+#     totalLateralFrictionForce[2] += pt[11][2] * pt[10] + pt[13][2] * pt[12]
+
+#   print("totalNormalForce=", totalNormalForce)
+#   print("totalLateralFrictionForce=", totalLateralFrictionForce)

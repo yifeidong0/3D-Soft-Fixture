@@ -33,8 +33,7 @@ if __name__ == '__main__':
 
     # create caging environment and items in pybullet
     if args.object in rigidObjectList:
-        eps_thres = 1e-2 # threshold of loop terminating
-        env = RigidObjectCaging(args, eps_thres)
+        env = RigidObjectCaging(args)
     else:
         env = ArticulatedObjectCaging(args)
 
