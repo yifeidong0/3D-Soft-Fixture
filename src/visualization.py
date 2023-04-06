@@ -152,7 +152,7 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
     # ax.set_aspect(30)
     ax.grid(True)
     ax.legend(fontsize=16,loc='upper right')
-    ax.set_xticks(np.arange(0,minDataLen,10).astype(int))
+    ax.set_xticks(np.arange(0,minDataLen,40).astype(int))
 
 def get_results_from_csv(folderName, isArticulatedObject=False):
     indices = []
@@ -295,7 +295,7 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     plt.title('Convergence of search algorithms over time',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=800)
+    plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=200)
 
 def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
@@ -355,7 +355,7 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     plt.title('Accuracy of search algorithms over keyframes',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}benchmark_accuracy_keyframe0-100.png'.format(SaveFolderName), dpi=800)
+    plt.savefig('{}benchmark_accuracy_keyframe0-100.png'.format(SaveFolderName), dpi=200)
 
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''

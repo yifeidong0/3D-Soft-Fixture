@@ -12,6 +12,7 @@ from runScenario import runScenario
 import pybullet as p
 import pybullet_data
 import time
+import tikzplotlib
 
 class generateVideo(runScenario):
     def __init__(self, args, dataPaths, isArticulatedObj):
@@ -57,8 +58,8 @@ class generateVideo(runScenario):
 
         # Data structure for selected key-frames
         self.rgb_arrays = []
-        self.ids_selected = [6, 25, 41, 62]
-        # self.ids_selected = [2, 28, 88, 155]
+        # self.ids_selected = [6, 25, 41, 62]
+        self.ids_selected = [2, 28, 88, 155]
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
@@ -181,7 +182,8 @@ class generateVideo(runScenario):
         # plot energy curves
         plot_escape_energy(axs['Left'], self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=self.ids_selected)
         # plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
-        plt.savefig(self.dataPaths[0] + "ICRAfigure2.png", dpi=1000)
+        tikzplotlib.save(self.dataPaths[0] + "ICRAfigure3.tex")
+        plt.savefig(self.dataPaths[0] + "ICRAfigure3.png", dpi=200)
         plt.close()
 
 
@@ -203,7 +205,7 @@ class generateVideo(runScenario):
         # plot energy curves
         plot_escape_energy(ax2, self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=[k])
         plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
-        plt.savefig(self.dataPaths[0] + "file%03d.png" % i, dpi=800)
+        plt.savefig(self.dataPaths[0] + "file%03d.png" % i, dpi=200)
         plt.close()
 
     def imagesToVideo(self):
