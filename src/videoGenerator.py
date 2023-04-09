@@ -31,6 +31,7 @@ class generateVideo(runScenario):
         self.endFrame = 800
         self.img_height = 1024
         self.img_width = 1024
+        self.dpi = 108
 
         # pybullet camera matrices param
         fov = 60
@@ -58,13 +59,14 @@ class generateVideo(runScenario):
 
         # Data structure for selected key-frames
         self.rgb_arrays = []
-        self.ids_selected = [6, 18, 41, 62]
-        # self.ids_selected = [2, 28, 88, 155]
+        # self.ids_selected = [6, 18, 41, 62]
+        self.ids_selected = [2, 28, 88, 155]
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
         i = 0 # sim no.
         k = 0 # results data no.
+        last_k = -1
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # set initial joint states
@@ -74,7 +76,15 @@ class generateVideo(runScenario):
         self.obstacle.set_state(obstacleState)
         
         # start simulation of clenching the fist
-        time.sleep(7)
+        time.sleep(10)
+        images = p.getCameraImage(self.img_width, 
+                            self.img_height,
+                            ) # list
+        time.sleep(4)
+        images = p.getCameraImage(self.img_width, 
+                            self.img_height,
+                            ) # list
+        time.sleep(4)
         while (1):
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
@@ -100,7 +110,7 @@ class generateVideo(runScenario):
                                       self.img_height,
                                     #   viewMatrix=self.viewMat,
                                     #   projectionMatrix=self.projMat,
-                                      renderer=p.ER_TINY_RENDERER,
+                                    #   renderer=p.ER_TINY_RENDERER,
                                       shadow=1,
                                     #   flags=p.ER_USE_PROJECTIVE_TEXTURE,
                                     #   projectiveTextureView=self.viewMat,
@@ -109,12 +119,13 @@ class generateVideo(runScenario):
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # Plot
-            # self.saveIntermImages(rgb_array, i, k)
+            self.saveIntermImages(rgb_array, i, k)
             i += 1
 
             # Save intermediate selected object poses
-            if k in self.ids_selected:
-                self.saveIntermSelectedImages.append(rgb_array)
+            if k in self.ids_selected and k != last_k:
+                self.rgb_arrays.append(rgb_array)
+                last_k = k
 
     def runDynamicFalling(self):
         '''For the tasks of articulated fish or ring falling'''
@@ -122,7 +133,16 @@ class generateVideo(runScenario):
         k = 0 # results data no.
         last_k = -1
 
-        time.sleep(13)
+        # get RGB of camera view
+        time.sleep(10)
+        images = p.getCameraImage(self.img_width, 
+                            self.img_height,
+                            ) # list
+        time.sleep(4)
+        images = p.getCameraImage(self.img_width, 
+                            self.img_height,
+                            ) # list
+        time.sleep(4)
         while (1):
             # print(i)
             p.stepSimulation()
@@ -145,7 +165,7 @@ class generateVideo(runScenario):
             rgb_array = np.reshape(images[2], (self.img_height, self.img_width, 4)) * 1. / 255.            
 
             # plot   
-            # self.saveIntermImages(rgb_array, i, k)
+            self.saveIntermImages(rgb_array, i, k)
             i += 1
 
             # Save intermediate selected object poses
@@ -158,33 +178,44 @@ class generateVideo(runScenario):
         '''
         # e_total,e_grav,e_bend,e_escape,_,_,_,_,_,_,_,_ = self.energyDataAnalysis
 
-        fig = plt.figure(constrained_layout=True)
-        fig.set_size_inches(16,8)
-        cameraImgNames = ['A', 'B', 'C', 'D']
-        axs = fig.subplot_mosaic([['Left', 'A', 'B'],['Left', 'C', 'D']],
-                                gridspec_kw={'width_ratios':[2,1,1]},)
-        axs['Left'].set_title('Escape energy plots', fontsize=18)
+        # fig = plt.figure(constrained_layout=True)
+        # fig.set_size_inches(16,8)
+        # cameraImgNames = ['A', 'B', 'C', 'D']
+        # axs = fig.subplot_mosaic([['Left', 'A', 'B'],['Left', 'C', 'D']],
+        #                         gridspec_kw={'width_ratios':[2,1,1]},)
+        # axs['Left'].set_title('Escape energy plots', fontsize=18)
 
-        for i, name in enumerate(cameraImgNames):
-            axs[name].set_title(name, fontsize=18)
-            axs[name].imshow(self.rgb_arrays[i])
-            axs[name].set_xticks([])
-            axs[name].set_yticks([])
+        # for i, name in enumerate(cameraImgNames):
+        #     axs[name].set_title(name, fontsize=18)
+        #     axs[name].imshow(self.rgb_arrays[i])
+        #     axs[name].set_xticks([])
+        #     axs[name].set_yticks([])
 
-        # # plot data text values
-        # ax1.text(self.img_width-100, self.img_height+20, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=14, color=self.cls[0])
-        # e_escape = np.round(e_escape[k],decimals=3) if e_escape[k] is not np.nan else np.inf
-        # ax1.text(self.img_width-100, self.img_height+45, 'E_escape:{}'.format(e_escape), fontsize=14, color=self.cls[3])
-        # if self.isArticulatedObj:
-        #     ax1.text(self.img_width-250, self.img_height+20, 'E_grav:{}'.format(np.round(e_grav[k],decimals=3)), fontsize=14, color=self.cls[1])
-        #     ax1.text(self.img_width-250, self.img_height+45, 'E_bend:{}'.format(np.round(e_bend[k],decimals=3)), fontsize=14, color=self.cls[2])
+        # # # plot data text values
+        # # ax1.text(self.img_width-100, self.img_height+20, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=14, color=self.cls[0])
+        # # e_escape = np.round(e_escape[k],decimals=3) if e_escape[k] is not np.nan else np.inf
+        # # ax1.text(self.img_width-100, self.img_height+45, 'E_escape:{}'.format(e_escape), fontsize=14, color=self.cls[3])
+        # # if self.isArticulatedObj:
+        # #     ax1.text(self.img_width-250, self.img_height+20, 'E_grav:{}'.format(np.round(e_grav[k],decimals=3)), fontsize=14, color=self.cls[1])
+        # #     ax1.text(self.img_width-250, self.img_height+45, 'E_bend:{}'.format(np.round(e_bend[k],decimals=3)), fontsize=14, color=self.cls[2])
 
-        # plot energy curves
-        plot_escape_energy(axs['Left'], self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=self.ids_selected)
-        # plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
-        tikzplotlib.save(self.dataPaths[0] + "ICRAfigure3.tex")
-        plt.savefig(self.dataPaths[0] + "ICRAfigure3.png", dpi=200)
-        plt.close()
+        # # plot energy curves
+        # plot_escape_energy(axs['Left'], self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=self.ids_selected)
+        # # plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
+        # # tikzplotlib.save(self.dataPaths[0] + "ICRAfigure3.tex")
+        # plt.savefig(self.dataPaths[0] + "ICRAfigure3.png")
+        # plt.close()
+
+        # Save the four subfigures separately
+        for i in range(len(self.rgb_arrays)):
+            f, ax = plt.subplots(figsize=(800/self.dpi, 800/self.dpi), dpi=self.dpi)
+            ax.imshow(self.rgb_arrays[i])
+            plt.xticks([]) 
+            plt.yticks([]) 
+            plt.axis('off')
+            f.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=None, hspace=None)
+            plt.savefig(self.dataPaths[0] + "ICRA-subfig-{}.png".format(i), bbox_inches='tight', pad_inches=0)
+            plt.close()
 
 
     def saveIntermImages(self, rgb_array, i, k):
@@ -195,27 +226,28 @@ class generateVideo(runScenario):
         ax1.set_yticks([])
 
         # plot data text values
-        ax1.text(self.img_width-100, self.img_height+20, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=14, color=self.cls[0])
+        ax1.text(self.img_width-150, self.img_height+50, 'E_total:{}'.format(np.round(e_total[k],decimals=3)), fontsize=16, color=self.cls[0])
         e_escape = np.round(e_escape[k],decimals=3) if e_escape[k] is not np.nan else np.inf
-        ax1.text(self.img_width-100, self.img_height+45, 'E_escape:{}'.format(e_escape), fontsize=14, color=self.cls[3])
+        ax1.text(self.img_width-150, self.img_height+105, 'E_escape:{}'.format(e_escape), fontsize=16, color=self.cls[3])
         if self.isArticulatedObj:
-            ax1.text(self.img_width-250, self.img_height+20, 'E_grav:{}'.format(np.round(e_grav[k],decimals=3)), fontsize=14, color=self.cls[1])
-            ax1.text(self.img_width-250, self.img_height+45, 'E_bend:{}'.format(np.round(e_bend[k],decimals=3)), fontsize=14, color=self.cls[2])
+            ax1.text(self.img_width-500, self.img_height+50, 'E_grav:{}'.format(np.round(e_grav[k],decimals=3)), fontsize=16, color=self.cls[1])
+            ax1.text(self.img_width-500, self.img_height+105, 'E_elas:{}'.format(np.round(e_bend[k],decimals=3)), fontsize=16, color=self.cls[2])
 
         # plot energy curves
-        plot_escape_energy(ax2, self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=[k])
-        plt.title('Escape energy plot of energy-bounded caging',fontsize=16)
-        plt.savefig(self.dataPaths[0] + "file%03d.png" % i, dpi=200)
+        plot_escape_energy(ax2, self.energyDataAnalysis, self.minDataLen, self.isArticulatedObj, axvline=[k], addAxvLabel=0)
+        plt.title('Quasi-static Analysis of Soft Fixture Escape Energy',fontsize=16)
+        plt.savefig(self.dataPaths[0] + "file%03d.png" % i, dpi=self.dpi)
         plt.close()
 
     def imagesToVideo(self):
         os.chdir(self.dataPaths[0])
         subprocess.call([
             'ffmpeg', '-framerate', '30', '-i', 'file%03d.png', '-r', '30', '-pix_fmt', 'yuv420p',
-            'cage_with_escape_energy_parallel.mp4'
+            'soft-fixture2.mp4'
         ])
         for file_name in glob.glob("file*"):
             os.remove(file_name)
+        os.chdir('./../')
 
 
 if __name__ == '__main__':
@@ -238,9 +270,9 @@ if __name__ == '__main__':
         sce.runClenchFist()
 
     # convert images to video
-    # sce.imagesToVideo()
+    sce.imagesToVideo()
 
     # Save plot for ICRA workshop
-    sce.saveIntermSelectedImages()
+    # sce.saveIntermSelectedImages()
 
 

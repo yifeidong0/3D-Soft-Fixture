@@ -126,11 +126,11 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
     minTot, minG, minE, minEsc, _, meanG, meanE, meanEsc, _, stdG, stdE, stdEsc = energyDataAnalysis
 
     # Plot min escape energy
-    ax.plot(IterId, minTot, '-', color=cls[0], linewidth=2, label='Total energy')
+    ax.plot(IterId, minTot, '-', color=cls[0], linewidth=2, label='total energy')
     if isArticulatedObject:
-        ax.plot(IterId, minG, '--', color=cls[1], label='Gravity potential energy')
-        ax.plot(IterId, minE, '--', color=cls[2], label='Elastic potential energy')
-    ax.plot(IterId, minEsc, '-', color=cls[3], linewidth=2, label='Escape energy cost')
+        ax.plot(IterId, minG, '-', color=cls[1], label='gravity potential energy')
+        ax.plot(IterId, minE, '-', color=cls[2], label='elastic potential energy')
+    ax.plot(IterId, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
 
     # Plot std shade
     # if isArticulatedObject:
@@ -148,12 +148,12 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
                 ax.text(axvline[i]+.5, -.1, labelNames[i], fontsize=18, color='k')
                 # ax.text(axvline[i]+.5, -1, labelNames[i], fontsize=18, color='k')
 
-    ax.set_xlabel('# iterations',fontsize=18)
-    ax.set_ylabel('Potential energy',fontsize=18)
-    # ax.set_aspect(30)
+    ax.set_xlabel('# iterations',fontsize=14)
+    ax.set_ylabel('potential energy / J',fontsize=14)
+    ax.set_aspect(26.5)
     ax.grid(True)
-    ax.legend(fontsize=16,loc='upper right')
-    ax.set_xticks(np.arange(0,minDataLen,40).astype(int))
+    ax.legend(fontsize=14,loc='upper right')
+    ax.set_xticks(np.arange(0,minDataLen,30).astype(int))
 
 def get_results_from_csv(folderName, isArticulatedObject=False):
     indices = []
