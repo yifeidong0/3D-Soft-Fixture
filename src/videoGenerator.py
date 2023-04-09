@@ -58,8 +58,8 @@ class generateVideo(runScenario):
 
         # Data structure for selected key-frames
         self.rgb_arrays = []
-        # self.ids_selected = [6, 25, 41, 62]
-        self.ids_selected = [2, 28, 88, 155]
+        self.ids_selected = [6, 18, 41, 62]
+        # self.ids_selected = [2, 28, 88, 155]
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''

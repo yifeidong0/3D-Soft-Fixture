@@ -298,145 +298,145 @@
 #########################################################################
 # CREATE CONCAVE SHAPES
 #  
-from utils import *
-name_in = 'models/bust/female_bust.obj'
-name_out = 'models/bust/female_bust_vhacd.obj'
-create_convex_vhacd(name_in, name_out, resolution=int(1e6))
+# from utils import *
+# name_in = 'models/bust/female_bust.obj'
+# name_out = 'models/bust/female_bust_vhacd.obj'
+# create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 # FISH WITH RING GOT HOOKED
 
-# import pybullet as p
-# import time
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import os
-# import subprocess
-# import glob
+import pybullet as p
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import subprocess
+import glob
 
-# p.connect(p.GUI)
-# # p.setGravity(0, 0, -9.8)
-# p.setTimeStep(1./240.)
-# # p.setAdditionalSearchPath(pybullet_data.getDataPath())
+p.connect(p.GUI)
+# p.setGravity(0, 0, -9.8)
+p.setTimeStep(1./240.)
+# p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-# GRAVITY = -10
-# p.setRealTimeSimulation(0)
-# # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
-# fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
+GRAVITY = -10
+p.setRealTimeSimulation(0)
+# bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
+fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
 
 
-# # ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
+# ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
 
-# # p.changeDynamics(bowl, -1, mass=0)
+# p.changeDynamics(bowl, -1, mass=0)
 
-# # Upload the mesh data to PyBullet and create a static object
-# # mesh_scale = [.04, .04, .04]  # The scale of the mesh
-# # mesh_collision_shape = p.createCollisionShape(
-# #     shapeType=p.GEOM_MESH,
-# #     fileName="models/fish/ring2_vhacd.OBJ",
-# #     meshScale=mesh_scale,
-# #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-# #     # meshData=mesh_data,
-# # )
-# # mesh_visual_shape = -1  # Use the same shape for visualization
-# # mesh_position = [0.3, 0, 2]  # The position of the mesh
-# # mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
-# # ring = p.createMultiBody(
-# #     baseMass=1.,
-# #     baseCollisionShapeIndex=mesh_collision_shape,
-# #     baseVisualShapeIndex=mesh_visual_shape,
-# #     basePosition=mesh_position,
-# #     baseOrientation=mesh_orientation,
-# # )
-
-# mesh_scale = [.1, .1, .1]  # The scale of the mesh
+# Upload the mesh data to PyBullet and create a static object
+# mesh_scale = [.04, .04, .04]  # The scale of the mesh
 # mesh_collision_shape = p.createCollisionShape(
 #     shapeType=p.GEOM_MESH,
-#     fileName="models/triple_hook/triple_hook_vhacd.obj",
+#     fileName="models/fish/ring2_vhacd.OBJ",
 #     meshScale=mesh_scale,
 #     # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
 #     # meshData=mesh_data,
 # )
 # mesh_visual_shape = -1  # Use the same shape for visualization
-# mesh_position = [0, 0, 0]  # The position of the mesh
-# mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
-# hook = p.createMultiBody(
+# mesh_position = [0.3, 0, 2]  # The position of the mesh
+# mesh_orientation = p.getQuaternionFromEuler([.6, 1.57, 0])  # The orientation of the mesh
+# ring = p.createMultiBody(
+#     baseMass=1.,
 #     baseCollisionShapeIndex=mesh_collision_shape,
 #     baseVisualShapeIndex=mesh_visual_shape,
 #     basePosition=mesh_position,
 #     baseOrientation=mesh_orientation,
 # )
 
-# def getJointStates(robot):
-#   joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
-#   joint_positions = [state[0] for state in joint_states]
-#   joint_velocities = [state[1] for state in joint_states]
-#   joint_torques = [state[3] for state in joint_states]
-#   return joint_positions, joint_velocities, joint_torques
+mesh_scale = [.1, .1, .1]  # The scale of the mesh
+mesh_collision_shape = p.createCollisionShape(
+    shapeType=p.GEOM_MESH,
+    fileName="models/triple_hook/triple_hook_vhacd.obj",
+    meshScale=mesh_scale,
+    # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+    # meshData=mesh_data,
+)
+mesh_visual_shape = -1  # Use the same shape for visualization
+mesh_position = [0, 0, 0]  # The position of the mesh
+mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
+hook = p.createMultiBody(
+    baseCollisionShapeIndex=mesh_collision_shape,
+    baseVisualShapeIndex=mesh_visual_shape,
+    basePosition=mesh_position,
+    baseOrientation=mesh_orientation,
+)
 
-# i = 0
-# jointPositionsSce = []
-# gemPosAll = []
-# gemOrnAll = []
+def getJointStates(robot):
+  joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
+  joint_positions = [state[0] for state in joint_states]
+  joint_velocities = [state[1] for state in joint_states]
+  joint_torques = [state[3] for state in joint_states]
+  return joint_positions, joint_velocities, joint_torques
 
-# viewMat = [
-#     0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
-#     0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
-#     0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
-# ]
-# width = 512 # 128
-# height = 512 # 128
-# folderName = './results/test/'
+i = 0
+jointPositionsSce = []
+gemPosAll = []
+gemOrnAll = []
 
-# while (1):
-#     p.stepSimulation()
-#     #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
-#     # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
-#     # print(gemPos, gemOrn)
-#     p.setGravity(0, 0, GRAVITY)
-#     dep = i
-#     images = p.getCameraImage(width, height, viewMatrix=viewMat,
-#                               )
-#     rgb_tiny = np.reshape(images[2], (height, width, 4)) * 1. / 255.
-#     # fig = plt.figure(num=1, clear=True)
-#     # ax = fig.add_subplot() 
-#     plt.text(width+10, height, 'Caging depth:{}'.format(dep))
-#     plt.text(width+10, height-20, 'curr depth:{}'.format(dep))
-#     plt.title('RGB')
-#     plt.imshow(rgb_tiny)
-#     plt.savefig(folderName + "file%03d.png" % i)
-#     plt.close()
+viewMat = [
+    0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+    0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+    0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+]
+width = 512 # 128
+height = 512 # 128
+folderName = './results/test/'
 
-#     # if i == 50:
-#     #     os.chdir(folderName)
-#     #     subprocess.call([
-#     #         'ffmpeg', '-framerate', '8', '-i', 'file%03d.png', '-r', '30', '-pix_fmt', 'yuv420p',
-#     #         'video_name.mp4'
-#     #     ])
-#     #     for file_name in glob.glob("*.png"):
-#     #         os.remove(file_name)
+while (1):
+    p.stepSimulation()
+    #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
+    # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
+    # print(gemPos, gemOrn)
+    p.setGravity(0, 0, GRAVITY)
+    dep = i
+    images = p.getCameraImage(width, height, viewMatrix=viewMat,
+                              )
+    rgb_tiny = np.reshape(images[2], (height, width, 4)) * 1. / 255.
+    # fig = plt.figure(num=1, clear=True)
+    # ax = fig.add_subplot() 
+    # plt.text(width+10, height, 'Caging depth:{}'.format(dep))
+    # plt.text(width+10, height-20, 'curr depth:{}'.format(dep))
+    # plt.title('RGB')
+    # plt.imshow(rgb_tiny)
+    # plt.savefig(folderName + "file%03d.png" % i)
+    # plt.close()
+
+    # if i == 50:
+    #     os.chdir(folderName)
+    #     subprocess.call([
+    #         'ffmpeg', '-framerate', '8', '-i', 'file%03d.png', '-r', '30', '-pix_fmt', 'yuv420p',
+    #         'video_name.mp4'
+    #     ])
+    #     for file_name in glob.glob("*.png"):
+    #         os.remove(file_name)
     
-#     time.sleep(5/240.)
+    time.sleep(5/240.)
 
-#     i += 1
-#     print(i)
-#     # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
-#     # if len(CP)>0:
-#     #     dis = [CP[i][8] for i in range(len(CP))]
-#     #     print('!!!!CP', dis)
+    i += 1
+    print(i)
+    # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
+    # if len(CP)>0:
+    #     dis = [CP[i][8] for i in range(len(CP))]
+    #     print('!!!!CP', dis)
 
-#     # if i % 20 == 0:
-#     #     jointPositions,_,_ = getJointStates(fish) # list(11)
-#     #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
-#     #     jointPositionsSce.append(jointPositions)
-#     #     gemPosAll.append(list(gemPos))
-#     #     gemOrnAll.append(list(gemOrn))
+    # if i % 20 == 0:
+    #     jointPositions,_,_ = getJointStates(fish) # list(11)
+    #     gemPos, gemOrn = p.getBasePositionAndOrientation(fish) # tuple(3), tuple(4)
+    #     jointPositionsSce.append(jointPositions)
+    #     gemPosAll.append(list(gemPos))
+    #     gemOrnAll.append(list(gemOrn))
     
-#     # if i == 500:
-#     #     break
-#     # # print(jointPositions)
+    # if i == 500:
+    #     break
+    # # print(jointPositions)
 
-# # # replay
+# # replay
 
 
 #########################################################################
@@ -564,21 +564,21 @@ create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 
-import pybullet as p
-import pybullet_data
-import time 
+# import pybullet as p
+# import pybullet_data
+# import time 
 
-p.connect(p.GUI)
-p.setAdditionalSearchPath(pybullet_data.getDataPath())
-useMaximalCoordinates = False
-id1 = p.loadURDF("plane.urdf", useMaximalCoordinates=useMaximalCoordinates)
-id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=10)
-# p.loadURDF("cube.urdf", [0, 0, 1], useMaximalCoordinates=useMaximalCoordinates)
-p.setGravity(0, 0, -10)
-while (1):
-  p.stepSimulation()
-  print(p.getClosestPoints(id1,id2,0))
-  time.sleep(1/240)
+# p.connect(p.GUI)
+# p.setAdditionalSearchPath(pybullet_data.getDataPath())
+# useMaximalCoordinates = False
+# id1 = p.loadURDF("plane.urdf", useMaximalCoordinates=useMaximalCoordinates)
+# id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=10)
+# # p.loadURDF("cube.urdf", [0, 0, 1], useMaximalCoordinates=useMaximalCoordinates)
+# p.setGravity(0, 0, -10)
+# while (1):
+#   p.stepSimulation()
+#   print(p.getClosestPoints(id1,id2,0))
+#   time.sleep(1/240)
 
 #   print("num pts=", len(pts))
 #   totalNormalForce = 0
