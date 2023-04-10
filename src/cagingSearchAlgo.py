@@ -342,10 +342,10 @@ class ElasticObjectCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        for i in range(self.numCtrlPoint):
-           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=10)) # radius 0.5cm
+        # for i in range(self.numCtrlPoint):
+        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=1)) # radius 0.5cm
         
-        self.robot = ElasticObjectToCage(self.object_id)
+        self.robot = ElasticObjectToCage(self.object_id, self.numCtrlPoint)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms

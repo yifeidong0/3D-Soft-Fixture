@@ -313,6 +313,7 @@ import matplotlib.pyplot as plt
 import os
 import subprocess
 import glob
+from utils import *
 
 p.connect(p.GUI)
 # p.setGravity(0, 0, -9.8)
@@ -322,9 +323,9 @@ p.setTimeStep(1./240.)
 GRAVITY = -10
 p.setRealTimeSimulation(0)
 # bowl = p.loadURDF('models/bowl/bowl.urdf', (0,0,0), (0,0,1,1), globalScaling=5)
-fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
-
-
+# fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
+start = generate_circle_points(6, rad=0.8, z=.98)
+# start = [start[i]+.075 if i<2 else start[i] for i in range(len(start))]
 # ring = p.loadURDF('models/fish/ring2_vhacd.OBJ', (0,0,1), (0,0,1,1))
 
 # p.changeDynamics(bowl, -1, mass=0)
@@ -349,23 +350,48 @@ fish = p.loadURDF('models/fish/fishWithRing.xacro', (1,-2.1,1), (0,1,0,1))
 #     baseOrientation=mesh_orientation,
 # )
 
+path = "models/hourglass/hourglass.obj"
 mesh_scale = [.1, .1, .1]  # The scale of the mesh
-mesh_collision_shape = p.createCollisionShape(
-    shapeType=p.GEOM_MESH,
-    fileName="models/triple_hook/triple_hook_vhacd.obj",
-    meshScale=mesh_scale,
-    # flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-    # meshData=mesh_data,
-)
-mesh_visual_shape = -1  # Use the same shape for visualization
+# mesh_collision_shape = p.createCollisionShape(
+#     shapeType=p.GEOM_MESH,
+#     fileName=path,
+#     meshScale=mesh_scale,
+#     flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+#     # meshData=mesh_data,
+# )
+# mesh_visual_shape = -1  # Use the same shape for visualization
 mesh_position = [0, 0, 0]  # The position of the mesh
 mesh_orientation = p.getQuaternionFromEuler([1.57, 0, 0])  # The orientation of the mesh
-hook = p.createMultiBody(
+# hook = p.createMultiBody(
+#     baseCollisionShapeIndex=mesh_collision_shape,
+#     baseVisualShapeIndex=mesh_visual_shape,
+#     basePosition=mesh_position,
+#     baseOrientation=mesh_orientation,
+# )
+
+mesh_collision_shape = p.createCollisionShape(
+    shapeType=p.GEOM_MESH,
+    fileName=path,
+    meshScale=mesh_scale,
+    flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+)
+mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
+    fileName=path,
+    rgbaColor=[1, 1, 1, 1],
+    specularColor=[0.4, .4, 0],
+    # visualFramePosition=shift,
+    meshScale=mesh_scale
+)
+# mesh_visual_shape = -1  # Use the same shape for visualization
+# mesh_position = pos  # The position of the mesh
+# mesh_orientation = qtn  # The orientation of the mesh
+obstacle_id = p.createMultiBody(
     baseCollisionShapeIndex=mesh_collision_shape,
     baseVisualShapeIndex=mesh_visual_shape,
     basePosition=mesh_position,
     baseOrientation=mesh_orientation,
 )
+
 
 def getJointStates(robot):
   joint_states = p.getJointStates(robot, range(p.getNumJoints(robot)))
@@ -374,30 +400,34 @@ def getJointStates(robot):
   joint_torques = [state[3] for state in joint_states]
   return joint_positions, joint_velocities, joint_torques
 
-i = 0
-jointPositionsSce = []
-gemPosAll = []
-gemOrnAll = []
+# i = 0
+# jointPositionsSce = []
+# gemPosAll = []
+# gemOrnAll = []
 
-viewMat = [
-    0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
-    0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
-    0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
-]
-width = 512 # 128
-height = 512 # 128
-folderName = './results/test/'
+# viewMat = [
+#     0.642787516117096, -0.4393851161003113, 0.6275069713592529, 0.0, 0.766044557094574,
+#     0.36868777871131897, -0.5265407562255859, 0.0, -0.0, 0.8191521167755127, 0.5735764503479004,
+#     0.0, 2.384185791015625e-07, 2.384185791015625e-07, -5.000000476837158, 1.0
+# ]
+# width = 512 # 128
+# height = 512 # 128
+# folderName = './results/test/'
 
 while (1):
     p.stepSimulation()
+    results = band_collision_raycast(start)
+    print(start)
+    print(results)
+
     #p.setJointMotorControl2(botId, 1, p.TORQUE_CONTROL, force=1098.0)
     # p.applyExternalTorque(mesh_id, -1, [1,0,0], p.WORLD_FRAME)
     # print(gemPos, gemOrn)
     p.setGravity(0, 0, GRAVITY)
-    dep = i
-    images = p.getCameraImage(width, height, viewMatrix=viewMat,
-                              )
-    rgb_tiny = np.reshape(images[2], (height, width, 4)) * 1. / 255.
+    # dep = i
+    # images = p.getCameraImage(width, height, viewMatrix=viewMat,
+    #                           )
+    # rgb_tiny = np.reshape(images[2], (height, width, 4)) * 1. / 255.
     # fig = plt.figure(num=1, clear=True)
     # ax = fig.add_subplot() 
     # plt.text(width+10, height, 'Caging depth:{}'.format(dep))
@@ -416,10 +446,10 @@ while (1):
     #     for file_name in glob.glob("*.png"):
     #         os.remove(file_name)
     
-    time.sleep(5/240.)
+    # time.sleep(5/240.)
 
-    i += 1
-    print(i)
+    # i += 1
+    # print(i)
     # CP = p.getClosestPoints(bodyA=fish, bodyB=mesh_id, distance=-0.01)
     # if len(CP)>0:
     #     dis = [CP[i][8] for i in range(len(CP))]

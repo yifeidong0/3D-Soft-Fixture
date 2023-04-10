@@ -81,18 +81,23 @@ class PbOMPL():
         # Should be unecessary if joint bounds is properly set
 
         # check self-collision
-        self.robot.set_state(self.state_to_list(state))
+        stateList = self.state_to_list(state)
+        self.robot.set_state(stateList)
         for link1, link2 in self.check_link_pairs:
             if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
                 # print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
                 return False
 
         # check collision against environment
-        for body1, body2 in self.check_body_pairs:
-            if utils.pairwise_collision(body1, body2):
-                # print('body collision', body1, body2)
-                # print(get_body_name(body1), get_body_name(body2))
+        if self.args.object == "Band":
+            if utils.band_collision_raycast(stateList):
                 return False
+        else:
+            for body1, body2 in self.check_body_pairs:
+                if utils.pairwise_collision(body1, body2):
+                    # print('body collision', body1, body2)
+                    # print(get_body_name(body1), get_body_name(body2))
+                    return False
         return True
 
     def setup_collision_detection(self, self_collisions = False):
@@ -107,7 +112,9 @@ class PbOMPL():
             # moving_bodies = [(robot.id, moving_links)] # original 
             # print('moving_bodies: ', moving_bodies)
             self.check_body_pairs = list(product(moving_bodies, self.obstacles))
-      
+
+
+
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()
@@ -150,7 +157,7 @@ class PbOMPL():
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
-            self.planner.params().setParam("samples_per_batch", "10000")
+            self.planner.params().setParam("samples_per_batch", "20000")
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":
@@ -284,8 +291,9 @@ class PbOMPL():
                 # p.setGravity(grav[0], grav[1], grav[2])
             else:
                 self.robot.set_state(q)
+                utils.band_collision_raycast(q, visRays=1)
             p.stepSimulation()
-            time.sleep(80/240)
+            time.sleep(140/240)
 
     # -------------
     # Configurations

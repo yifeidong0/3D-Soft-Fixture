@@ -18,13 +18,14 @@ if __name__ == '__main__':
     elif args.object == 'Fish':
         env = ArticulatedObjectCaging(args)
     elif args.object == 'Band':
-        numCtrlPoint = 3
-        start = [-0.2,-0.2,1.8, 0.2,-0.2,1.8, 0,0.4,1.8] 
-        goal = [0,0,4] * numCtrlPoint
+        numCtrlPoint = 6
+        # start = [-0.2,-0.2,1.8, 0.2,-0.2,1.8, 0,0.4,1.8] 
+        start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
+        goal = [0,0,2.18] * numCtrlPoint
         env = ElasticObjectCaging(args, numCtrlPoint, start, goal)
 
     # set searching bounds and add obstacles
-    env.add_obstacles(scale=[.05]*3)
+    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
     env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
  
     # Choose from different searching methods

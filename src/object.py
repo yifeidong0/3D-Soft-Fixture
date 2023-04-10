@@ -137,9 +137,9 @@ class ObjectToCage(ObjectBase):
 class ElasticObjectToCage(ObjectToCage):
     '''An elastic band composed of several control points.
     '''
-    def __init__(self, id) -> None:
+    def __init__(self, id, numCtrlPoint) -> None:
         self.id = id # a list
-        self.numCtrlPoint = len(self.id)
+        self.numCtrlPoint = numCtrlPoint
         self.comDof = 3
         self.joint_idx = []
         # self.articulate_num = p.getNumJoints(id)
@@ -149,16 +149,16 @@ class ElasticObjectToCage(ObjectToCage):
 
         self.set_search_bounds()
 
-    def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
+    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
         self.joint_bounds = self.numCtrlPoint * basePosBounds
 
     def set_state(self, state):
         eulerRot = [0,0,0]
         quat = p.getQuaternionFromEuler(eulerRot)
 
-        for i in range(self.numCtrlPoint):
-            pos = state[i*3:i*3+3]
-            p.resetBasePositionAndOrientation(self.id[i], pos, quat)
+        # for i in range(self.numCtrlPoint):
+        #     pos = state[i*3:i*3+3]
+            # p.resetBasePositionAndOrientation(self.id[i], pos, quat)
 
         self.state = state
 

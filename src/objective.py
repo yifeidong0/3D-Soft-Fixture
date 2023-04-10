@@ -55,7 +55,7 @@ class ElasticPotentialObjective(ob.OptimizationObjective):
         self.numStateSpace = len(start)
         self.numCtrlPoint = int(self.numStateSpace/3)
         self.stiffnesss = [10] * self.numCtrlPoint
-        self.springneutralLen = .3
+        self.springneutralLen = .8
         # self.comDof = 6
         # self.numJoints = self.numStateSpace - self.comDof
         # self.numLinks = self.numJoints + 1
@@ -88,38 +88,7 @@ class ElasticPotentialObjective(ob.OptimizationObjective):
 
         return energyElastic
 
-    # def getGravityEnergy(self, state):
-    #     # extract positions of links
-    #     jointAngles = state[self.comDof:] # rad
-    #     linkPosesInBase = self.chain.forward_kinematics(jointAngles) # dictionary
-
-    #     # get object's base transform
-    #     basePositionInWorld = state[0:3]
-    #     baseEulInWorld = state[3:self.comDof] # euler
-    #     baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
-    #     # r = R.from_euler('zyx', baseEulInWorld, degrees=False)
-    #     r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
-    #     mat = r.as_matrix() # 3*3
-    #     thirdRow = (mat[2,:].reshape((1,3)), np.array(basePositionInWorld[2]).reshape((1,1)))
-    #     baseTInWorld = np.hstack(thirdRow) # 1*4. 3rd row of Transform matrix
-    #     # baseTransformInWorld = np.vstack(baseTInWorld, np.array([.0, .0, .0, 1.0])) # 4*4
-
-    #     # get link heights in World frame
-    #     linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
-    #     linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
-    #     linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-    #     # print('@@linkZsInWorld', linkZsInWorld)
-        
-    #     # get links' gravitational potential energy
-    #     linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
-    #     energyGravity = self.g * sum(linkEnergies) # sigma(g * m_i * z_i)
-        
-    #     return energyGravity
-
     def stateEnergy(self, state):
-        # energyElastic = self.getElasticEnergy(state)
-        # energyGravity = self.getGravityEnergy(state)
-        # energySum = energyElastic + energyGravity
         # print('!!!!!energyElastic: {}, energyGravity: {}'.format(energyElastic, energyGravity))
         return self.getElasticEnergy(state)
     

@@ -4,11 +4,13 @@ https://github.com/StanfordVL/iGibson/blob/master/igibson/external/pybullet_tool
 '''
 
 from __future__ import print_function
-
 import pybullet as p
 from collections import defaultdict, deque, namedtuple
 from itertools import product, combinations, count
 import argparse
+import math
+import numpy as np
+import time
 
 BASE_LINK = -1
 MAX_DISTANCE = -0.025
@@ -22,8 +24,8 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
-        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish'], \
+    parser.add_argument('-c', '--scenario', default='BustTrapsBand', \
+        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyMinimizeSearch', \
@@ -35,20 +37,20 @@ def argument_parser():
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
+    parser.add_argument('-o', '--objective', default='ElasticPotential', \
         choices=['ElasticPotential', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Starfish', \
+    parser.add_argument('-j', '--object', default='Band', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust'], \
+    parser.add_argument('-l', '--obstacle', default='Hourglass', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=10, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -79,7 +81,8 @@ def path_collector():
             'Humanoid': 'models/humanoid.urdf',
             'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
-            'Bust': 'models/bust/female_bust.obj'
+            'Bust': 'models/bust/female_bust.obj',
+            'Hourglass': 'models/hourglass/hourglass.obj'
             }
 
 def texture_path_list():
@@ -90,7 +93,7 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust']
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -106,6 +109,17 @@ def create_convex_vhacd(name_in, name_out, resolution=int(1e5)):
     '''
     name_log = "log.txt"
     p.vhacd(name_in, name_out, name_log, resolution=resolution)
+
+
+def generate_circle_points(n, rad, z):
+    points = []
+    angles = list(np.linspace(0, 2*np.pi, n, endpoint=0))
+    for i in range(n):
+        x = rad * math.cos(angles[i])
+        y = rad * math.sin(angles[i])
+        points.append([x,y,z])
+    points = flatten_nested_list(points)
+    return points
 
 #####################################
 
@@ -144,6 +158,40 @@ def body_collision(body1, body2, max_distance=MAX_DISTANCE):  # 10000
     # p.stepSimulation()
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance)) != 0  # getContactPoints`
     # return len(p.getContactPoints(bodyA=body1, bodyB=body2,)) > 20  # getContactPoints`
+
+def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    '''
+    Description:
+        check if the lines connecting any two adjacent control points along a band penetrate obstacles.
+        Pybullet Raycast method applied here.
+    Input: 
+        state: list of planner state vector, length is 3*numCtrlPoint
+        obstacles: list of obstacle IDs
+    '''
+    is_collision = False
+    numCtrlPoint = int(len(state)/3)
+    rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
+    rayToPositions = rayFromPositions[1:]
+    rayToPositions.append(rayFromPositions[0])
+    results = p.rayTestBatch(rayFromPositions, rayToPositions)
+    
+    # if visRays:
+    #     time.sleep(20/240)
+    #     p.removeAllUserDebugItems()
+
+    for i in range(len(results)):
+        hitObjectUid = results[i][0]
+        # print(hitObjectUid)
+        if (hitObjectUid < 0): # collision free
+            # hitPosition = [0, 0, 0]
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.5) if visRays else None
+        else: # collision
+            # hitPosition = results[i][3]
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.5) if visRays else None
+            # return True
+            is_collision = True
+
+    return is_collision
 
 def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):
     moving_links = get_moving_links(body, joints)
