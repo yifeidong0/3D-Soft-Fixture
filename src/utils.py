@@ -50,7 +50,7 @@ def argument_parser():
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=90, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -248,7 +248,7 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
 
     return is_collision
 
-def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+def rope_collision_raycast(state, linkLen, obstacleIds, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
     '''
     Description:
         check if the lines connecting any two adjacent control points along a rope penetrate obstacles.
@@ -268,13 +268,13 @@ def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,
 
     for i in range(len(results)):
         hitObjectUid = results[i][0]
-        print('!!!!!hitObjectUid', hitObjectUid)
         if (hitObjectUid < 0): # collision free
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1) if visRays else None
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.07) if visRays else None
         else: # collision
-            hitPosition = results[i][3]
-            print('!!!!!hitPosition', hitPosition)
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1) if visRays else None
+            # print('!!!!!i, hitObjectUid', i, hitObjectUid)
+            # hitPosition = results[i][3]
+            # print('!!!!!hitPosition', hitPosition)
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.07) if visRays else None
             # return True
             is_collision = True
 

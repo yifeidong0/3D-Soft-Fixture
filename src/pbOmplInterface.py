@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 100
+INTERPOLATE_NUM = 4000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -64,6 +64,7 @@ class PbOMPL():
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
+        self.ropeNodeAwayPos = [10]*3
 
         # self.reset_robot_state_bound()
   
@@ -80,7 +81,7 @@ class PbOMPL():
         # satisfy bounds TODO
         # Should be unecessary if joint bounds is properly set
 
-        # check self-collision
+        # Check self-collision
         stateList = self.state_to_list(state)
         self.robot.set_state(stateList)
         for link1, link2 in self.check_link_pairs:
@@ -88,13 +89,30 @@ class PbOMPL():
                 # print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
                 return False
 
-        # check collision against environment
+        # Check collision against environment
+        # Scenarios with a band
         if self.args.object == "Band":
             if utils.band_collision_raycast(stateList):
                 return False
+
+        # Scenarios with a rope
         if self.args.object == "Rope":
-            if utils.rope_collision_raycast(stateList, self.robot.linkLen):
+            # Check if nodes of rope in collision
+            for body1, body2 in self.check_body_pairs:
+                if utils.pairwise_collision(body1, body2):
+                    # print('nodes of rope in collision')
+                    return False
+            
+            # Move node spheres in Bullet away to avoid interfering collision check
+            for i in range(len(self.robot.id)):
+                p.resetBasePositionAndOrientation(self.robot.id[i], self.ropeNodeAwayPos, self.robot.zeroQuaternion)
+    
+            # Check if links between nodes in collision
+            if utils.rope_collision_raycast(stateList, self.robot.linkLen, self.obstacles):
+                # print('links between nodes in collision')
                 return False
+        
+        # Other scenarios with URDF collision bodies
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
@@ -104,7 +122,7 @@ class PbOMPL():
         return True
 
     def setup_collision_detection(self, self_collisions = False):
-        if self.args.object == "Band":
+        if self.args.object == "Band" or "Rope":
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
         else:
@@ -254,8 +272,8 @@ class PbOMPL():
             print('sol_path_list', len(sol_path_list))
 
             # check if solution path is valid
-            for sol_path in sol_path_list:
-                self.is_state_valid(sol_path)
+            # for sol_path in sol_path_list:
+            #     self.is_state_valid(sol_path)
                 
             # get cost of the solution path
             if self.args.search == 'EnergyMinimizeSearch':
@@ -308,10 +326,10 @@ class PbOMPL():
                 if self.args.object == 'Band':
                     utils.band_collision_raycast(q, visRays=1)
                 elif self.args.object == 'Rope':
-                    utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
+                    utils.rope_collision_raycast(q, self.robot.linkLen, self.obstacles, visRays=1)
 
             p.stepSimulation()
-            time.sleep(80/240)
+            time.sleep(11/240)
 
     # -------------
     # Configurations

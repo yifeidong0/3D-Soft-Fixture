@@ -65,11 +65,11 @@ class RigidObjectCaging():
     def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
         obst = self.args.obstacle
         if  obst == 'Box':
-            # self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
-            self.add_box([.5, 0, 1.5], [0.5, .7, .9]) # add outer walls
-            # self.add_box([-.5, 0, 1.5], [0.2, .7, .9])
-            # self.add_box([0, .5, 1.5], [.7, 0.2, .9])
-            # self.add_box([0, -.5, 1.5], [.7, 0.2, .9])
+            self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
+            self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
+            self.add_box([-.5, 0, 1.2], [0.2, .7, .4])
+            self.add_box([0, .5, 1.2], [.7, 0.2, .4])
+            self.add_box([0, -.5, 1.2], [.7, 0.2, .4])
         
         elif obst in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
@@ -345,25 +345,12 @@ class ElasticBandCaging(RigidObjectCaging):
         # for i in range(self.numCtrlPoint):
         #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=1)) # radius 0.5cm
         
-        # if self.args.object == 'Band':
         self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
-        # elif self.args.object == 'Rope':
-        #     self.robot = objectRope(self.object_id, self.numCtrlPoint)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
-        # if self.args.object == 'Band':
-        # if start is None:
         self.start = [0,0,2]*self.numCtrlPoint if start is None else start
-        # else:
-        #     self.start = start
-        # if goal is None:
         self.goal = [0,0,3]*self.numCtrlPoint if goal is None else goal
-        # else:
-        #     self.goal = goal
-        # elif self.args.object == 'Rope':
-        #     self.start = [0,0,2,0,0,0] + [0,0]*self.numCtrlPoint if start is None else start
-        #     self.goal = [0,0,0.1,0,0,0] + [0,0]*self.numCtrlPoint if goal is None else goal
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
@@ -404,6 +391,9 @@ class RopeCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
+        for i in range(self.numCtrlPoint+2): # number of nodes
+           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.1)) # '1cm': diameter
+        # print('@@@@ self.object_id', self.object_id)
         self.robot = objectRope(self.object_id, self.numCtrlPoint, self.linkLen)
 
     def reset_start_and_goal(self, start=None, goal=None):

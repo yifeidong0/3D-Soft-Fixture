@@ -29,9 +29,9 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
     elif args.object == 'Rope':
-        numCtrlPoint = 1
-        linkLen = 0.4
-        start = [0,0,.8,0,0,0] + [0,0]*numCtrlPoint
+        numCtrlPoint = 4
+        linkLen = 0.1
+        start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
         goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
         env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
         env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))

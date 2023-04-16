@@ -3,6 +3,7 @@ import copy
 import math
 from scipy.spatial.transform import Rotation as R
 import time
+from utils import *
 
 class ObjectBase():
     '''
@@ -165,13 +166,16 @@ class objectRope(ObjectFromUrdf):
     A rope composed of base (6) and several control points (3n).
     '''
     def __init__(self, id, numCtrlPoint, linkLen) -> None:
-        self.id = id # a list
+        self.id = id # a list of spheres' IDs
         self.numCtrlPoint = numCtrlPoint
         self.linkLen = linkLen
         self.baseDof = 6
         self.ctrlPointDof = 2
         self.joint_idx = []
         self.num_dim = self.baseDof + self.ctrlPointDof*self.numCtrlPoint # 6+2n
+        self.nodesPositions = None
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
         # self.articulate_num = p.getNumJoints(id)
         # self.reset()
 
@@ -183,7 +187,14 @@ class objectRope(ObjectFromUrdf):
         for i in range(self.num_dim-3): # 3+2n rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
 
+    def get_cur_nodes_positions(self):
+        return self.nodesPositions
+    
     def set_state(self, state):
+        self.nodesPositions, _ = ropeForwardKinematics(state, self.linkLen)
+        for i in range(len(self.id)):
+            p.resetBasePositionAndOrientation(self.id[i], self.nodesPositions[i], self.zeroQuaternion)
+
         self.state = state
 
 
