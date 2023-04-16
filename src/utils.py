@@ -42,12 +42,12 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Band', \
-        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
+    parser.add_argument('-j', '--object', default='Rope', \
+        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hourglass', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass'], \
+    parser.add_argument('-l', '--obstacle', default='Box', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
     parser.add_argument('-t', '--runtime', type=float, default=120, help=\
@@ -110,7 +110,6 @@ def create_convex_vhacd(name_in, name_out, resolution=int(1e5)):
     name_log = "log.txt"
     p.vhacd(name_in, name_out, name_log, resolution=resolution)
 
-
 def generate_circle_points(n, rad, z):
     points = []
     angles = list(np.linspace(0, 2*np.pi, n, endpoint=0))
@@ -120,6 +119,63 @@ def generate_circle_points(n, rad, z):
         points.append([x,y,z])
     points = flatten_nested_list(points)
     return points
+
+def ropeForwardKinematics(state, linkLen, baseDof_=6, ctrlPointDof_=2, TLastRow_=np.array([[0.,0.,0.,1.]])):
+    numStateSpace_ = len(state)
+    numCtrlPoint_ = int((numStateSpace_-baseDof_) / ctrlPointDof_)
+    nextFPosInThisF_ = np.array([[0.], [0.], [linkLen], [1.]]) # 4*1
+
+    # Data structure
+    nodePositionsInWorld = [] # all nodes (numCtrlPoint+2): base + numCtrlPoint + end
+    nodePosZsInWorld = []
+
+    # Retrieve object's base transform
+    basePosInWorld = np.array(state[0:3]).reshape((3))
+    baseEulInWorld = state[3:6] # euler
+    baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
+    r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
+    mat = r.as_matrix() # (3,3)
+    first3Rows = (mat, basePosInWorld.reshape((3,1)))
+    first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+    baseTInWorld = np.vstack((first3Rows, TLastRow_)) # (4,4)
+    F0PosInWorld = baseTInWorld @ nextFPosInThisF_ # (4,1)
+    F0PosInWorld = F0PosInWorld[:3].reshape((3))
+
+    # Record
+    nodePositionsInWorld.append(list(basePosInWorld))
+    nodePositionsInWorld.append(list(F0PosInWorld))
+    nodePosZsInWorld.append(float(basePosInWorld[2]))
+    nodePosZsInWorld.append(float(F0PosInWorld[2]))
+
+    # Iterate over control points
+    Fi_1TInWorld = baseTInWorld
+    for i in range(numCtrlPoint_):
+        # Fi_1: F_{i-1} the (i-1)'th frame, F_{-1} is base frame
+        # Fip1: F_{i+1} the (i+1)'th frame
+
+        # Build local rotation matrix
+        FiEulInFi_1 = state[6+2*i:6+2*(i+1)]
+        FiEulInFi_1.append(0.) # euler
+        FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
+        r = R.from_quat(FiQuatInFi_1)
+        mat = r.as_matrix() # (3,3)
+
+        # Build global transformation matrix
+        first3Rows = (mat, np.array(nextFPosInThisF_[:3]))
+        first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+        FiTInFi_1 = np.vstack((first3Rows, TLastRow_)) # (4,4)
+        FiTInWorld = Fi_1TInWorld @ FiTInFi_1 # (4,4)
+        Fip1PosInWorld = FiTInWorld @ nextFPosInThisF_ # (4,1)
+        Fip1PosInWorld = Fip1PosInWorld[:3].reshape((3)) # (3,)
+
+        # Record
+        nodePositionsInWorld.append(list(Fip1PosInWorld))
+        nodePosZsInWorld.append(float(Fip1PosInWorld[2]))
+        
+        # Update last transformation matrix
+        Fi_1TInWorld = FiTInWorld
+    
+    return nodePositionsInWorld, nodePosZsInWorld
 
 #####################################
 
@@ -166,7 +222,6 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
         Pybullet Raycast method applied here.
     Input: 
         state: list of planner state vector, length is 3*numCtrlPoint
-        obstacles: list of obstacle IDs
     '''
     is_collision = False
     numCtrlPoint = int(len(state)/3)
@@ -185,9 +240,41 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
         if (hitObjectUid < 0): # collision free
             # hitPosition = [0, 0, 0]
             p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.5) if visRays else None
-        else: # collision
+        else: # in collision
             # hitPosition = results[i][3]
             p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.5) if visRays else None
+            # return True
+            is_collision = True
+
+    return is_collision
+
+def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    '''
+    Description:
+        check if the lines connecting any two adjacent control points along a rope penetrate obstacles.
+        Pybullet Raycast method applied here.
+    Input: 
+        state: list of planner state vector, length is 6+2*numCtrlPoint
+        obstacles: list of obstacle IDs
+    '''
+    is_collision = False
+    nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
+
+    # numNode = len(nodePositionsInWorld)
+    rayFromPositions = nodePositionsInWorld[:-1]
+    rayToPositions = nodePositionsInWorld[1:]
+    # print('!!!!!rayFromPositions, rayToPositions', rayFromPositions, rayToPositions)
+    results = p.rayTestBatch(rayFromPositions, rayToPositions)
+
+    for i in range(len(results)):
+        hitObjectUid = results[i][0]
+        print('!!!!!hitObjectUid', hitObjectUid)
+        if (hitObjectUid < 0): # collision free
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1) if visRays else None
+        else: # collision
+            hitPosition = results[i][3]
+            print('!!!!!hitPosition', hitPosition)
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1) if visRays else None
             # return True
             is_collision = True
 

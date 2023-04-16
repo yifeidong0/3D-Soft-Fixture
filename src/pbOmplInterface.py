@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 40
+INTERPOLATE_NUM = 100
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -92,6 +92,9 @@ class PbOMPL():
         if self.args.object == "Band":
             if utils.band_collision_raycast(stateList):
                 return False
+        if self.args.object == "Rope":
+            if utils.rope_collision_raycast(stateList, self.robot.linkLen):
+                return False
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
@@ -157,7 +160,9 @@ class PbOMPL():
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
-            self.planner.params().setParam("samples_per_batch", "20000")
+            # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
+            # self.planner.params().setParam("samples_per_batch", "20000") # band
+            self.planner.params().setParam("samples_per_batch", "50000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":
@@ -201,7 +206,11 @@ class PbOMPL():
                 self.pdef.setOptimizationObjective(self.potentialObjective)
 
             elif self.args.object == "Band":
-                self.potentialObjective = objective.ElasticPotentialObjective(self.si, start, self.args)
+                self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
+                self.pdef.setOptimizationObjective(self.potentialObjective)
+
+            elif self.args.object == "Rope":
+                self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
                 self.pdef.setOptimizationObjective(self.potentialObjective)
             # else: self.args.objective == 'PathLength'
         
@@ -241,7 +250,9 @@ class PbOMPL():
             sol_path_states = sol_path_geometric.getStates()
             sol_path_list_non_interp = [self.state_to_list(s) for s in sol_path_states_non_interp]
             sol_path_list = [self.state_to_list(s) for s in sol_path_states]
-            
+            print('sol_path_list_non_interp', len(sol_path_list_non_interp))
+            print('sol_path_list', len(sol_path_list))
+
             # check if solution path is valid
             for sol_path in sol_path_list:
                 self.is_state_valid(sol_path)
@@ -280,6 +291,7 @@ class PbOMPL():
                       meaning that the simulator will simply reset robot's state WITHOUT any dynamics simulation. Since the
                       path is collision free, this is somewhat acceptable.
         '''
+        print('!!!!!!!!execute path length', len(path))
         for q in path:
             if dynamics:
                 # TODO: try tune gravity
@@ -291,9 +303,15 @@ class PbOMPL():
                 # p.setGravity(grav[0], grav[1], grav[2])
             else:
                 self.robot.set_state(q)
-                utils.band_collision_raycast(q, visRays=1)
+
+                # Visualize linear objects using Bullet user debug lines
+                if self.args.object == 'Band':
+                    utils.band_collision_raycast(q, visRays=1)
+                elif self.args.object == 'Rope':
+                    utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
+
             p.stepSimulation()
-            time.sleep(140/240)
+            time.sleep(80/240)
 
     # -------------
     # Configurations

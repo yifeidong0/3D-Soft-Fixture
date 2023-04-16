@@ -8,7 +8,7 @@ from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
 from main import argument_parser
 import pybullet_data
 from utils import *
-from object import CagingObstacle
+from object import obstascle3fGripper
 from visualization import *
 import numpy as np
 
@@ -129,7 +129,7 @@ class runScenario():
                                           baseOrientation=self.obstacleQtn, 
                                           globalScaling=self.obstacleScale
                                           )
-            self.obstacle = CagingObstacle(self.obstacleId)
+            self.obstacle = obstascle3fGripper(self.obstacleId)
 
         # Load texture file - png
         # texObsId = p.loadTexture(self.pathsTex[self.obstacle])

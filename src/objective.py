@@ -17,8 +17,98 @@ import numpy as np
 import sys
 import kinpy as kp
 from scipy.spatial.transform import Rotation as R
-from utils import path_collector
+from utils import *
 import pybullet as p
+
+class RopePotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, linkLen):
+        super(RopePotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.linkLen_ = linkLen # fixed-length rope links
+        self.numStateSpace_ = len(start)
+        self.baseDof_ = 6
+        self.ctrlPointDof_ = 2
+        self.numCtrlPoint_ = int((self.numStateSpace_-self.baseDof_) / self.ctrlPointDof_)
+        self.ctrlPointMass_ = .1
+        self.g_ = 9.81
+        self.TLastRow_ = np.array([[0., 0., 0., 1.]]) # 1*4
+        self.nextFPosInThisF_ = np.array([[0.], [0.], [self.linkLen_], [1.]]) # 4*1
+
+        # self.framePositionsInWorld = [] # list of (3,) numpy arrays
+        # self.framePosZsInWorld = []
+        self.startStateEnergy = self.stateEnergy(self.start_)
+
+    # def ropeForwardKinematics(self, state):
+    #     # Retrieve object's base transform
+    #     basePosInWorld = np.array(state[0:3]).reshape((3))
+    #     baseEulInWorld = state[3:6] # euler
+    #     baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
+    #     r = R.from_quat(baseQuatInWorld)
+    #     mat = r.as_matrix() # (3,3)
+    #     first3Rows = (mat, basePosInWorld.reshape((3,1)))
+    #     first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+    #     baseTInWorld = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
+    #     F0PosInWorld = baseTInWorld @ self.nextFPosInThisF_ # (4,1)
+    #     F0PosInWorld = F0PosInWorld[:3].reshape((3))
+
+    #     # Record
+    #     self.framePositionsInWorld.append(basePosInWorld)
+    #     self.framePositionsInWorld.append(F0PosInWorld)
+    #     self.framePosZsInWorld.append(float(basePosInWorld[2]))
+    #     self.framePosZsInWorld.append(float(F0PosInWorld[2]))
+
+    #     # Iterate over control points
+    #     Fi_1TInWorld = baseTInWorld
+    #     for i in range(self.numCtrlPoint_):
+    #         # Fi_1: F_{i-1} the (i-1)'th frame, F_{-1} is base frame
+    #         # Fip1: F_{i+1} the (i+1)'th frame
+
+    #         # Build local rotation matrix
+    #         FiEulInFi_1 = state[6+2*i:6+2*(i+1)]
+    #         FiEulInFi_1.append(0.) # euler
+    #         FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
+    #         r = R.from_quat(FiQuatInFi_1)
+    #         mat = r.as_matrix() # (3,3)
+
+    #         # Build global transformation matrix
+    #         first3Rows = (mat, np.array(self.nextFPosInThisF_[:3]))
+    #         first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+    #         FiTInFi_1 = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
+    #         FiTInWorld = Fi_1TInWorld @ FiTInFi_1 # (4,4)
+    #         Fip1PosInWorld = FiTInWorld @ self.nextFPosInThisF_ # (4,1)
+    #         Fip1PosInWorld = Fip1PosInWorld[:3].reshape((3)) # (3,)
+
+    #         # Record
+    #         self.framePositionsInWorld.append(Fip1PosInWorld)
+    #         self.framePosZsInWorld.append(float(Fip1PosInWorld[2]))
+            
+    #         # Update last transformation matrix
+    #         Fi_1TInWorld = FiTInWorld
+
+    def stateEnergy(self, state):
+        # Rope forward kinematics
+        _, nodeZsInWorld = ropeForwardKinematics(state, self.linkLen_) # no. of zs - numCtrlPoint_+2
+        
+        # Get links' gravitational potential energy
+        energyGravity = self.ctrlPointMass_ * self.g_ * sum(nodeZsInWorld) # sigma(m_i * g * z_i)
+        
+        return energyGravity
+    
+    def motionCost(self, state1, state2):
+        state2 = [state2[i] for i in range(self.numStateSpace_)] # RealVectorStateInternal to list
+        return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+
+    def combineCosts(self, cost1, cost2):
+        '''
+        The vertex i cost is expressed as the potential energy gain along 
+        the path connecting i and v_start, and formulated as
+        v_child.cost = combineCost(v_parent.cost, 
+                                   motionCost(v_parent, v_child))
+                     = max(v_parent.cost, v_child.energy-v_start.energy)
+        '''
+        return ob.Cost(max(cost1.value(), cost2.value()))
+    
 
 class GravityPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
@@ -34,19 +124,12 @@ class GravityPotentialObjective(ob.OptimizationObjective):
         return ob.Cost(self.stateEnergy(s2) - self.startStateEnergy)
 
     def combineCosts(self, c1, c2):
-        '''
-        The vertex i cost is expressed as the potential energy gain along 
-        the path connecting i and v_start, and formulated as
-        v_child.cost = combineCost(v_parent.cost, 
-                                   motionCost(v_parent, v_child))
-                     = max(v_parent.cost, v_child.energy-v_start.energy)
-        '''
         return ob.Cost(max(c1.value(), c2.value()))
 
 
-class ElasticPotentialObjective(ob.OptimizationObjective):
+class ElasticBandPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):
-        super(ElasticPotentialObjective, self).__init__(si)
+        super(ElasticBandPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
         self.args_ = args
@@ -68,7 +151,6 @@ class ElasticPotentialObjective(ob.OptimizationObjective):
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
-        # print('!!!!!self.energyStart: {}'.format(self.energyStart))
 
     def getElasticEnergy(self, state):
         # Retrieve control point positions

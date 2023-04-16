@@ -73,7 +73,10 @@ class ObjectBase():
             p.resetJointState(self.id, joint, value, targetVelocity=0)
 
 
-class ObjectToCage(ObjectBase):
+class ObjectFromUrdf(ObjectBase):
+    '''
+    Object loaded from URDF files. States, joint bounds are defined here.
+    '''
     def __init__(self, id) -> None:
         self.id = id
         self.comDof = 3 + 3 # SE3
@@ -134,8 +137,9 @@ class ObjectToCage(ObjectBase):
             p.resetJointState(self.id, joint, value, targetVelocity=0)
 
 
-class ElasticObjectToCage(ObjectToCage):
-    '''An elastic band composed of several control points.
+class objectElasticBand(ObjectFromUrdf):
+    '''
+    An elastic band composed of several control points.
     '''
     def __init__(self, id, numCtrlPoint) -> None:
         self.id = id # a list
@@ -153,17 +157,40 @@ class ElasticObjectToCage(ObjectToCage):
         self.joint_bounds = self.numCtrlPoint * basePosBounds
 
     def set_state(self, state):
-        eulerRot = [0,0,0]
-        quat = p.getQuaternionFromEuler(eulerRot)
-
-        # for i in range(self.numCtrlPoint):
-        #     pos = state[i*3:i*3+3]
-            # p.resetBasePositionAndOrientation(self.id[i], pos, quat)
-
         self.state = state
 
-# for articulated obstacle (3fGripper)
-class CagingObstacle(ObjectToCage):
+
+class objectRope(ObjectFromUrdf):
+    '''
+    A rope composed of base (6) and several control points (3n).
+    '''
+    def __init__(self, id, numCtrlPoint, linkLen) -> None:
+        self.id = id # a list
+        self.numCtrlPoint = numCtrlPoint
+        self.linkLen = linkLen
+        self.baseDof = 6
+        self.ctrlPointDof = 2
+        self.joint_idx = []
+        self.num_dim = self.baseDof + self.ctrlPointDof*self.numCtrlPoint # 6+2n
+        # self.articulate_num = p.getNumJoints(id)
+        # self.reset()
+
+        self.set_search_bounds()
+
+    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+        # self.joint_bounds = self.numCtrlPoint * basePosBounds
+        self.joint_bounds = basePosBounds # base pos
+        for i in range(self.num_dim-3): # 3+2n rot
+            self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
+
+    def set_state(self, state):
+        self.state = state
+
+
+class obstascle3fGripper(ObjectFromUrdf):
+    '''
+    A Robotiq 3-finger gripper composed of 3 fingers and 4 DoF on each.
+    '''
     def __init__(self, id) -> None:
         self.id = id
         self.comDof = 3 + 3 # SE3
