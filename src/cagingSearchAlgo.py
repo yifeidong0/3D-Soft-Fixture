@@ -67,9 +67,9 @@ class RigidObjectCaging():
         if  obst == 'Box':
             self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
             self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
-            self.add_box([-.5, 0, 1.2], [0.2, .7, .4])
-            self.add_box([0, .5, 1.2], [.7, 0.2, .4])
-            self.add_box([0, -.5, 1.2], [.7, 0.2, .4])
+            self.add_box([-.5, 0, 1.2], [0.2, .7, .6])
+            self.add_box([0, .5, 1.2], [.7, 0.2, .5])
+            self.add_box([0, -.5, 1.2], [.7, 0.2, .7])
         
         elif obst in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
@@ -328,7 +328,6 @@ class ElasticBandCaging(RigidObjectCaging):
         else:
             vis = p.DIRECT
         p.connect(vis)
-        # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
@@ -342,9 +341,9 @@ class ElasticBandCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        # for i in range(self.numCtrlPoint):
-        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=1)) # radius 0.5cm
-        
+        for i in range(self.numCtrlPoint):
+           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
+
         self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
 
     def reset_start_and_goal(self, start=None, goal=None):
@@ -354,8 +353,6 @@ class ElasticBandCaging(RigidObjectCaging):
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
-        # print('@@@@self.start', self.start)
-        # print('@@@@jbounds', jbounds)
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
@@ -380,7 +377,6 @@ class RopeCaging(RigidObjectCaging):
         else:
             vis = p.DIRECT
         p.connect(vis)
-        # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
@@ -392,7 +388,7 @@ class RopeCaging(RigidObjectCaging):
         self.paths = path_collector()
         self.object_id = []
         for i in range(self.numCtrlPoint+2): # number of nodes
-           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.1)) # '1cm': diameter
+           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.01)) # '1cm': diameter
         # print('@@@@ self.object_id', self.object_id)
         self.robot = objectRope(self.object_id, self.numCtrlPoint, self.linkLen)
 
@@ -403,8 +399,6 @@ class RopeCaging(RigidObjectCaging):
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
-        # print('@@@@self.start', self.start)
-        # print('@@@@jbounds', jbounds)
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated

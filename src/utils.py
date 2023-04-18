@@ -42,15 +42,15 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Rope', \
+    parser.add_argument('-j', '--object', default='Band', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Box', \
+    parser.add_argument('-l', '--obstacle', default='Hourglass', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=90, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -229,7 +229,8 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
     rayToPositions = rayFromPositions[1:]
     rayToPositions.append(rayFromPositions[0])
     results = p.rayTestBatch(rayFromPositions, rayToPositions)
-    
+    # TODO: double-way raycast
+
     # if visRays:
     #     time.sleep(20/240)
     #     p.removeAllUserDebugItems()
@@ -238,17 +239,15 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
         hitObjectUid = results[i][0]
         # print(hitObjectUid)
         if (hitObjectUid < 0): # collision free
-            # hitPosition = [0, 0, 0]
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.5) if visRays else None
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.3) if visRays else None
         else: # in collision
-            # hitPosition = results[i][3]
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.5) if visRays else None
+            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.3) if visRays else None
             # return True
             is_collision = True
 
     return is_collision
 
-def rope_collision_raycast(state, linkLen, obstacleIds, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
     '''
     Description:
         check if the lines connecting any two adjacent control points along a rope penetrate obstacles.
@@ -260,10 +259,8 @@ def rope_collision_raycast(state, linkLen, obstacleIds, rayHitColor=[1,0,0], ray
     is_collision = False
     nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
 
-    # numNode = len(nodePositionsInWorld)
     rayFromPositions = nodePositionsInWorld[:-1]
     rayToPositions = nodePositionsInWorld[1:]
-    # print('!!!!!rayFromPositions, rayToPositions', rayFromPositions, rayToPositions)
     results = p.rayTestBatch(rayFromPositions, rayToPositions)
 
     for i in range(len(results)):

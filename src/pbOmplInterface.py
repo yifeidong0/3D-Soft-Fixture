@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 4000
+INTERPOLATE_NUM = 1000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -50,7 +50,6 @@ class PbStateSpace(ob.RealVectorStateSpace):
         self.state_sampler = state_sampler
 
 
-
 class PbOMPL():
     def __init__(self, robot, args, obstacles=[]) -> None:
         '''
@@ -64,7 +63,9 @@ class PbOMPL():
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
-        self.ropeNodeAwayPos = [10]*3
+
+        # spheres of control/node points are moved away to avoid collision while ray-casting
+        self.nodeAwayPos = [10]*3
 
         # self.reset_robot_state_bound()
   
@@ -92,7 +93,18 @@ class PbOMPL():
         # Check collision against environment
         # Scenarios with a band
         if self.args.object == "Band":
+            # Check if control points in collision(Not necessary in the hourglass-band scenario)
+            # for body1, body2 in self.check_body_pairs:
+            #     if utils.pairwise_collision(body1, body2):
+            #         print('nodes of rope in collision')
+            #         return False
+            
+            # # Move node spheres in Bullet away to avoid interfering collision check
+            for i in range(len(self.robot.id)):
+                p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
+    
             if utils.band_collision_raycast(stateList):
+                # print('links between nodes in collision')
                 return False
 
         # Scenarios with a rope
@@ -103,12 +115,11 @@ class PbOMPL():
                     # print('nodes of rope in collision')
                     return False
             
-            # Move node spheres in Bullet away to avoid interfering collision check
             for i in range(len(self.robot.id)):
-                p.resetBasePositionAndOrientation(self.robot.id[i], self.ropeNodeAwayPos, self.robot.zeroQuaternion)
+                p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
     
             # Check if links between nodes in collision
-            if utils.rope_collision_raycast(stateList, self.robot.linkLen, self.obstacles):
+            if utils.rope_collision_raycast(stateList, self.robot.linkLen):
                 # print('links between nodes in collision')
                 return False
         
@@ -180,7 +191,7 @@ class PbOMPL():
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
-            self.planner.params().setParam("samples_per_batch", "50000") # rope
+            self.planner.params().setParam("samples_per_batch", "100000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":
@@ -326,10 +337,10 @@ class PbOMPL():
                 if self.args.object == 'Band':
                     utils.band_collision_raycast(q, visRays=1)
                 elif self.args.object == 'Rope':
-                    utils.rope_collision_raycast(q, self.robot.linkLen, self.obstacles, visRays=1)
+                    utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
 
             p.stepSimulation()
-            time.sleep(11/240)
+            time.sleep(2/240)
 
     # -------------
     # Configurations

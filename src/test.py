@@ -804,12 +804,25 @@ env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
 
 i=0
+
+'''Rope test'''
+# while (1):
+#     p.stepSimulation()
+#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+#     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # print(env.pb_ompl_interface.is_state_valid(state))
+#     rope_collision_raycast(start, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     i += 1
+
+'''Band test'''
 while (1):
     p.stepSimulation()
-    # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-    state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-    # print(env.pb_ompl_interface.is_state_valid(state))
-    rope_collision_raycast(start, linkLen, env.obstacles, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-    # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-    # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+    start = generate_circle_points(numCtrlPoint, rad=1.2-i/100, z=1.2)
+    # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+    print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+    band_collision_raycast(start, visRays=1)
     i += 1
+    if 1.2-i/100 < 0:
+        break

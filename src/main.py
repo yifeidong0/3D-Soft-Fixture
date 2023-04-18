@@ -29,7 +29,7 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
     elif args.object == 'Rope':
-        numCtrlPoint = 4
+        numCtrlPoint = 3
         linkLen = 0.1
         start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
         goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
