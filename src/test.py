@@ -1,283 +1,241 @@
 
-# import sys
-# try:
-#     from ompl import util as ou
-#     from ompl import base as ob
-#     from ompl import geometric as og
-# except ImportError:
-#     # if the ompl module is not in the PYTHONPATH assume it is installed in a
-#     # subdirectory of the parent directory called "py-bindings."
-#     from os.path import abspath, dirname, join
-#     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
-#     from ompl import util as ou
-#     from ompl import base as ob
-#     from ompl import geometric as og
-# from math import sqrt
-# import argparse
 
-# ## @cond IGNORE
-# # Our "collision checker". For this demo, our robot's state space
-# # lies in [0,1]x[0,1], with a circular obstacle of radius 0.25
-# # centered at (0.5,0.5). Any states lying in this circular region are
-# # considered "in collision".
-# class ValidityChecker(ob.StateValidityChecker):
-#     # Returns whether the given state's position overlaps the
-#     # circular obstacle
-#     def isValid(self, state):
-#         return self.clearance(state) > 0.0
+#########################################################################
+#########################################################################
+#########################################################################
+# https://github.com/ompl/ompl/blob/main/demos/OptimalPlanning.py
 
-#     # Returns the distance from the given state's position to the
-#     # boundary of the circular obstacle.
-#     def clearance(self, state):
-#         # Extract the robot's (x,y) position from its state
-#         x = state[0]
-#         y = state[1]
+import sys
+try:
+    from ompl import util as ou
+    from ompl import base as ob
+    from ompl import geometric as og
+except ImportError:
+    # if the ompl module is not in the PYTHONPATH assume it is installed in a
+    # subdirectory of the parent directory called "py-bindings."
+    from os.path import abspath, dirname, join
+    sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
+    from ompl import util as ou
+    from ompl import base as ob
+    from ompl import geometric as og
+from math import sqrt
+import argparse
 
-#         # Distance formula between two points, offset by the circle's
-#         # radius
-#         return sqrt((x-0.5)*(x-0.5) + (y-0.)*(y-0.)) - 0.45
+class ValidityChecker(ob.StateValidityChecker):
+    # Returns whether the given state's position overlaps the
+    # circular obstacle
+    def isValid(self, state):
+        return self.clearance(state) > 0.0
 
+    # Returns the distance from the given state's position to the
+    # boundary of the circular obstacle.
+    def clearance(self, state):
+        # Extract the robot's (x,y) position from its state
+        x = state[0]
+        y = state[1]
 
-# ## Returns a structure representing the optimization objective to use
-# #  for optimal motion planning. This method returns an objective
-# #  which attempts to minimize the length in configuration space of
-# #  computed paths.
-# def getPathLengthObjective(si):
-#     return ob.PathLengthOptimizationObjective(si)
+        return sqrt((x-0.5)*(x-0.5) + (y-0.)*(y-0.)) - 0.2
 
-# ## Returns an optimization objective which attempts to minimize path
-# #  length that is satisfied when a path of length shorter than 1.51
-# #  is found.
-# def getThresholdPathLengthObj(si):
-#     obj = ob.PathLengthOptimizationObjective(si)
-#     obj.setCostThreshold(ob.Cost(1.51))
-#     return obj
+class minPathPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start):
+        super(minPathPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
 
-# ## Defines an optimization objective which attempts to steer the
-# #  robot away from obstacles. To formulate this objective as a
-# #  minimization of path cost, we can define the cost of a path as a
-# #  summation of the costs of each of the states along the path, where
-# #  each state cost is a function of that state's clearance from
-# #  obstacles.
-# #
-# #  The class StateCostIntegralObjective represents objectives as
-# #  summations of state costs, just like we require. All we need to do
-# #  then is inherit from that base class and define our specific state
-# #  cost function by overriding the stateCost() method.
-# #
-# class minPathPotentialObjective(ob.OptimizationObjective):
-#     def __init__(self, si, start):
-#         super(minPathPotentialObjective, self).__init__(si)
-#         self.si_ = si
-#         self.start_ = start
+    def combineCosts(self, c1, c2):
+        return ob.Cost(max(c1.value(), c2.value()))
 
-#     # Our requirement is to maximize path clearance from obstacles,
-#     # but we want to represent the objective as a path cost
-#     # minimization. Therefore, we set each state's cost to be the
-#     # reciprocal of its clearance, so that as state clearance
-#     # increases, the state cost decreases.
-#     # def stateCost(self, s):
-#     #     return ob.Cost(1 / (self.si_.getStateValidityChecker().clearance(s) +
-#     #                         sys.float_info.min))
-
-#     def combineCosts(self, c1, c2):
-#         return ob.Cost(max(c1.value(), c2.value()))
-
-#     def motionCost(self, s1, s2):
-#         return ob.Cost(s2[1] - self.start_[1])
+    def motionCost(self, s1, s2):
+        return ob.Cost(s2[1] - self.start_[1])
     
-    
-# ## Return an optimization objective which attempts to steer the robot
-# #  away from obstacles.
-# def getClearanceObjective(si, start):
-#     return minPathPotentialObjective(si, start)
+def getPotentialObjective(si, start):
+    obj = minPathPotentialObjective(si, start)
+    # obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo)) # TODO:
+    return obj
 
-# ## Create an optimization objective which attempts to optimize both
-# #  path length and clearance. We do this by defining our individual
-# #  objectives, then adding them to a MultiOptimizationObjective
-# #  object. This results in an optimization objective where path cost
-# #  is equivalent to adding up each of the individual objectives' path
-# #  costs.
-# #
-# #  When adding objectives, we can also optionally specify each
-# #  objective's weighting factor to signify how important it is in
-# #  optimal planning. If no weight is specified, the weight defaults to
-# #  1.0.
-# def getBalancedObjective1(si):
-#     lengthObj = ob.PathLengthOptimizationObjective(si)
-#     clearObj = minPathPotentialObjective(si)
+def getThresholdPathLengthObj(si):
+    obj = ob.PathLengthOptimizationObjective(si)
+    obj.setCostThreshold(ob.Cost(1.51))
+    return obj
 
-#     opt = ob.MultiOptimizationObjective(si)
-#     opt.addObjective(lengthObj, 5.0)
-#     opt.addObjective(clearObj, 1.0)
+def getBalancedObjective1(si):
+    lengthObj = ob.PathLengthOptimizationObjective(si)
+    clearObj = minPathPotentialObjective(si)
 
-#     return opt
+    opt = ob.MultiOptimizationObjective(si)
+    opt.addObjective(lengthObj, 5.0)
+    opt.addObjective(clearObj, 1.0)
 
-# ## Create an optimization objective equivalent to the one returned by
-# #  getBalancedObjective1(), but use an alternate syntax.
-# #  THIS DOESN'T WORK YET. THE OPERATORS SOMEHOW AREN'T EXPORTED BY Py++.
-# # def getBalancedObjective2(si):
-# #     lengthObj = ob.PathLengthOptimizationObjective(si)
-# #     clearObj = ClearanceObjective(si)
-# #
-# #     return 5.0*lengthObj + clearObj
+    return opt
+
+def getPathLengthObjective(si):
+    return ob.PathLengthOptimizationObjective(si)
+
+def getPathLengthObjWithCostToGo(si):
+    obj = ob.PathLengthOptimizationObjective(si)
+    obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo))
+    return obj
 
 
-# ## Create an optimization objective for minimizing path length, and
-# #  specify a cost-to-go heuristic suitable for this optimal planning
-# #  problem.
-# def getPathLengthObjWithCostToGo(si):
-#     obj = ob.PathLengthOptimizationObjective(si)
-#     obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo))
-#     return obj
+def allocatePlanner(si, plannerType):
+    if plannerType.lower() == "bfmtstar":
+        return og.BFMT(si)
+    elif plannerType.lower() == "bitstar":
+        return og.BITstar(si)
+    elif plannerType.lower() == "fmtstar":
+        return og.FMT(si)
+    elif plannerType.lower() == "informedrrtstar":
+        return og.InformedRRTstar(si)
+    elif plannerType.lower() == "prmstar":
+        return og.PRMstar(si)
+    elif plannerType.lower() == "rrtstar":
+        return og.RRTstar(si)
+    elif plannerType.lower() == "sorrtstar":
+        return og.SORRTstar(si)
+    # elif plannerType.lower() == "bitrrt": # Not available yet it seems
+    #     return og.BiTRRT(si)
+    else:
+        ou.OMPL_ERROR("Planner-type is not implemented in allocation function.")
 
+def allocateObjective(si, objectiveType, start):
+    if objectiveType.lower() == "pathpotential":
+        return getPotentialObjective(si, start)
+    elif objectiveType.lower() == "pathlength":
+        return getPathLengthObjWithCostToGo(si)
+    elif objectiveType.lower() == "thresholdpathlength":
+        return getThresholdPathLengthObj(si)
+    elif objectiveType.lower() == "weightedlengthandclearancecombo":
+        return getBalancedObjective1(si)
+    else:
+        ou.OMPL_ERROR("Optimization-objective is not implemented in allocation function.")
 
-# # Keep these in alphabetical order and all lower case
-# def allocatePlanner(si, plannerType):
-#     if plannerType.lower() == "bfmtstar":
-#         return og.BFMT(si)
-#     elif plannerType.lower() == "bitstar":
-#         return og.BITstar(si)
-#     elif plannerType.lower() == "fmtstar":
-#         return og.FMT(si)
-#     elif plannerType.lower() == "informedrrtstar":
-#         return og.InformedRRTstar(si)
-#     elif plannerType.lower() == "prmstar":
-#         return og.PRMstar(si)
-#     elif plannerType.lower() == "rrtstar":
-#         return og.RRTstar(si)
-#     elif plannerType.lower() == "sorrtstar":
-#         return og.SORRTstar(si)
-#     else:
-#         ou.OMPL_ERROR("Planner-type is not implemented in allocation function.")
+def plan(runTime, plannerType, objectiveType, fname):
+    # Construct the robot state space in which we're planning. We're
+    # planning in [0,1]x[0,1], a subset of R^2.
+    space = ob.RealVectorStateSpace(2)
 
+    # Set the bounds of space to be in [0,1].
+    space.setBounds(0.0, 1.0)
 
-# # Keep these in alphabetical order and all lower case
-# def allocateObjective(si, objectiveType, start):
-#     if objectiveType.lower() == "pathclearance":
-#         return getClearanceObjective(si, start)
-#     elif objectiveType.lower() == "pathlength":
-#         return getPathLengthObjective(si)
-#     elif objectiveType.lower() == "thresholdpathlength":
-#         return getThresholdPathLengthObj(si)
-#     elif objectiveType.lower() == "weightedlengthandclearancecombo":
-#         return getBalancedObjective1(si)
-#     else:
-#         ou.OMPL_ERROR("Optimization-objective is not implemented in allocation function.")
+    # Construct a space information instance for this state space
+    si = ob.SpaceInformation(space)
 
+    # Set the object used to check which states in the space are valid
+    validityChecker = ValidityChecker(si)
+    si.setStateValidityChecker(validityChecker)
+    si.setup()
 
+    start = ob.State(space)
+    start[0] = 0.0
+    start[1] = 0.0
 
-# def plan(runTime, plannerType, objectiveType, fname):
-#     # Construct the robot state space in which we're planning. We're
-#     # planning in [0,1]x[0,1], a subset of R^2.
-#     space = ob.RealVectorStateSpace(2)
+    goal = ob.State(space)
+    goal[0] = .8
+    goal[1] = .0
 
-#     # Set the bounds of space to be in [0,1].
-#     space.setBounds(0.0, 1.0)
+    # goal_sampler = ob.GoalRegion(si)
+    # goal_sampler.setThreshold(0.1)
 
-#     # Construct a space information instance for this state space
-#     si = ob.SpaceInformation(space)
+    # Create a problem instance
+    pdef = ob.ProblemDefinition(si)
 
-#     # Set the object used to check which states in the space are valid
-#     validityChecker = ValidityChecker(si)
-#     si.setStateValidityChecker(validityChecker)
+    # Set the start and goal states
+    useGoalSpace = 1
+    if useGoalSpace:
+        # GoalSpace works with RRT*/PRM*/InformedRRT*, not with BIT*
+        goal_space = ob.GoalSpace(si)
+        s = ob.RealVectorStateSpace(2)
+        bounds = ob.RealVectorBounds(2)
+        bounds.setLow(0, .8)
+        bounds.setHigh(0, 1.)
+        bounds.setLow(1, .0)
+        bounds.setHigh(1, .01)
+        # s.setBounds(0.6, 0.7)
+        s.setBounds(bounds)
+        goal_space.setSpace(s)
 
-#     si.setup()
+        # set start and goal
+        pdef.addStartState(start)
+        # pdef.setGoalState(goal, threshold)
+        pdef.setGoal(goal_space)
+    else:
+        threshold = .001 # TODO: does not seem to impact anything now
+        pdef.setStartAndGoalStates(start, goal, threshold)
 
-#     # Set our robot's starting state to be the bottom-left corner of
-#     # the environment, or (0,0).
-#     start = ob.State(space)
-#     start[0] = 0.0
-#     start[1] = 0.0
+    # Create the optimization objective specified by our command-line argument.
+    # This helper function is simply a switch statement.
+    pdef.setOptimizationObjective(allocateObjective(si, objectiveType, start))
 
-#     # Set our robot's goal state to be the top-right corner of the
-#     # environment, or (1,1).
-#     goal = ob.State(space)
-#     goal[0] = 1.0
-#     goal[1] = 0.0
+    # Construct the optimal planner specified by our command line argument.
+    # This helper function is simply a switch statement.
+    optimizingPlanner = allocatePlanner(si, plannerType)
 
-#     # Create a problem instance
-#     pdef = ob.ProblemDefinition(si)
+    # Set the problem instance for our planner to solve
+    optimizingPlanner.setProblemDefinition(pdef)
+    optimizingPlanner.setup()
 
-#     # Set the start and goal states
-#     pdef.setStartAndGoalStates(start, goal)
+    # attempt to solve the planning problem in the given runtime
+    solved = optimizingPlanner.solve(runTime)
 
-#     # Create the optimization objective specified by our command-line argument.
-#     # This helper function is simply a switch statement.
-#     pdef.setOptimizationObjective(allocateObjective(si, objectiveType, start))
+    if solved:
+        # Output the length of the path found
+        print('{0} found solution of path length {1:.4f} with an optimization ' \
+            'objective value of {2:.4f}'.format( \
+            optimizingPlanner.getName(), \
+            pdef.getSolutionPath().length(), \
+            pdef.getSolutionPath().cost(pdef.getOptimizationObjective()).value()))
+        print(pdef.getSolutionPath())
 
-#     # Construct the optimal planner specified by our command line argument.
-#     # This helper function is simply a switch statement.
-#     optimizingPlanner = allocatePlanner(si, plannerType)
+        # If a filename was specified, output the path as a matrix to
+        # that file for visualization
+        if fname:
+            with open(fname, 'w') as outFile:
+                outFile.write(pdef.getSolutionPath().printAsMatrix())
+    else:
+        print("No solution found.")
 
-#     # Set the problem instance for our planner to solve
-#     optimizingPlanner.setProblemDefinition(pdef)
-#     optimizingPlanner.setup()
+if __name__ == "__main__":
+    # Create an argument parser
+    parser = argparse.ArgumentParser(description='Optimal motion planning demo program.')
 
-#     # attempt to solve the planning problem in the given runtime
-#     solved = optimizingPlanner.solve(runTime)
+    # Add a filename argument
+    parser.add_argument('-t', '--runtime', type=float, default=30.0, help=\
+        '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
+    parser.add_argument('-p', '--planner', default='RRTstar', \
+        choices=['BiTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
+        'SORRTstar'], \
+        help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
+    parser.add_argument('-o', '--objective', default='PathPotential', \
+        choices=['PathPotential', 'PathLength', 'ThresholdPathLength', \
+        'WeightedLengthAndClearanceCombo'], \
+        help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
+    parser.add_argument('-f', '--file', default=None, \
+        help='(Optional) Specify an output path for the found solution path.')
+    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
+        help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
+        ' Defaults to WARN.')
 
-#     if solved:
-#         # Output the length of the path found
-#         print('{0} found solution of path length {1:.4f} with an optimization ' \
-#             'objective value of {2:.4f}'.format( \
-#             optimizingPlanner.getName(), \
-#             pdef.getSolutionPath().length(), \
-#             pdef.getSolutionPath().cost(pdef.getOptimizationObjective()).value()))
-#         print(pdef.getSolutionPath())
+    # Parse the arguments
+    args = parser.parse_args()
 
-#         # If a filename was specified, output the path as a matrix to
-#         # that file for visualization
-#         if fname:
-#             with open(fname, 'w') as outFile:
-#                 outFile.write(pdef.getSolutionPath().printAsMatrix())
-#     else:
-#         print("No solution found.")
+    # Check that time is positive
+    if args.runtime <= 0:
+        raise argparse.ArgumentTypeError(
+            "argument -t/--runtime: invalid choice: %r (choose a positive number greater than 0)" \
+            % (args.runtime,))
 
-# if __name__ == "__main__":
-#     # Create an argument parser
-#     parser = argparse.ArgumentParser(description='Optimal motion planning demo program.')
+    # Set the log level
+    if args.info == 0:
+        ou.setLogLevel(ou.LOG_WARN)
+    elif args.info == 1:
+        ou.setLogLevel(ou.LOG_INFO)
+    elif args.info == 2:
+        ou.setLogLevel(ou.LOG_DEBUG)
+    else:
+        ou.OMPL_ERROR("Invalid log-level integer.")
 
-#     # Add a filename argument
-#     parser.add_argument('-t', '--runtime', type=float, default=1.0, help=\
-#         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-#     parser.add_argument('-p', '--planner', default='BITstar', \
-#         choices=['BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
-#         'SORRTstar'], \
-#         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
-#     parser.add_argument('-o', '--objective', default='PathClearance', \
-#         choices=['PathClearance', 'PathLength', 'ThresholdPathLength', \
-#         'WeightedLengthAndClearanceCombo'], \
-#         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
-#     parser.add_argument('-f', '--file', default=None, \
-#         help='(Optional) Specify an output path for the found solution path.')
-#     parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
-#         help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
-#         ' Defaults to WARN.')
-
-#     # Parse the arguments
-#     args = parser.parse_args()
-
-#     # Check that time is positive
-#     if args.runtime <= 0:
-#         raise argparse.ArgumentTypeError(
-#             "argument -t/--runtime: invalid choice: %r (choose a positive number greater than 0)" \
-#             % (args.runtime,))
-
-#     # Set the log level
-#     if args.info == 0:
-#         ou.setLogLevel(ou.LOG_WARN)
-#     elif args.info == 1:
-#         ou.setLogLevel(ou.LOG_INFO)
-#     elif args.info == 2:
-#         ou.setLogLevel(ou.LOG_DEBUG)
-#     else:
-#         ou.OMPL_ERROR("Invalid log-level integer.")
-
-#     # Solve the planning problem
-#     plan(args.runtime, args.planner, args.objective, args.file)
-
-
+    # Solve the planning problem
+    plan(args.runtime, args.planner, args.objective, args.file)
 
 
 #########################################################################
@@ -651,91 +609,91 @@
 #########################################################################
 #########################################################################
 
-try:
-    from ompl import util as ou
-    from ompl import base as ob
-    from ompl import geometric as og
-except ImportError:
-    # if the ompl module is not in the PYTHONPATH assume it is installed in a
-    # subdirectory of the parent directory called "py-bindings."
-    from os.path import abspath, dirname, join
-    import sys
-    sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'ompl/py-bindings'))
-    # sys.path.insert(0, join(dirname(abspath(__file__)), '../whole-body-motion-planning/src/ompl/py-bindings'))
-    print(sys.path)
-    from ompl import util as ou
-    from ompl import base as ob
-    from ompl import geometric as og
-import numpy as np
-import sys
-import kinpy as kp
-from scipy.spatial.transform import Rotation as R
-from utils import path_collector
-import pybullet as p
+# try:
+#     from ompl import util as ou
+#     from ompl import base as ob
+#     from ompl import geometric as og
+# except ImportError:
+#     # if the ompl module is not in the PYTHONPATH assume it is installed in a
+#     # subdirectory of the parent directory called "py-bindings."
+#     from os.path import abspath, dirname, join
+#     import sys
+#     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'ompl/py-bindings'))
+#     # sys.path.insert(0, join(dirname(abspath(__file__)), '../whole-body-motion-planning/src/ompl/py-bindings'))
+#     print(sys.path)
+#     from ompl import util as ou
+#     from ompl import base as ob
+#     from ompl import geometric as og
+# import numpy as np
+# import sys
+# import kinpy as kp
+# from scipy.spatial.transform import Rotation as R
+# from utils import path_collector
+# import pybullet as p
 
-class RopePotentialObjective():
-    def __init__(self, linkLen):
-        # super(RopePotentialObjective, self).__init__(si)
-        # self.si_ = si
-        # self.start_ = start
-        self.linkLen_ = linkLen # fixed-length rope links
-        # self.numStateSpace_ = len(start)
-        self.baseDof_ = 6
-        self.ctrlPointDof_ = 2
-        self.numCtrlPoint_ = int((self.numStateSpace_-self.baseDof_) / self.ctrlPointDof_) ###
+# class RopePotentialObjective():
+#     def __init__(self, linkLen):
+#         # super(RopePotentialObjective, self).__init__(si)
+#         # self.si_ = si
+#         # self.start_ = start
+#         self.linkLen_ = linkLen # fixed-length rope links
+#         # self.numStateSpace_ = len(start)
+#         self.baseDof_ = 6
+#         self.ctrlPointDof_ = 2
+#         self.numCtrlPoint_ = int((self.numStateSpace_-self.baseDof_) / self.ctrlPointDof_) ###
 
-        self.TLastRow_ = np.array([[0., 0., 0., 1.]]) # 1*4
-        self.nextFPosInThisF_ = np.array([[0.], [0.], [self.linkLen_], [1.]]) # 4*1
-        self.framePositionsInWorld = [] # list of (3,) numpy arrays
-        self.framePosZsInWorld = []
-        # self.startStateEnergy = self.stateEnergy(self.start_)
+#         self.TLastRow_ = np.array([[0., 0., 0., 1.]]) # 1*4
+#         self.nextFPosInThisF_ = np.array([[0.], [0.], [self.linkLen_], [1.]]) # 4*1
+#         self.framePositionsInWorld = [] # list of (3,) numpy arrays
+#         self.framePosZsInWorld = []
+#         # self.startStateEnergy = self.stateEnergy(self.start_)
 
-    def ropeForwardKinematics(self, state):
-        # Retrieve object's base transform
-        basePosInWorld = np.array(state[0:3]).reshape((3))
-        baseEulInWorld = state[3:6] # euler
-        baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
-        r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
-        mat = r.as_matrix() # (3,3)
-        first3Rows = (mat, basePosInWorld.reshape((3,1)))
-        first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
-        baseTInWorld = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
-        F0PosInWorld = baseTInWorld @ self.nextFPosInThisF_ # (4,1)
-        F0PosInWorld = F0PosInWorld[:3].reshape((3))
+#     def ropeForwardKinematics(self, state):
+#         # Retrieve object's base transform
+#         basePosInWorld = np.array(state[0:3]).reshape((3))
+#         baseEulInWorld = state[3:6] # euler
+#         baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
+#         r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
+#         mat = r.as_matrix() # (3,3)
+#         first3Rows = (mat, basePosInWorld.reshape((3,1)))
+#         first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+#         baseTInWorld = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
+#         F0PosInWorld = baseTInWorld @ self.nextFPosInThisF_ # (4,1)
+#         F0PosInWorld = F0PosInWorld[:3].reshape((3))
 
-        # Record
-        self.framePositionsInWorld.append(basePosInWorld)
-        self.framePositionsInWorld.append(F0PosInWorld)
-        self.framePosZsInWorld.append(float(basePosInWorld[2]))
-        self.framePosZsInWorld.append(float(F0PosInWorld[2]))
+#         # Record
+#         self.framePositionsInWorld.append(basePosInWorld)
+#         self.framePositionsInWorld.append(F0PosInWorld)
+#         self.framePosZsInWorld.append(float(basePosInWorld[2]))
+#         self.framePosZsInWorld.append(float(F0PosInWorld[2]))
 
-        # Iterate over control points
-        Fi_1TInWorld = baseTInWorld
-        for i in range(self.numCtrlPoint_):
-            # Fi_1: F_{i-1} the (i-1)'th frame, F_{-1} is base frame
-            # Fip1: F_{i+1} the (i+1)'th frame
+#         # Iterate over control points
+#         Fi_1TInWorld = baseTInWorld
+#         for i in range(self.numCtrlPoint_):
+#             # Fi_1: F_{i-1} the (i-1)'th frame, F_{-1} is base frame
+#             # Fip1: F_{i+1} the (i+1)'th frame
 
-            # Build local rotation matrix
-            FiEulInFi_1 = state[6+2*i:6+2*(i+1)] ###
-            FiEulInFi_1.append(0.) # euler
-            FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
-            r = R.from_quat(FiQuatInFi_1)
-            mat = r.as_matrix() # (3,3)
+#             # Build local rotation matrix
+#             FiEulInFi_1 = state[6+2*i:6+2*(i+1)] ###
+#             FiEulInFi_1.append(0.) # euler
+#             FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
+#             r = R.from_quat(FiQuatInFi_1)
+#             mat = r.as_matrix() # (3,3)
 
-            # Build global transformation matrix
-            first3Rows = (mat, np.array(self.nextFPosInThisF_[:3]))
-            first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
-            FiTInFi_1 = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
-            FiTInWorld = Fi_1TInWorld @ FiTInFi_1 # (4,4)
-            Fip1PosInWorld = FiTInWorld @ self.nextFPosInThisF_ # (4,1)
-            Fip1PosInWorld = Fip1PosInWorld[:3].reshape((3)) # (3,)
+#             # Build global transformation matrix
+#             first3Rows = (mat, np.array(self.nextFPosInThisF_[:3]))
+#             first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
+#             FiTInFi_1 = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
+#             FiTInWorld = Fi_1TInWorld @ FiTInFi_1 # (4,4)
+#             Fip1PosInWorld = FiTInWorld @ self.nextFPosInThisF_ # (4,1)
+#             Fip1PosInWorld = Fip1PosInWorld[:3].reshape((3)) # (3,)
 
-            # Record
-            self.framePositionsInWorld.append(Fip1PosInWorld)
-            self.framePosZsInWorld.append(float(Fip1PosInWorld[2]))
+#             # Record
+#             self.framePositionsInWorld.append(Fip1PosInWorld)
+#             self.framePosZsInWorld.append(float(Fip1PosInWorld[2]))
             
-            # Update last transformation matrix
-            Fi_1TInWorld = FiTInWorld
+#             # Update last transformation matrix
+#             Fi_1TInWorld = FiTInWorld
 
 # if __name__ == '__main__':
 #     start = [1,1,1,0,0,0] + [0,np.pi/6]*6
@@ -749,80 +707,85 @@ class RopePotentialObjective():
 #     print(rope.numCtrlPoint_)
 
 
-import pybullet as p
-import pybullet_data
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-import os
-import subprocess
-import glob
-from utils import *
-from cagingSearchAlgo import *
-from pbOmplInterface import *
+#########################################################################
+#########################################################################
+#########################################################################
+# Rope and band test
 
-# p.connect(p.GUI)
-# # p.setGravity(0, 0, -9.8)
-# p.setTimeStep(1./240.)
-# p.setAdditionalSearchPath(pybullet_data.getDataPath())
+# import pybullet as p
+# import pybullet_data
+# import time
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import os
+# import subprocess
+# import glob
+# from utils import *
+# from cagingSearchAlgo import *
+# from pbOmplInterface import *
 
-# p.setRealTimeSimulation(0)
-# # id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=150)
-# id2 = p.loadURDF("plane.urdf",[0,0,1], globalScaling=1)
+# # p.connect(p.GUI)
+# # # p.setGravity(0, 0, -9.8)
+# # p.setTimeStep(1./240.)
+# # p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-args, parser = argument_parser()
-# basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
+# # p.setRealTimeSimulation(0)
+# # # id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=150)
+# # id2 = p.loadURDF("plane.urdf",[0,0,1], globalScaling=1)
 
-# create caging environment and items in pybullet
-if args.object in get_non_articulated_objects():
-    env = RigidObjectCaging(args)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+# args, parser = argument_parser()
+# # basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
-elif args.object == 'Fish':
-    env = ArticulatedObjectCaging(args)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+# # create caging environment and items in pybullet
+# if args.object in get_non_articulated_objects():
+#     env = RigidObjectCaging(args)
+#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-elif args.object == 'Band':
-    numCtrlPoint = 6
-    start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
-    goal = [0,0,2.18] * numCtrlPoint
-    env = ElasticBandCaging(args, numCtrlPoint, start, goal)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+# elif args.object == 'Fish':
+#     env = ArticulatedObjectCaging(args)
+#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-elif args.object == 'Rope':
-    numCtrlPoint = 1
-    linkLen = 0.3
-    start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
-    goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
-    env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
-    # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # box
-    # env.add_obstacles(scale=[.1, .1, .3], pos=[0,0,-1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
-    env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-    # print('@@@@ env.obstacles', env.obstacles)
+# elif args.object == 'Band':
+#     numCtrlPoint = 6
+#     start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
+#     goal = [0,0,2.18] * numCtrlPoint
+#     env = ElasticBandCaging(args, numCtrlPoint, start, goal)
+#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+# elif args.object == 'Rope':
+#     numCtrlPoint = 1
+#     linkLen = 0.3
+#     start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
+#     goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
+#     env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
+#     # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # box
+#     # env.add_obstacles(scale=[.1, .1, .3], pos=[0,0,-1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
+#     env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+#     # print('@@@@ env.obstacles', env.obstacles)
+
+# env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
 
-i=0
+# i=0
 
-'''Rope test'''
+# '''Rope test'''
+# # while (1):
+# #     p.stepSimulation()
+# #     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+# #     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+# #     # print(env.pb_ompl_interface.is_state_valid(state))
+# #     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+# #     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+# #     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+# #     i += 1
+
+# '''Band test'''
 # while (1):
 #     p.stepSimulation()
-#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-#     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # print(env.pb_ompl_interface.is_state_valid(state))
-#     rope_collision_raycast(start, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
+#     # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+#     band_collision_raycast(start, visRays=1)
 #     i += 1
-
-'''Band test'''
-while (1):
-    p.stepSimulation()
-    start = generate_circle_points(numCtrlPoint, rad=1.2-i/100, z=1.2)
-    # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-    print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
-    band_collision_raycast(start, visRays=1)
-    i += 1
-    if 1.2-i/100 < 0:
-        break
+#     if 1.2-i/100 < 0:
+#         break

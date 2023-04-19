@@ -100,8 +100,8 @@ class PbOMPL():
             #         return False
             
             # # Move node spheres in Bullet away to avoid interfering collision check
-            for i in range(len(self.robot.id)):
-                p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
+            # for i in range(len(self.robot.id)):
+            #     p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
     
             if utils.band_collision_raycast(stateList):
                 # print('links between nodes in collision')
@@ -191,7 +191,7 @@ class PbOMPL():
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
-            self.planner.params().setParam("samples_per_batch", "100000") # rope
+            self.planner.params().setParam("samples_per_batch", "2000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":

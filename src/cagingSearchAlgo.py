@@ -341,8 +341,8 @@ class ElasticBandCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        for i in range(self.numCtrlPoint):
-           self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
+        # for i in range(self.numCtrlPoint):
+        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
 
         self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
 

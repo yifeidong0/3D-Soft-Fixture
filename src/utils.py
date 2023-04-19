@@ -50,7 +50,7 @@ def argument_parser():
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=30, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -223,7 +223,7 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
     Input: 
         state: list of planner state vector, length is 3*numCtrlPoint
     '''
-    is_collision = False
+    # Construct start and end positions of rays
     numCtrlPoint = int(len(state)/3)
     rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
     rayToPositions = rayFromPositions[1:]
@@ -231,21 +231,21 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
     results = p.rayTestBatch(rayFromPositions, rayToPositions)
     # TODO: double-way raycast
 
-    # if visRays:
-    #     time.sleep(20/240)
+    # Check if any ray hits obstacles
+    hitObjectUids = [results[i][0] for i in range(len(results))]
+    idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
+    collisionExists = (idMask.count(True) > 0)
+
+    # Visualize the band after running the planner
+    if visRays:
+        for i,idNonNegative in enumerate(idMask):
+            if (not idNonNegative): # collision free
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.3)
+            else: # in collision
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.3)
     #     p.removeAllUserDebugItems()
 
-    for i in range(len(results)):
-        hitObjectUid = results[i][0]
-        # print(hitObjectUid)
-        if (hitObjectUid < 0): # collision free
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.3) if visRays else None
-        else: # in collision
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.3) if visRays else None
-            # return True
-            is_collision = True
-
-    return is_collision
+    return collisionExists
 
 def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
     '''
@@ -256,26 +256,39 @@ def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,
         state: list of planner state vector, length is 6+2*numCtrlPoint
         obstacles: list of obstacle IDs
     '''
-    is_collision = False
+    # Run rope forward kinematics and retrive nodes
+    # is_collision = False
     nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
 
+    # Construct start and end positions of rays
     rayFromPositions = nodePositionsInWorld[:-1]
     rayToPositions = nodePositionsInWorld[1:]
     results = p.rayTestBatch(rayFromPositions, rayToPositions)
 
-    for i in range(len(results)):
-        hitObjectUid = results[i][0]
-        if (hitObjectUid < 0): # collision free
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.07) if visRays else None
-        else: # collision
-            # print('!!!!!i, hitObjectUid', i, hitObjectUid)
-            # hitPosition = results[i][3]
-            # print('!!!!!hitPosition', hitPosition)
-            p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.07) if visRays else None
-            # return True
-            is_collision = True
+    # Check if any ray hits obstacles
+    hitObjectUids = [results[i][0] for i in range(len(results))]
+    idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
+    print('idMask', idMask)
+    collisionExists = (idMask.count(True) > 0)
 
-    return is_collision
+    # Visualize the rope after running the planner
+    if visRays:
+        for i,idNonNegative in enumerate(idMask):
+            if (not idNonNegative): # collision free
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.3)
+            else: # in collision
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.3)
+
+    # for i in range(len(results)):
+    #     hitObjectUid = results[i][0]
+    #     if (hitObjectUid < 0): # collision free
+    #         p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.07) if visRays else None
+    #     else: # collision
+    #         # hitPosition = results[i][3]
+    #         p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.07) if visRays else None
+    #         is_collision = True
+
+    return collisionExists
 
 def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):
     moving_links = get_moving_links(body, joints)
