@@ -22,19 +22,15 @@ from math import sqrt
 import argparse
 
 class ValidityChecker(ob.StateValidityChecker):
-    # Returns whether the given state's position overlaps the
-    # circular obstacle
     def isValid(self, state):
         return self.clearance(state) > 0.0
 
-    # Returns the distance from the given state's position to the
-    # boundary of the circular obstacle.
     def clearance(self, state):
         # Extract the robot's (x,y) position from its state
         x = state[0]
         y = state[1]
-
-        return sqrt((x-0.5)*(x-0.5) + (y-0.)*(y-0.)) - 0.2
+        Robstacle = .2
+        return sqrt((x-0.5)*(x-0.5) + (y-0.)*(y-0.)) - Robstacle
 
 class minPathPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
@@ -42,12 +38,30 @@ class minPathPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
 
+    '''I think the way of defining potential energy gain (mechanical work required from an external hand
+    to lift up an object or extend an elastic band) was wrong.
+    Previously we find the max energy along the path. However, each time potential energy gains, extra work required; 
+    potential energy drops, it LOSES this part of energy by applying work on the hand.
+    The energy required to send the object out of the soft fixture should be the piece-wise sum of energy gains along the path,
+    
+    Egain = 0.5 * (Etotal - (Estart-Egoal)) 
+    min{Egain} <-> min{Etotal} 
+    '''
+    '''Original'''
+    # def combineCosts(self, c1, c2):
+    #     '''Combine the current cost with a motion cost'''
+    #     return ob.Cost(max(c1.value(), c2.value()))
+
+    # def motionCost(self, s1, s2):
+    #     return ob.Cost(s2[1] - self.start_[1])
+
+    '''Test for RRT* (Etotal)'''
     def combineCosts(self, c1, c2):
-        return ob.Cost(max(c1.value(), c2.value()))
+        return ob.Cost(c1.value() + c2.value())
 
     def motionCost(self, s1, s2):
-        return ob.Cost(s2[1] - self.start_[1])
-    
+        return ob.Cost(abs(s2[1] - s1[1])) # works for RRT*, BIT*
+
 def getPotentialObjective(si, start):
     obj = minPathPotentialObjective(si, start)
     # obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo)) # TODO:
@@ -130,8 +144,12 @@ def plan(runTime, plannerType, objectiveType, fname):
     start[1] = 0.0
 
     goal = ob.State(space)
-    goal[0] = .8
+    goal[0] = 1
     goal[1] = .0
+
+    # Energy of start and goal
+    Es = start[1]
+    Eg = goal[1]
 
     # goal_sampler = ob.GoalRegion(si)
     # goal_sampler.setThreshold(0.1)
@@ -140,7 +158,7 @@ def plan(runTime, plannerType, objectiveType, fname):
     pdef = ob.ProblemDefinition(si)
 
     # Set the start and goal states
-    useGoalSpace = 1
+    useGoalSpace = 0
     if useGoalSpace:
         # GoalSpace works with RRT*/PRM*/InformedRRT*, not with BIT*
         goal_space = ob.GoalSpace(si)
@@ -179,12 +197,16 @@ def plan(runTime, plannerType, objectiveType, fname):
 
     if solved:
         # Output the length of the path found
+        objValue = pdef.getSolutionPath().cost(pdef.getOptimizationObjective()).value()
+        sumEnergyGain = (objValue - (Es-Eg)) / 2
+
         print('{0} found solution of path length {1:.4f} with an optimization ' \
             'objective value of {2:.4f}'.format( \
             optimizingPlanner.getName(), \
             pdef.getSolutionPath().length(), \
-            pdef.getSolutionPath().cost(pdef.getOptimizationObjective()).value()))
+            objValue))
         print(pdef.getSolutionPath())
+        print('External mechanical work required to escape (total potential energy gain along the escape path): ', sumEnergyGain)
 
         # If a filename was specified, output the path as a matrix to
         # that file for visualization
@@ -199,7 +221,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Optimal motion planning demo program.')
 
     # Add a filename argument
-    parser.add_argument('-t', '--runtime', type=float, default=30.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     parser.add_argument('-p', '--planner', default='RRTstar', \
         choices=['BiTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
