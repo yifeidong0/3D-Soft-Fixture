@@ -3,7 +3,6 @@ import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import *
-# from runScenario import runScenario
 import pybullet as p
 import matplotlib.pyplot as plt
 from utils import argument_parser, get_non_articulated_objects
@@ -29,7 +28,7 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
     elif args.object == 'Rope':
-        numCtrlPoint = 3
+        numCtrlPoint = 4
         linkLen = 0.1
         start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
         goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint

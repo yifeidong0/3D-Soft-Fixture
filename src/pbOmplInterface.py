@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 1000
+INTERPOLATE_NUM = 2000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -191,7 +191,7 @@ class PbOMPL():
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
-            self.planner.params().setParam("samples_per_batch", "2000") # rope
+            self.planner.params().setParam("samples_per_batch", "30000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("use_strict_queue_ordering", "0")
         elif planner_name == "ABITstar":
