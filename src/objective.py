@@ -19,6 +19,7 @@ import kinpy as kp
 from scipy.spatial.transform import Rotation as R
 from utils import *
 import pybullet as p
+import time
 
 class RopePotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, linkLen):
@@ -26,6 +27,8 @@ class RopePotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.linkLen_ = linkLen # fixed-length rope links
+
+        self.incrementalCost = 1
         self.numStateSpace_ = len(start)
         self.baseDof_ = 6
         self.ctrlPointDof_ = 2
@@ -35,56 +38,7 @@ class RopePotentialObjective(ob.OptimizationObjective):
         self.TLastRow_ = np.array([[0., 0., 0., 1.]]) # 1*4
         self.nextFPosInThisF_ = np.array([[0.], [0.], [self.linkLen_], [1.]]) # 4*1
 
-        # self.framePositionsInWorld = [] # list of (3,) numpy arrays
-        # self.framePosZsInWorld = []
         self.startStateEnergy = self.stateEnergy(self.start_)
-
-    # def ropeForwardKinematics(self, state):
-    #     # Retrieve object's base transform
-    #     basePosInWorld = np.array(state[0:3]).reshape((3))
-    #     baseEulInWorld = state[3:6] # euler
-    #     baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
-    #     r = R.from_quat(baseQuatInWorld)
-    #     mat = r.as_matrix() # (3,3)
-    #     first3Rows = (mat, basePosInWorld.reshape((3,1)))
-    #     first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
-    #     baseTInWorld = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
-    #     F0PosInWorld = baseTInWorld @ self.nextFPosInThisF_ # (4,1)
-    #     F0PosInWorld = F0PosInWorld[:3].reshape((3))
-
-    #     # Record
-    #     self.framePositionsInWorld.append(basePosInWorld)
-    #     self.framePositionsInWorld.append(F0PosInWorld)
-    #     self.framePosZsInWorld.append(float(basePosInWorld[2]))
-    #     self.framePosZsInWorld.append(float(F0PosInWorld[2]))
-
-    #     # Iterate over control points
-    #     Fi_1TInWorld = baseTInWorld
-    #     for i in range(self.numCtrlPoint_):
-    #         # Fi_1: F_{i-1} the (i-1)'th frame, F_{-1} is base frame
-    #         # Fip1: F_{i+1} the (i+1)'th frame
-
-    #         # Build local rotation matrix
-    #         FiEulInFi_1 = state[6+2*i:6+2*(i+1)]
-    #         FiEulInFi_1.append(0.) # euler
-    #         FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
-    #         r = R.from_quat(FiQuatInFi_1)
-    #         mat = r.as_matrix() # (3,3)
-
-    #         # Build global transformation matrix
-    #         first3Rows = (mat, np.array(self.nextFPosInThisF_[:3]))
-    #         first3Rows = np.hstack(first3Rows) # (3,4). first 3 rows of Transform matrix
-    #         FiTInFi_1 = np.vstack((first3Rows, self.TLastRow_)) # (4,4)
-    #         FiTInWorld = Fi_1TInWorld @ FiTInFi_1 # (4,4)
-    #         Fip1PosInWorld = FiTInWorld @ self.nextFPosInThisF_ # (4,1)
-    #         Fip1PosInWorld = Fip1PosInWorld[:3].reshape((3)) # (3,)
-
-    #         # Record
-    #         self.framePositionsInWorld.append(Fip1PosInWorld)
-    #         self.framePosZsInWorld.append(float(Fip1PosInWorld[2]))
-            
-    #         # Update last transformation matrix
-    #         Fi_1TInWorld = FiTInWorld
 
     def stateEnergy(self, state):
         # Rope forward kinematics
@@ -96,8 +50,13 @@ class RopePotentialObjective(ob.OptimizationObjective):
         return energyGravity
     
     def motionCost(self, state1, state2):
-        state2 = [state2[i] for i in range(self.numStateSpace_)] # RealVectorStateInternal to list
-        return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+        # RealVectorStateInternal to list
+        state1 = [state1[i] for i in range(self.numStateSpace_)]
+        state2 = [state2[i] for i in range(self.numStateSpace_)]
+        if self.incrementalCost:
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
 
     def combineCosts(self, cost1, cost2):
         '''
@@ -107,24 +66,10 @@ class RopePotentialObjective(ob.OptimizationObjective):
                                    motionCost(v_parent, v_child))
                      = max(v_parent.cost, v_child.energy-v_start.energy)
         '''
-        return ob.Cost(max(cost1.value(), cost2.value()))
-    
-
-class GravityPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start):
-        super(GravityPotentialObjective, self).__init__(si)
-        self.si_ = si
-        self.start_ = start
-        self.startStateEnergy = self.stateEnergy(self.start_)
-
-    def stateEnergy(self, state):
-        return state[2]
-    
-    def motionCost(self, s1, s2):
-        return ob.Cost(self.stateEnergy(s2) - self.startStateEnergy)
-
-    def combineCosts(self, c1, c2):
-        return ob.Cost(max(c1.value(), c2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
 
 
 class ElasticBandPotentialObjective(ob.OptimizationObjective):
@@ -139,15 +84,6 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         self.numCtrlPoint = int(self.numStateSpace/3)
         self.stiffnesss = [10] * self.numCtrlPoint
         self.springneutralLen = .8
-        # self.comDof = 6
-        # self.numJoints = self.numStateSpace - self.comDof
-        # self.numLinks = self.numJoints + 1
-        # self.g = 9.81
-        # TODO:
-        # self.masses = [.1] * self.numLinks
-        # self.o = np.array([1.])
-        # self.path = path_collector()
-        # self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
@@ -171,7 +107,6 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         return energyElastic
 
     def stateEnergy(self, state):
-        # print('!!!!!energyElastic: {}, energyGravity: {}'.format(energyElastic, energyGravity))
         return self.getElasticEnergy(state)
     
     def motionCost(self, state1, state2):
@@ -183,6 +118,31 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         return ob.Cost(max(cost1.value(), cost2.value()))
     
 
+class GravityPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start):
+        super(GravityPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.startStateEnergy = self.stateEnergy(self.start_)
+        self.incrementalCost = 1
+
+    def stateEnergy(self, state):
+        return state[2]
+    
+    def motionCost(self, state1, state2):
+        # return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+        if self.incrementalCost:
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+        
+    def combineCosts(self, cost1, cost2):
+        # return ob.Cost(max(cost1.value(), cost2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
+
 class TotalPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):
         super(TotalPotentialObjective, self).__init__(si)
@@ -191,6 +151,7 @@ class TotalPotentialObjective(ob.OptimizationObjective):
         self.args_ = args
 
         # parameters of articulated object
+        self.incrementalCost = 0
         self.numStateSpace = len(start)
         self.comDof = 6
         self.numJoints = self.numStateSpace - self.comDof
@@ -205,7 +166,6 @@ class TotalPotentialObjective(ob.OptimizationObjective):
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
-        # print('!!!!!self.energyStart: {}'.format(self.energyStart))
 
     def getElasticEnergy(self, state):
         # read joint stiffnesses
@@ -237,7 +197,6 @@ class TotalPotentialObjective(ob.OptimizationObjective):
         linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-        # print('@@linkZsInWorld', linkZsInWorld)
         
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
@@ -249,14 +208,22 @@ class TotalPotentialObjective(ob.OptimizationObjective):
         energyElastic = self.getElasticEnergy(state)
         energyGravity = self.getGravityEnergy(state)
         energySum = energyElastic + energyGravity
-        # print('!!!!!energyElastic: {}, energyGravity: {}'.format(energyElastic, energyGravity))
         return energySum
     
     def motionCost(self, state1, state2):
-        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
-        energyState2 = self.stateEnergy(state2)
-        return ob.Cost(energyState2 - self.energyStart)
+        state1 = [state1[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
+        state2 = [state2[i] for i in range(self.numStateSpace)]
+        # energyState2 = self.stateEnergy(state2)
+        # return ob.Cost(energyState2 - self.energyStart)
 
+        if self.incrementalCost:
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
+        
     def combineCosts(self, cost1, cost2):
-        return ob.Cost(max(cost1.value(), cost2.value()))
-
+        # return ob.Cost(max(cost1.value(), cost2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))

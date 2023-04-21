@@ -12,23 +12,26 @@ if __name__ == '__main__':
     # basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
     # create caging environment and items in pybullet
-    if args.object in get_non_articulated_objects():
-        env = RigidObjectCaging(args)
-        env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+    # if args.object in get_non_articulated_objects():
+    #     env = RigidObjectCaging(args)
+    #     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
+    if args.object == 'Ring':
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
+        env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
     elif args.object == 'Fish':
         env = ArticulatedObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
-
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
         goal = [0,0,2.18] * numCtrlPoint
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
-
     elif args.object == 'Rope':
-        numCtrlPoint = 4
+        numCtrlPoint = 1
         linkLen = 0.1
         start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
         goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint

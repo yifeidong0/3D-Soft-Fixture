@@ -133,7 +133,7 @@ class PbOMPL():
         return True
 
     def setup_collision_detection(self, self_collisions = False):
-        if self.args.object == "Band" or "Rope":
+        if self.args.object == "Band" or self.args.object == "Rope":
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
         else:
@@ -144,8 +144,6 @@ class PbOMPL():
             # moving_bodies = [(robot.id, moving_links)] # original 
             # print('moving_bodies: ', moving_bodies)
             self.check_body_pairs = list(product(moving_bodies, self.obstacles))
-
-
 
     def reset_robot_state_bound(self):
         bounds = ob.RealVectorBounds(self.robot.num_dim)
@@ -158,7 +156,6 @@ class PbOMPL():
     # def solution_callback(self, data):
     #     ''' Define a callback function to print the solution path
     #     '''
-    #     print('@@@@@data callback', data)
     #     solution = data['solution']
     #     print('New solution found with cost', solution.cost)
     #     solution.printAsMatrix()
@@ -189,11 +186,12 @@ class PbOMPL():
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
+            # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
             # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
-            self.planner.params().setParam("samples_per_batch", "30000") # rope
+            # self.planner.params().setParam("samples_per_batch", "50000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            # self.planner.params().setParam("use_strict_queue_ordering", "0")
+            # self.planner.params().setParam("rewire_factor", "1000") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "AITstar":
@@ -208,7 +206,6 @@ class PbOMPL():
 
         # Set the start and goal states;
         start = self.robot.get_cur_state()
-
         s = ob.State(self.space)
         g = ob.State(self.space)
         for i in range(len(start)):
@@ -223,27 +220,14 @@ class PbOMPL():
         rigidObjs = utils.get_non_articulated_objects()
         if self.args.search == 'EnergyMinimizeSearch':
             if self.args.object in rigidObjs: # rigid object caging
-                if self.args.objective == 'GravityPotential':
-                    self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
-                    self.pdef.setOptimizationObjective(self.potentialObjective)
-                # elif self.args.objective == 'GravityAndElasticPotential': # Not applied
-                # else self.args.objective == 'PathLength' # default objective
-
-            # elif self.args.objective == 'GravityAndElasticPotential' or 'GravityPotential': # articulated object caging
+                self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
             elif self.args.object == "Fish":
                 self.potentialObjective = objective.TotalPotentialObjective(self.si, start, self.args)
-                self.pdef.setOptimizationObjective(self.potentialObjective)
-
             elif self.args.object == "Band":
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
-                self.pdef.setOptimizationObjective(self.potentialObjective)
-
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
-                self.pdef.setOptimizationObjective(self.potentialObjective)
-            # else: self.args.objective == 'PathLength'
-        
-        # else self.args.search == 'BoundShrinkSearch':
+            self.pdef.setOptimizationObjective(self.potentialObjective)
 
         # # Register the callback function with the planner
         # if self.args.search == 'EnergyMinimizeSearch':
@@ -257,7 +241,7 @@ class PbOMPL():
         plan a path to goal from the given robot start state
         '''
         # print("start_planning")
-        # print(self.planner.params())
+        print(self.planner.params())
 
         orig_robot_state = self.robot.get_cur_state()
 

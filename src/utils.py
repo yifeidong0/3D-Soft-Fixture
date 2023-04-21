@@ -32,25 +32,26 @@ def argument_parser():
         choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='RRTstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
-    parser.add_argument('-o', '--objective', default='ElasticPotential', \
+    # deprecated already
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['ElasticPotential', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Rope', \
+    parser.add_argument('-j', '--object', default='Ring', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Box', \
+    parser.add_argument('-l', '--obstacle', default='Hook', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=150, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -59,10 +60,6 @@ def argument_parser():
     # parser.add_argument('-f', '--file', default=None, \
     #     help='(Optional) Specify anoutput path for the found solution path.')
     
-    # parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
-    #     help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
-    #     ' Defaults to WARN.')
-
     # Parse the arguments
     args = parser.parse_args()
 
@@ -179,7 +176,7 @@ def ropeForwardKinematics(state, linkLen, baseDof_=6, ctrlPointDof_=2, TLastRow_
 
 #####################################
 
-def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):  # 10000
+def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
                                   linkIndexA=link1, linkIndexB=link2)) != 0  # getContactPoints
 

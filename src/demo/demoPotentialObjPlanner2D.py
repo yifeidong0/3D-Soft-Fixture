@@ -18,6 +18,8 @@ from math import sqrt
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import ompl
+
 
 # Hyperparameters
 rads = [[.1, .2], [.1, .7], [.1, .6]]
@@ -50,20 +52,28 @@ class minPathPotentialObjective(ob.OptimizationObjective):
     Egain = 0.5 * (Etotal - (Estart-Egoal)) 
     min{Egain} <-> min{Etotal} 
     '''
+
     '''Original'''
-    # def combineCosts(self, c1, c2):
-    #     '''Combine the current cost with a motion cost'''
-    #     return ob.Cost(max(c1.value(), c2.value()))
-
-    # def motionCost(self, s1, s2):
-    #     return ob.Cost(s2[1] - self.start_[1])
-
-    '''Test for RRT* (Etotal)'''
     def combineCosts(self, c1, c2):
-        return ob.Cost(c1.value() + c2.value())
+        '''
+        The vertex i cost is expressed as the potential energy gain along 
+        the path connecting i and v_start, and formulated as
+        v_child.cost = combineCost(v_parent.cost, 
+                                motionCost(v_parent, v_child))
+                    = max(v_parent.cost, v_child.energy-v_start.energy)
+        '''
+        '''Combine the current cost with a motion cost'''
+        return ob.Cost(max(c1.value(), c2.value()))
 
     def motionCost(self, s1, s2):
-        return ob.Cost(abs(s2[1] - s1[1])) # works for RRT*, BIT*
+        return ob.Cost(s2[1] - self.start_[1])
+
+    '''Test for RRT* (Etotal)'''
+    # def combineCosts(self, c1, c2):
+    #     return ob.Cost(c1.value() + c2.value())
+
+    # def motionCost(self, s1, s2):
+    #     return ob.Cost(abs(s2[1] - s1[1])) # works for RRT*, BIT*
 
 def getPotentialObjective(si, start):
     obj = minPathPotentialObjective(si, start)
@@ -96,7 +106,9 @@ def allocatePlanner(si, plannerType):
     if plannerType.lower() == "bfmtstar":
         return og.BFMT(si)
     elif plannerType.lower() == "bitstar":
-        return og.BITstar(si)
+        planner = og.BITstar(si)
+        # planner.params().setParam("rewire_factor", "100")
+        return planner
     elif plannerType.lower() == "fmtstar":
         return og.FMT(si)
     elif plannerType.lower() == "informedrrtstar":
@@ -168,6 +180,7 @@ def plan(runTime, plannerType, objectiveType, fname):
 
     # Construct a space information instance for this state space
     si = ob.SpaceInformation(space)
+    si.setup()
 
     # Set the object used to check which states in the space are valid
     validityChecker = ValidityChecker(si)
@@ -216,6 +229,7 @@ def plan(runTime, plannerType, objectiveType, fname):
 
     # Construct the optimal planner specified by our command line argument.
     optimizingPlanner = allocatePlanner(si, plannerType)
+    print(optimizingPlanner.params())
 
     # Set the problem instance for our planner to solve
     optimizingPlanner.setProblemDefinition(pdef)
@@ -257,7 +271,7 @@ if __name__ == "__main__":
     # Add a filename argument
     parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BiTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -267,7 +281,7 @@ if __name__ == "__main__":
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
     parser.add_argument('-f', '--file', default=None, \
         help='(Optional) Specify an output path for the found solution path.')
-    parser.add_argument('-i', '--info', type=int, default=0, choices=[0, 1, 2], \
+    parser.add_argument('-i', '--info', type=int, default=1, choices=[0, 1, 2], \
         help='(Optional) Set the OMPL log level. 0 for WARN, 1 for INFO, 2 for DEBUG.' \
         ' Defaults to WARN.')
 
