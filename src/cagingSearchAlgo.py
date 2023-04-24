@@ -9,9 +9,7 @@ from time import sleep
 from object import *
 from utils import *
 import copy
-import datetime
-import os
-import csv
+from pbOmplInterface import PbOMPL
 
 class RigidObjectCaging():
     def __init__(self, args):
@@ -52,8 +50,6 @@ class RigidObjectCaging():
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
-        # print('@@@@self.start', self.start)
-        # print('@@@@jbounds', jbounds)
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
@@ -73,7 +69,6 @@ class RigidObjectCaging():
         
         elif obst in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
-            # mesh_scale = [.1, .1, .1]  # The scale of the mesh
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
@@ -112,40 +107,42 @@ class RigidObjectCaging():
         self.obstacles.append(box_id)
         return box_id
 
+    def create_ompl_interface(self):
+        self.pb_ompl_interface = PbOMPL(self.robot, self.args, self.obstacles)
+
+    # def track_path_cost(self, path):
+    #     self.path_z = np.array(path)[:,2]
+    #     max_z_escape = np.max(self.path_z)
+    #     self.escape_cost_list.append(max_z_escape-self.start[2])
+
     def track_path_cost(self, path):
-        self.path_z = np.array(path)[:,2]
-        max_z_escape = np.max(self.path_z)
-        self.escape_cost_list.append(max_z_escape-self.start[2])
+        energy_along_path = [get_state_energy(state, self.args.object) for state in path]
+        escape_energy = max(energy_along_path) - energy_along_path[0]
+        self.escape_cost_list.append(escape_energy)
 
     def execute_search(self):
-        # sleep(1240.)
         res, path, sol_path_energy, best_cost, time_taken = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             if self.args.visualization:
                 self.pb_ompl_interface.execute(path)
-            if self.args.objective == 'GravityPotential':
-                self.track_path_cost(path)
+            # if self.args.objective == 'GravityPotential':
+            self.track_path_cost(path)
         else:
             if self.args.search == 'BoundShrinkSearch':
                self.escape_cost_list.append(self.escape_cost_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
     def energy_minimize_search(self, numIter=1):
-        # set upper bound of searching
         self.pb_ompl_interface.reset_robot_state_bound()
-        # self.robot.set_state(self.start)
-        # self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-        
-        # start planning
-        self.state_energy_escape_path_iter = []
+        self.sol_path_energy_list = []
         self.sol_final_costs = []
         self.escape_cost_list = [] # successful escapes
         solveds = []
         for i in range(numIter):
             self.robot.set_state(self.start)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-            solved, _, sol_path_energy, sol_final_cost, time_taken = self.execute_search()
-            self.state_energy_escape_path_iter.append(sol_path_energy)      
+            solved, _, sol_path_energy, sol_final_cost, _ = self.execute_search()
+            self.sol_path_energy_list.append(sol_path_energy)      
             self.sol_final_costs.append(sol_final_cost)
             solveds.append(solved)
         if solveds.count(True) == 0:
@@ -153,149 +150,178 @@ class RigidObjectCaging():
         return True
 
     def visualize_energy_minimize_search(self):
-        '''visualize the convergence of caging depth'''
-
+        '''visualize the convergence of caging depth
+        '''
         _, ax1 = plt.subplots()
-        energy_curves = self.state_energy_escape_path_iter
-        for i in range(len(energy_curves)):
-            ax1.plot(energy_curves[i], label='path {}'.format(i)) # max z's along successful escape paths
+        for i in range(len(self.sol_path_energy_list)):
+            ax1.plot(self.sol_path_energy_list[i], label='path {}'.format(i)) # max z's along successful escape paths
         ax1.set_xlabel('vertices of solution paths')
         ax1.set_ylabel('state energy')
         ax1.grid(True)
         ax1.legend()
-
-        plt.title('Iterative BIT* energy minimize search')
+        plt.title('State energy along the escape path in the energy biased search')
         plt.show()
 
-    def bound_shrink_search(self, useGreedySearch=False, initSearchBound=None, numIter=2, maxTimeTaken=30):
-        '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path'''
+    def energy_bisection_search(self, numIter=1, maxTimeTaken=120, epsThreshold=1e-3):
+        '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path
+        '''
+        initCUpper = 10
         self.time_taken_list_runs, self.escape_cost_list_runs = [], [] # record over several runs
-        initUpperBound = copy.deepcopy(initSearchBound[2][1])
-        
-        for i in range(numIter):        
-            cUpper = initSearchBound[2][1] - self.start[2]
-            cLower = 0
-            eps = np.inf
-            # self.cUppers, self.cLowers = [], []
-            self.epss = []
-            idx = 0
-            self.itercount = []
+        startEnergy = get_state_energy(self.start, self.args.object)
+        for i in range(numIter):
+            cUpper, cLower = initCUpper, 0
             self.escape_cost_list = [] # successful escapes
             self.time_taken_list = [] # corresponding time taken
-            self.times_of_no_solution = 0
-            noinf = []
             moveOn = True
 
             while moveOn: 
-                # data record
-                # self.cUppers.append(cUpper)
-                # self.cLowers.append(cLower)
-                self.itercount.append(idx)
-
                 # set upper bound of searching
                 self.pb_ompl_interface.reset_robot_state_bound()
                 self.robot.set_state(self.start)
-                # print('@@@@@@DIST', len(p.getClosestPoints(bodyA=self.object_id, bodyB=self.obstacle_id, distance=-0.027)))
-
                 self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
                 
-                # start planning
+                # Start planning
                 res, _, _, _, time_taken = self.execute_search()
 
-                # record times of failure and time 
-                if not res:
-                    self.times_of_no_solution += 1
+                # Record time 
                 accumulate_time = time_taken + self.time_taken_list[-1] if len(self.time_taken_list)>0 else time_taken
                 self.time_taken_list.append(accumulate_time)
 
                 # update bounds
                 curr_cost = self.escape_cost_list[-1]
-                noinf.append(curr_cost) if curr_cost!=np.inf else None
 
-                if useGreedySearch: # greedy but no lower bound guarantee
-                    if not res: # no solution
-                        cLower = cUpper
-                        cUpper = np.min(self.escape_cost_list) # except infs, the target z is monotonically decreasing
-                    else: # solution found
-                        if curr_cost < cLower: # a solution lower than lower bound found
-                            cUpper = curr_cost
-                            cLower = 0
-                        else: # solution found within expected bounds
-                            cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
-                        # cLower = cLower
-                    
-                    eps = abs(cUpper-cLower)
-                    self.epss.append(eps)
-                    if eps < self.eps_thres: # terminate
-                        moveOn = False
-
-                else: # slower but guaranteed lower bound
-                    # Update upper bound
-                    if res: # solution found
+                # Set lower and upper bounds
+                if not res: # no solution
+                    cLower = cUpper
+                    cUpper = np.min(self.escape_cost_list)
+                else: # solution found
+                    if curr_cost < cLower: # a solution lower than lower bound found
                         cUpper = curr_cost
+                        cLower = 0
+                    else: # solution found within expected bounds
+                        cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
+                
+                # Conditions of termination
+                eps = abs(cUpper-cLower)
+                if eps < epsThreshold or accumulate_time > maxTimeTaken:
+                    moveOn = False
 
-                    # Cost already zero
-                    if cUpper <= 0.0:
-                        moveOn = False
-
-                    # Time up
-                    if self.time_taken_list[-1] > maxTimeTaken:
-                        moveOn = False
-
-                # Reset z upper bound
-                self.robot.set_bisec_thres(cUpper+self.start[2])
-                idx += 1
+                # Reset energy threshold
+                self.pb_ompl_interface.reset_bisec_energy_thres(cUpper+startEnergy)
 
                 print("----------escape_cost_list: ", self.escape_cost_list)
                 print("----------time_taken_list: ", self.time_taken_list)
-                # print('----------cUpper, cLower, eps: ', cUpper, cLower, eps)
-                # print("----------joint_bounds z: ", self.robot.joint_bounds[2])
+                print("----------cUpper, cLower: ", cUpper, cLower)
             
             # record data over runs
             self.time_taken_list_runs.append(self.time_taken_list) 
             self.escape_cost_list_runs.append(self.escape_cost_list)
 
             # reset and prepare for the next run
-            self.robot.set_bisec_thres(initUpperBound)
-            
-    def visualize_bound_shrink_search(self, useGreedySearch=False):
-        '''visualize the convergence of caging depth'''
+            self.pb_ompl_interface.reset_bisec_energy_thres(initCUpper)
 
-        # escape_cost_list_noinf = [self.escape_cost_list[i] if self.escape_cost_list[i] != np.inf else self.escape_cost_list[i-1] for i in range(len(self.escape_cost_list))]
-        # escape_costs = [[i, esc] for i, esc in enumerate(self.escape_cost_list)] # no infs
-        # escape_costs = np.array(escape_costs)
-        # escape_energy = escape_costs[-1, 1] # minimum escape_energy
-        # z_thres = escape_costs[-1, 1]
-        # iters, escs = escape_costs[:,0], escape_costs[:,1]
-        # print('@@@escape_costs', escs)
-
+    def visualize_bound_shrink_search(self):
+        '''visualize the convergence of caging depth
+        '''
         _, ax1 = plt.subplots()
         for i in range(len(self.time_taken_list_runs)):
             ax1.plot(self.time_taken_list_runs[i], self.escape_cost_list_runs[i], label='Costs of escapes in run {}'.format(i))
-        # ax1.plot(self.time_taken_list, self.cUppers, '-b*', label='Search upper bound')
-        # ax1.plot(self.time_taken_list, self.cLowers, '--b*', label='Search lower bound')
-        # ax1.axhline(y=self.start[2], color='k', alpha=.3, linestyle='--', label='init_z object')
-        ax1.set_xlabel('Time of search / s')
-        ax1.set_ylabel('Cost (Energy gain) / J')
+        ax1.set_xlabel('Accumulated search time / s')
+        ax1.set_ylabel('Escape cost / J')
         ax1.grid(True)
         ax1.legend()
-
-        # ax2 = ax1.twinx()
-        # ax2.plot(self.itercount, self.epss, '-g.', label='convergence epsilon')
-        # ax2.axhline(y=self.eps_thres, color='k', alpha=.7, linestyle='--', label='search resolution')
-        # if useGreedySearch:
-        #     ax2.set_ylabel('bound bandwidth')
-        # else:
-        #     ax2.set_ylabel('previous heights diff')
-        # ax2.set_yscale('log')
-        # ax2.legend(loc='lower right')
-
-        plt.title('Iterative bound shrinking search of caging escape energy cost')
+        plt.title('Iterative bound shrinking search of caging escape energy')
         plt.show()
 
-        # return escape_energy, z_thres
-    
-    
+
+    # def bound_shrink_search(self, useGreedySearch=1, initSearchBound=[[-2,2], [-2,2], [0,3]], numIter=1, maxTimeTaken=30):
+    #     '''Iteratively find the (lowest) threshold of z upper bound that allows an escaping path
+    #     '''
+    #     self.time_taken_list_runs, self.escape_cost_list_runs = [], [] # record over several runs
+    #     initUpperBound = copy.deepcopy(initSearchBound[2][1])
+        
+    #     for i in range(numIter):        
+    #         cUpper = initSearchBound[2][1] - self.start[2]
+    #         cLower = 0
+    #         eps = np.inf
+    #         self.epss = []
+    #         idx = 0
+    #         self.itercount = []
+    #         self.escape_cost_list = [] # successful escapes
+    #         self.time_taken_list = [] # corresponding time taken
+    #         self.times_of_no_solution = 0
+    #         noinf = []
+    #         moveOn = True
+
+    #         while moveOn: 
+    #             # data record
+    #             self.itercount.append(idx)
+
+    #             # set upper bound of searching
+    #             self.pb_ompl_interface.reset_robot_state_bound()
+    #             self.robot.set_state(self.start)
+
+    #             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
+                
+    #             # start planning
+    #             res, _, _, _, time_taken = self.execute_search()
+
+    #             # record times of failure and time 
+    #             if not res:
+    #                 self.times_of_no_solution += 1
+    #             accumulate_time = time_taken + self.time_taken_list[-1] if len(self.time_taken_list)>0 else time_taken
+    #             self.time_taken_list.append(accumulate_time)
+
+    #             # update bounds
+    #             curr_cost = self.escape_cost_list[-1]
+    #             noinf.append(curr_cost) if curr_cost!=np.inf else None
+
+    #             if useGreedySearch: # greedy but no lower bound guarantee
+    #                 if not res: # no solution
+    #                     cLower = cUpper
+    #                     cUpper = np.min(self.escape_cost_list) # except infs, the target z is monotonically decreasing
+    #                 else: # solution found
+    #                     if curr_cost < cLower: # a solution lower than lower bound found
+    #                         cUpper = curr_cost
+    #                         cLower = 0
+    #                     else: # solution found within expected bounds
+    #                         cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
+                    
+    #                 eps = abs(cUpper-cLower)
+    #                 self.epss.append(eps)
+    #                 if eps < self.eps_thres: # terminate
+    #                     moveOn = False
+
+    #             else: # slower but guaranteed lower bound
+    #                 # Update upper bound
+    #                 if res: # solution found
+    #                     cUpper = curr_cost
+
+    #                 # Cost already zero
+    #                 if cUpper <= 0.0:
+    #                     moveOn = False
+
+    #                 # Time up
+    #                 if self.time_taken_list[-1] > maxTimeTaken:
+    #                     moveOn = False
+
+    #             # Reset z upper bound
+    #             self.robot.set_bisec_thres(cUpper+self.start[2])
+    #             idx += 1
+
+    #             print("----------escape_cost_list: ", self.escape_cost_list)
+    #             print("----------time_taken_list: ", self.time_taken_list)
+            
+    #         # record data over runs
+    #         self.time_taken_list_runs.append(self.time_taken_list) 
+    #         self.escape_cost_list_runs.append(self.escape_cost_list)
+
+    #         # reset and prepare for the next run
+    #         self.robot.set_bisec_thres(initUpperBound)
+            
+
+
+
 class ArticulatedObjectCaging(RigidObjectCaging):
     def __init__(self, args):
         self.args = args

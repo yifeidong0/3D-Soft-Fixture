@@ -24,7 +24,8 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 2000
+INTERPOLATE_NUM = 200
+# INTERPOLATE_NUM = 2000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -63,6 +64,7 @@ class PbOMPL():
         self.obstacles = obstacles
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
+        self.use_bisection_search = 0
 
         # spheres of control/node points are moved away to avoid collision while ray-casting
         self.nodeAwayPos = [10]*3
@@ -78,31 +80,27 @@ class PbOMPL():
     def add_obstacles(self, obstacle_id):
         self.obstacles.append(obstacle_id)
 
-    def is_state_valid(self, state):
-        # satisfy bounds TODO
-        # Should be unecessary if joint bounds is properly set
+    def reset_bisec_energy_thres(self, energy_threshold):
+        self.use_bisection_search = 1
+        self.energy_threshold = energy_threshold
 
+    def is_state_valid(self, state):
+        # Check if the state overshoots the energy threshold in bisection search
+        if self.use_bisection_search:
+            current_energy = utils.get_state_energy(state, self.args.object)
+            if current_energy > self.energy_threshold:
+                return False
+            
         # Check self-collision
         stateList = self.state_to_list(state)
         self.robot.set_state(stateList)
         for link1, link2 in self.check_link_pairs:
             if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
-                # print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
                 return False
 
         # Check collision against environment
-        # Scenarios with a band
+        # Scenarios with a band (control points collision check not necessary)
         if self.args.object == "Band":
-            # Check if control points in collision(Not necessary in the hourglass-band scenario)
-            # for body1, body2 in self.check_body_pairs:
-            #     if utils.pairwise_collision(body1, body2):
-            #         print('nodes of rope in collision')
-            #         return False
-            
-            # # Move node spheres in Bullet away to avoid interfering collision check
-            # for i in range(len(self.robot.id)):
-            #     p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
-    
             if utils.band_collision_raycast(stateList):
                 # print('links between nodes in collision')
                 return False
@@ -127,9 +125,8 @@ class PbOMPL():
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
-                    # print('body collision', body1, body2)
-                    # print(get_body_name(body1), get_body_name(body2))
                     return False
+                
         return True
 
     def setup_collision_detection(self, self_collisions = False):
@@ -142,7 +139,6 @@ class PbOMPL():
             #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
             moving_bodies = [self.robot.id] # for deformable ball
             # moving_bodies = [(robot.id, moving_links)] # original 
-            # print('moving_bodies: ', moving_bodies)
             self.check_body_pairs = list(product(moving_bodies, self.obstacles))
 
     def reset_robot_state_bound(self):
@@ -152,13 +148,6 @@ class PbOMPL():
             bounds.setLow(i, bound[0])
             bounds.setHigh(i, bound[1])
         self.space.setBounds(bounds)
-
-    # def solution_callback(self, data):
-    #     ''' Define a callback function to print the solution path
-    #     '''
-    #     solution = data['solution']
-    #     print('New solution found with cost', solution.cost)
-    #     solution.printAsMatrix()
         
     def set_planner(self, planner_name, goal):
         '''
@@ -189,10 +178,10 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
+            self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            # self.planner.params().setParam("rewire_factor", "1000") # higher value, less rewires
+            self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "AITstar":
@@ -203,7 +192,8 @@ class PbOMPL():
             self.planner = og.PRMstar(self.si)
         elif planner_name == "LBTRRT":
             self.planner = og.LBTRRT(self.si)
-            self.planner.params().setParam("epsilon", "0.03")
+            self.planner.params().setParam("epsilon", "0.01") # A smaller value for epsilon will result in a denser tree
+            self.planner.params().setParam("range", "0.1")
         else:
             print("{} not recognized, please add it first".format(planner_name))
             return
@@ -232,10 +222,6 @@ class PbOMPL():
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
             self.pdef.setOptimizationObjective(self.potentialObjective)
-
-        # # Register the callback function with the planner
-        # if self.args.search == 'EnergyMinimizeSearch':
-        #     self.pdef.getIntermediateSolutionCallback().set(self.solution_callback)
 
         self.planner.setProblemDefinition(self.pdef)
         self.planner.setup()
@@ -306,7 +292,6 @@ class PbOMPL():
                       meaning that the simulator will simply reset robot's state WITHOUT any dynamics simulation. Since the
                       path is collision free, this is somewhat acceptable.
         '''
-        print('!!!!!!!!execute path length', len(path))
         for q in path:
             if dynamics:
                 # TODO: try tune gravity

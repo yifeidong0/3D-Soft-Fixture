@@ -19,7 +19,6 @@ import kinpy as kp
 from scipy.spatial.transform import Rotation as R
 from utils import *
 import pybullet as p
-import time
 
 class RopePotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, linkLen):

@@ -38,14 +38,15 @@ if __name__ == '__main__':
         env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
         env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
-    env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
- 
+    # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+    env.create_ompl_interface()
+    
     # Choose from different searching methods
     if args.search == 'BoundShrinkSearch':
-        useGreedySearch = False # True: bisection search; False: Conservative search
-        env.bound_shrink_search(useGreedySearch)
-        env.visualize_bound_shrink_search(useGreedySearch) # visualize
-        # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+        # useGreedySearch = False # True: bisection search; False: Conservative search
+        # env.bound_shrink_search(useGreedySearch)
+        env.energy_bisection_search(maxTimeTaken=240)
+        env.visualize_bound_shrink_search() # visualize
 
     elif args.search == 'EnergyMinimizeSearch':
         numInnerIter = 1

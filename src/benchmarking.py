@@ -59,7 +59,8 @@ if __name__ == '__main__':
             continue
         
         # Create OMPL interface
-        env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+        # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+        env.create_ompl_interface()
 
         # Choose a searching method
         if args.search == 'BoundShrinkSearch':

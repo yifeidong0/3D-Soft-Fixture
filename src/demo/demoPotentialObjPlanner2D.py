@@ -122,7 +122,10 @@ def allocatePlanner(si, plannerType):
     elif plannerType.lower() == "informedrrtstar":
         return og.InformedRRTstar(si)
     elif plannerType.lower() == "prmstar":
-        return og.PRMstar(si)
+        planner = og.PRMstar(si)
+        # planner = og.PRM(si)
+        # planner.params().setParam("max_nearest_neighbors", "1")
+        return planner
     elif plannerType.lower() == "rrtstar":
         planner = og.RRTstar(si)
         # planner.params().setParam("number_sampling_attempts", "1000")
@@ -287,7 +290,7 @@ if __name__ == "__main__":
     # Add a filename argument
     parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='PRMstar', \
         choices=['LBTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
