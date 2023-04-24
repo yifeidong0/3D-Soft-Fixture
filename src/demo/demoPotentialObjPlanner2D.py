@@ -26,6 +26,7 @@ rads = [[.1, .2], [.1, .7], [.1, .6]]
 centers = [[.2, 0], [.5, .8], [.85, .25]]
 useGoalSpace = 0
 balancedObjRatio = .1
+useIncrementalCost = 1
 
 class ValidityChecker(ob.StateValidityChecker):
     def isValid(self, state):
@@ -38,10 +39,11 @@ class ValidityChecker(ob.StateValidityChecker):
         return (x-xc)**2/radius[0]**2 + (y-yc)**2/radius[1]**2 - 1
 
 class minPathPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start):
+    def __init__(self, si, start, useIncrementalCost):
         super(minPathPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
+        self.useIncrementalCost_ = useIncrementalCost
 
     '''I think the way of defining potential energy gain (mechanical work required from an external hand
     to lift up an object or extend an elastic band) was wrong.
@@ -53,30 +55,36 @@ class minPathPotentialObjective(ob.OptimizationObjective):
     min{Egain} <-> min{Etotal} 
     '''
 
-    '''Original'''
-    def combineCosts(self, c1, c2):
-        '''
-        The vertex i cost is expressed as the potential energy gain along 
-        the path connecting i and v_start, and formulated as
-        v_child.cost = combineCost(v_parent.cost, 
-                                motionCost(v_parent, v_child))
-                    = max(v_parent.cost, v_child.energy-v_start.energy)
-        '''
-        '''Combine the current cost with a motion cost'''
-        return ob.Cost(max(c1.value(), c2.value()))
-
-    def motionCost(self, s1, s2):
-        return ob.Cost(s2[1] - self.start_[1])
-
-    '''Test for RRT* (Etotal)'''
+    '''Original: max potential gain'''
     # def combineCosts(self, c1, c2):
-    #     return ob.Cost(c1.value() + c2.value())
+    #     '''
+    #     The vertex i cost is expressed as the potential energy gain along 
+    #     the path connecting i and v_start, and formulated as
+    #     v_child.cost = combineCost(v_parent.cost, 
+    #                             motionCost(v_parent, v_child))
+    #                 = max(v_parent.cost, v_child.energy-v_start.energy)
+    #     '''
+    #     '''Combine the current cost with a motion cost'''
+    #     return ob.Cost(max(c1.value(), c2.value()))
 
     # def motionCost(self, s1, s2):
-    #     return ob.Cost(abs(s2[1] - s1[1])) # works for RRT*, BIT*
+    #     return ob.Cost(s2[1] - self.start_[1])
 
-def getPotentialObjective(si, start):
-    obj = minPathPotentialObjective(si, start)
+    '''Accumulated potential gain'''
+    def combineCosts(self, c1, c2):
+        if self.useIncrementalCost_:
+            return ob.Cost(c1.value() + c2.value())
+        else:
+            return ob.Cost(max(c1.value(), c2.value()))
+
+    def motionCost(self, s1, s2):
+        if self.useIncrementalCost_:
+            return ob.Cost(abs(s2[1] - s1[1]))
+        else:
+            return ob.Cost(s2[1] - self.start_[1])
+
+def getPotentialObjective(si, start, useIncrementalCost):
+    obj = minPathPotentialObjective(si, start, useIncrementalCost)
     # obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo)) # TODO:
     return obj
 
@@ -85,9 +93,9 @@ def getThresholdPathLengthObj(si):
     obj.setCostThreshold(ob.Cost(1.51))
     return obj
 
-def getBalancedObjective(si, start):
+def getBalancedObjective(si, start, useIncrementalCost):
     lengthObj = ob.PathLengthOptimizationObjective(si)
-    potentialObj = minPathPotentialObjective(si, start)
+    potentialObj = minPathPotentialObjective(si, start, useIncrementalCost)
 
     opt = ob.MultiOptimizationObjective(si)
     opt.addObjective(lengthObj, balancedObjRatio)
@@ -116,23 +124,31 @@ def allocatePlanner(si, plannerType):
     elif plannerType.lower() == "prmstar":
         return og.PRMstar(si)
     elif plannerType.lower() == "rrtstar":
-        return og.RRTstar(si)
+        planner = og.RRTstar(si)
+        # planner.params().setParam("number_sampling_attempts", "1000")
+        planner.params().setParam("range", "0.01") # controls the maximum distance between a new state and its nearest neighbor in the tree (for max potential gain)
+        planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase (for max potential gain)
+        return planner
     elif plannerType.lower() == "sorrtstar":
         return og.SORRTstar(si)
-    # elif plannerType.lower() == "bitrrt": # Not available yet it seems
-    #     return og.BiTRRT(si)
+    elif plannerType.lower() == "lbtrrt":
+        planner = og.LBTRRT(si)
+        # planner.params().setParam("goal_bias", "0.2")
+        # epsilon: smaller values of epsilon tend to explore the space more thoroughly but can be slower, while larger values of epsilon tend to be faster
+        planner.params().setParam("epsilon", "0.01")
+        return planner
     else:
         ou.OMPL_ERROR("Planner-type is not implemented in allocation function.")
 
-def allocateObjective(si, objectiveType, start):
+def allocateObjective(si, objectiveType, start, useIncrementalCost):
     if objectiveType.lower() == "pathpotential":
-        return getPotentialObjective(si, start)
+        return getPotentialObjective(si, start, useIncrementalCost)
     elif objectiveType.lower() == "pathlength":
         return getPathLengthObjWithCostToGo(si)
     elif objectiveType.lower() == "thresholdpathlength":
         return getThresholdPathLengthObj(si)
     elif objectiveType.lower() == "weightedlengthandpotential":
-        return getBalancedObjective(si, start)
+        return getBalancedObjective(si, start, useIncrementalCost)
     else:
         ou.OMPL_ERROR("Optimization-objective is not implemented in allocation function.")
 
@@ -170,7 +186,7 @@ def plot(sol_path_list):
     ax.set_title('Escape path - objective of lowest incremental potential energy gain')
     plt.show()
 
-def plan(runTime, plannerType, objectiveType, fname):
+def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
     # Construct the robot state space in which we're planning. We're
     # planning in [0,1]x[0,1], a subset of R^2.
     space = ob.RealVectorStateSpace(2)
@@ -225,7 +241,7 @@ def plan(runTime, plannerType, objectiveType, fname):
         pdef.setStartAndGoalStates(start, goal, threshold)
 
     # Create the optimization objective specified by our command-line argument.
-    pdef.setOptimizationObjective(allocateObjective(si, objectiveType, start))
+    pdef.setOptimizationObjective(allocateObjective(si, objectiveType, start, useIncrementalCost))
 
     # Construct the optimal planner specified by our command line argument.
     optimizingPlanner = allocatePlanner(si, plannerType)
@@ -269,10 +285,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Optimal motion planning demo program.')
 
     # Add a filename argument
-    parser.add_argument('-t', '--runtime', type=float, default=2.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
     parser.add_argument('-p', '--planner', default='BITstar', \
-        choices=['BiTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
+        choices=['LBTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     parser.add_argument('-o', '--objective', default='PathPotential', \
@@ -305,4 +321,4 @@ if __name__ == "__main__":
         ou.OMPL_ERROR("Invalid log-level integer.")
 
     # Solve the planning problem
-    plan(args.runtime, args.planner, args.objective, args.file)
+    plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost)

@@ -179,6 +179,8 @@ class PbOMPL():
             self.planner = og.RRTConnect(self.si)
         elif planner_name == "RRTstar":
             self.planner = og.RRTstar(self.si)
+            self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
+            self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
         elif planner_name == "EST":
             self.planner = og.EST(self.si)
         elif planner_name == "FMT":
@@ -189,7 +191,6 @@ class PbOMPL():
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
             # self.planner.params().setParam("samples_per_batch", "10000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
-            # self.planner.params().setParam("samples_per_batch", "50000") # rope
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("rewire_factor", "1000") # higher value, less rewires
         elif planner_name == "ABITstar":
@@ -200,6 +201,9 @@ class PbOMPL():
             self.planner = og.SORRTstar(self.si)
         elif planner_name == "PRMstar":
             self.planner = og.PRMstar(self.si)
+        elif planner_name == "LBTRRT":
+            self.planner = og.LBTRRT(self.si)
+            self.planner.params().setParam("epsilon", "0.03")
         else:
             print("{} not recognized, please add it first".format(planner_name))
             return
@@ -240,7 +244,6 @@ class PbOMPL():
         '''
         plan a path to goal from the given robot start state
         '''
-        # print("start_planning")
         print(self.planner.params())
 
         orig_robot_state = self.robot.get_cur_state()
@@ -256,26 +259,25 @@ class PbOMPL():
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # solution_path = self.planner.bestPathFromGoalToStart() # TODO: expose the corresponding C++ protected function
-            # print('@@@callback', self.pdef.getIntermediateSolutionCallback(self.solution_callback))
             sol_path_geometric = self.pdef.getSolutionPath()
             sol_path_states_non_interp = sol_path_geometric.getStates()
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
             sol_path_states = sol_path_geometric.getStates()
             sol_path_list_non_interp = [self.state_to_list(s) for s in sol_path_states_non_interp]
             sol_path_list = [self.state_to_list(s) for s in sol_path_states]
-            print('sol_path_list_non_interp', len(sol_path_list_non_interp))
-            print('sol_path_list', len(sol_path_list))
 
             # check if solution path is valid
             # for sol_path in sol_path_list:
             #     self.is_state_valid(sol_path)
                 
-            # get cost of the solution path
+            # Get cost of the solution path
             if self.args.search == 'EnergyMinimizeSearch':
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
-                best_cost = self.planner.bestCost().value() # approximate solution? available for BITstar
+                if self.args.planner in ['PRMstar', 'LBTRRT']:
+                    best_cost = float(self.planner.getBestCost()) # getBestCost returns a str
+                else:
+                    best_cost = self.planner.bestCost().value() # approximate solution? available for BITstar
                 # sol_final_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
-                # print('!!!!!!!!sol_final_cost', sol_final_cost)
 
             # make sure goal is reached
             diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
