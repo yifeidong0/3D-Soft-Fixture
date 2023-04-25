@@ -14,7 +14,6 @@ except ImportError:
     from ompl import util as ou
     from ompl import base as ob
     from ompl import geometric as og
-from math import sqrt
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
@@ -120,7 +119,10 @@ def allocatePlanner(si, plannerType):
     elif plannerType.lower() == "fmtstar":
         return og.FMT(si)
     elif plannerType.lower() == "informedrrtstar":
-        return og.InformedRRTstar(si)
+        planner = og.InformedRRTstar(si)
+        # planner.params().setParam("range", "0.01") # controls the maximum distance between a new state and its nearest neighbor in the tree (for max potential gain)
+        # planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase (for max potential gain)
+        return planner
     elif plannerType.lower() == "prmstar":
         planner = og.PRMstar(si)
         # planner = og.PRM(si)
@@ -129,8 +131,8 @@ def allocatePlanner(si, plannerType):
     elif plannerType.lower() == "rrtstar":
         planner = og.RRTstar(si)
         # planner.params().setParam("number_sampling_attempts", "1000")
-        planner.params().setParam("range", "0.01") # controls the maximum distance between a new state and its nearest neighbor in the tree (for max potential gain)
-        planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase (for max potential gain)
+        planner.params().setParam("range", "0.01")
+        planner.params().setParam("rewire_factor", "0.01")
         return planner
     elif plannerType.lower() == "sorrtstar":
         return og.SORRTstar(si)
@@ -290,7 +292,7 @@ if __name__ == "__main__":
     # Add a filename argument
     parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-p', '--planner', default='PRMstar', \
+    parser.add_argument('-p', '--planner', default='InformedRRTstar', \
         choices=['LBTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')

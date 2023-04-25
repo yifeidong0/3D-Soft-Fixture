@@ -161,6 +161,29 @@ class objectElasticBand(ObjectFromUrdf):
         #     p.resetBasePositionAndOrientation(self.id[i], self.state[3*i:3*i+3], self.zeroQuaternion)
 
 
+class objectElasticJelly(ObjectFromUrdf):
+    '''
+    An elastic jelly composed of several (4) control points as a volumetric deformable primitive.
+    '''
+    def __init__(self, id, numCtrlPoint) -> None:
+        self.id = id # a list
+        self.numCtrlPoint = numCtrlPoint
+        self.comDof = 3
+        self.joint_idx = []
+        self.num_dim = self.comDof * self.numCtrlPoint
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
+        self.set_search_bounds()
+
+    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+        self.joint_bounds = self.numCtrlPoint * basePosBounds
+
+    def set_state(self, state):
+        self.state = state
+        # for i in range(len(self.id)):
+        #     p.resetBasePositionAndOrientation(self.id[i], self.state[3*i:3*i+3], self.zeroQuaternion)
+
+
 class objectRope(ObjectFromUrdf):
     '''
     A rope composed of base (6 DoF) and several control points (3n DoF).

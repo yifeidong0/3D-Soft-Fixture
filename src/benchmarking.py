@@ -43,7 +43,6 @@ if __name__ == '__main__':
     
     # Run the caging analysis algorithm over downsampled frames we extracted above
     for i in frames:
-        print('@@@@@index: ', sce.idxSce[i])
         frameId = sce.idxSce[i]
 
         # Set obstacle's state
@@ -63,7 +62,7 @@ if __name__ == '__main__':
         env.create_ompl_interface()
 
         # Choose a searching method
-        if args.search == 'BoundShrinkSearch':
+        if args.search == 'BisectionSearch':
             env.bound_shrink_search(useGreedySearch, initSearchBound=sce.basePosBounds, numIter=numInnerIter, maxTimeTaken=maxTimeTaken)
             
             # # Visualization
@@ -78,9 +77,9 @@ if __name__ == '__main__':
                 os.mkdir(folderName)
 
             # Record data to the folder
-            record_data_benchmark_bound_shrink(env.escape_cost_list_runs, env.time_taken_list_runs, frameId, folderName)
+            record_data_benchmark_bound_shrink(env.escape_energy_list_runs, env.time_taken_list_runs, frameId, folderName)
 
-        elif args.search == 'EnergyMinimizeSearch':
+        elif args.search == 'EnergyBiasedSearch':
             isSolved = env.energy_minimize_search(numInnerIter)
             # env.visualize_energy_minimize_search()
             print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))

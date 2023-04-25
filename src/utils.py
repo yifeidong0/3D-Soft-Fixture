@@ -28,30 +28,31 @@ def argument_parser():
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
-    parser.add_argument('-s', '--search', default='BoundShrinkSearch', \
-        choices=['BoundShrinkSearch', 'EnergyMinimizeSearch'], \
-        help='(Optional) Specify the sampling-based search method to use, defaults to BoundShrinkSearch if not given.')
+    parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
+        choices=['BisectionSearch', 'EnergyBiasedSearch'], \
+        help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRT', \
+    parser.add_argument('-p', '--planner', default='LBTRRT', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
     
     # deprecated already
-    parser.add_argument('-o', '--objective', default='GravityPotential', \
+    parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
         choices=['ElasticPotential', 'GravityPotential', 'GravityAndElasticPotential', \
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Ring', \
-        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', 'Hook', '3fGripper', 'PlanarRobot', 'PandaArm'], \
+    parser.add_argument('-j', '--object', default='Jelly', \
+        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
+                 'Jelly', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='Box', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=30, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -251,6 +252,38 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
             else: # in collision
                 p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
     #     p.removeAllUserDebugItems()
+
+    return collisionExists
+
+def jelly_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    '''
+    Description:
+        check if the lines connecting any two adjacent control points along a band penetrate obstacles.
+        Pybullet Raycast method applied here.
+    Input: 
+        state: list of planner state vector, length is 3*numCtrlPoint
+    '''
+    # Construct start and end positions of rays
+    numCtrlPoint = int(len(state)/3)
+    ctrlPointPos = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
+    rayFromPositions = [ctrlPointPos[i] for i in [0,0,0,1,1,2]]
+    rayToPositions = [ctrlPointPos[i] for i in [1,2,3,2,3,3]]
+    rayToPosDouble = rayToPositions + rayFromPositions # double-way raycast
+    rayFromPosDouble = rayFromPositions + rayToPositions
+    results = p.rayTestBatch(rayFromPosDouble, rayToPosDouble)
+
+    # Check if any ray hits obstacles
+    hitObjectUids = [results[i][0] for i in range(len(results))]
+    idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
+    collisionExists = (idMask.count(True) > 0)
+
+    # Visualize the band after running the planner
+    if visRays:
+        for i,idNonNegative in enumerate(idMask):
+            if (not idNonNegative): # collision free
+                p.addUserDebugLine(rayFromPosDouble[i], rayToPosDouble[i], rayMissColor, lineWidth=5, lifeTime=.1)
+            else: # in collision
+                p.addUserDebugLine(rayFromPosDouble[i], rayToPosDouble[i], rayHitColor, lineWidth=5, lifeTime=.1)
 
     return collisionExists
 

@@ -286,13 +286,13 @@ if __name__ == '__main__':
             env.create_ompl_interface()
 
             # Choose a searching method
-            if args.search == 'BoundShrinkSearch':
+            if args.search == 'BisectionSearch':
                 useBisecSearch = True # True: bisection search; False: Conservative search
                 env.bound_shrink_search(useBisecSearch)
                 escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
-            elif args.search == 'EnergyMinimizeSearch':
+            elif args.search == 'EnergyBiasedSearch':
                 numInnerIter = 1
                 isSolved = env.energy_minimize_search(numInnerIter)
                 # env.visualize_energy_minimize_search()

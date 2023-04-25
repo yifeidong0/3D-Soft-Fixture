@@ -25,7 +25,6 @@ import math
 import objective
 
 INTERPOLATE_NUM = 200
-# INTERPOLATE_NUM = 2000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -90,23 +89,22 @@ class PbOMPL():
             current_energy = utils.get_state_energy(state, self.args.object)
             if current_energy > self.energy_threshold:
                 return False
-            
-        # Check self-collision
-        stateList = self.state_to_list(state)
-        self.robot.set_state(stateList)
-        for link1, link2 in self.check_link_pairs:
-            if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
-                return False
 
         # Check collision against environment
+        stateList = self.state_to_list(state)
         # Scenarios with a band (control points collision check not necessary)
-        if self.args.object == "Band":
+        if self.args.object in ["Band"]:
             if utils.band_collision_raycast(stateList):
                 # print('links between nodes in collision')
                 return False
 
+        # Scenarios with an elastic jelly
+        elif self.args.object in ["Jelly"]:
+            if utils.jelly_collision_raycast(stateList):
+                return False
+            
         # Scenarios with a rope
-        if self.args.object == "Rope":
+        elif self.args.object in ["Rope"]:
             # Check if nodes of rope in collision
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
@@ -126,7 +124,13 @@ class PbOMPL():
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
                     return False
-                
+
+        # Check self-collision
+        self.robot.set_state(stateList)
+        for link1, link2 in self.check_link_pairs:
+            if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
+                return False
+              
         return True
 
     def setup_collision_detection(self, self_collisions = False):
@@ -212,13 +216,15 @@ class PbOMPL():
      
         # Set customized optimization objective
         rigidObjs = utils.get_non_articulated_objects()
-        if self.args.search == 'EnergyMinimizeSearch':
+        if self.args.search == 'EnergyBiasedSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
             elif self.args.object == "Fish":
                 self.potentialObjective = objective.TotalPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Band":
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
+            elif self.args.object == "Jelly":
+                self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
             self.pdef.setOptimizationObjective(self.potentialObjective)
@@ -257,7 +263,7 @@ class PbOMPL():
             #     self.is_state_valid(sol_path)
                 
             # Get cost of the solution path
-            if self.args.search == 'EnergyMinimizeSearch':
+            if self.args.search == 'EnergyBiasedSearch':
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
                 if self.args.planner in ['PRMstar', 'LBTRRT']:
                     best_cost = float(self.planner.getBestCost()) # getBestCost returns a str
@@ -309,7 +315,8 @@ class PbOMPL():
                     utils.band_collision_raycast(q, visRays=1)
                 elif self.args.object == 'Rope':
                     utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
-
+                elif self.args.object == 'Jelly':
+                    utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
             time.sleep(2/240)
 

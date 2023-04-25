@@ -117,6 +117,66 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         return ob.Cost(max(cost1.value(), cost2.value()))
     
 
+class ElasticJellyPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, args):
+        super(ElasticJellyPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.args_ = args
+
+        # parameters of articulated object
+        self.numStateSpace = len(start)
+        self.numCtrlPoint = int(self.numStateSpace/3)
+        self.numEdges = int(self.numCtrlPoint * (self.numCtrlPoint-1) / 2) # 4 vertices, 6 edges
+        self.stiffnesss = [10] * self.numEdges
+        self.springneutralLen = .5
+        self.masses = [.1] * self.numCtrlPoint
+        self.g = 9.81
+        
+        # calculated energy of initial pose
+        self.energyStart = self.stateEnergy(self.start_)
+
+    def getElasticEnergy(self, state):
+        # Retrieve control point positions
+        ctrlPointPos = [np.asarray(state[3*i:3*i+3]) for i in range(self.numCtrlPoint)]
+        # for i in range(self.numCtrlPoint):
+        #     ctrlPointPos.append(np.asarray(state[3*i:3*i+3]))
+        edgeStartPoints = [ctrlPointPos[i] for i in [0,0,0,1,1,2]] # combination of vertices
+        edgeEndPoints = [ctrlPointPos[i] for i in [1,2,3,2,3,3]]
+
+        # Retrieve displacement of control points
+        springDisplaces = []
+        for i in range(self.numEdges):
+            springDisp = np.linalg.norm(edgeStartPoints[i]-edgeEndPoints[i])-self.springneutralLen
+            # springDisp = max(np.linalg.norm(edgeStartPoints[i]-edgeEndPoints[i])-self.springneutralLen, 0.0)
+            springDisplaces.append(springDisp)
+
+        # Get elastic potential energy
+        jointEnergies = [self.stiffnesss[i] * springDisplaces[i]**2 for i in range(self.numEdges)]
+        energyElastic = 0.5 * sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
+
+        return energyElastic
+
+    def getGravityEnergy(self, state):
+        # Get control points' gravitational potential energy
+        ZsInWorld = [state[i] for i in [2,5,8,11]]
+        linkEnergies = [ZsInWorld[i] * self.masses[i] for i in range(self.numCtrlPoint)]
+        energyGravity = self.g * sum(linkEnergies) # sigma(g * m_i * z_i)
+        
+        return energyGravity
+    
+    def stateEnergy(self, state):
+        return self.getElasticEnergy(state) + self.getGravityEnergy(state)
+    
+    def motionCost(self, state1, state2):
+        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
+        energyState2 = self.stateEnergy(state2)
+        return ob.Cost(energyState2 - self.energyStart)
+
+    def combineCosts(self, cost1, cost2):
+        return ob.Cost(max(cost1.value(), cost2.value()))
+    
+
 class GravityPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
         super(GravityPotentialObjective, self).__init__(si)

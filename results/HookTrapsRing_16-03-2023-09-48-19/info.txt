@@ -1,6 +1,6 @@
 *****Search goalCoMPose: [0, 0, 0.01, 1.57, 0, 0]
 *****Search basePosBounds: [[-2, 2], [-2, 2], [0, 3.5], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793]]
-*****args: Namespace(scenario='HookTrapsRing', search='EnergyMinimizeSearch', planner='BITstar', objective='GravityPotential', object='Ring', obstacle='Hook', runtime=120, visualization=0)
+*****args: Namespace(scenario='HookTrapsRing', search='EnergyBiasedSearch', planner='BITstar', objective='GravityPotential', object='Ring', obstacle='Hook', runtime=120, visualization=0)
 *****BIT params: delay_rewiring_to_first_solution = 0
 drop_unconnected_samples_on_prune = 0
 find_approximate_solutions = 0
