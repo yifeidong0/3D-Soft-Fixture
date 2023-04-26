@@ -21,7 +21,7 @@ if __name__ == '__main__':
         env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
     elif args.object == 'Fish':
         env = ArticulatedObjectCaging(args)
-        env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+        env.add_obstacles(scale=[.1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
@@ -54,12 +54,12 @@ if __name__ == '__main__':
         # useGreedySearch = False # True: bisection search; False: Conservative search
         # env.bound_shrink_search(useGreedySearch)
         env.energy_bisection_search(maxTimeTaken=40)
-        env.visualize_bound_shrink_search() # visualize
+        env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':
         numInnerIter = 1
-        env.energy_minimize_search(numInnerIter)
-        # env.visualize_energy_minimize_search()
+        env.energy_biased_search(numInnerIter)
+        env.visualize_energy_biased_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
     # shut down pybullet (GUI)

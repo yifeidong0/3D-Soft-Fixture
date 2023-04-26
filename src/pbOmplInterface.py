@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 200
+INTERPOLATE_NUM = 2000
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -90,8 +90,14 @@ class PbOMPL():
             if current_energy > self.energy_threshold:
                 return False
 
-        # Check collision against environment
+        # Check self-collision
         stateList = self.state_to_list(state)
+        self.robot.set_state(stateList)
+        for link1, link2 in self.check_link_pairs:
+            if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
+                return False
+            
+        # Check collision against environment
         # Scenarios with a band (control points collision check not necessary)
         if self.args.object in ["Band"]:
             if utils.band_collision_raycast(stateList):
@@ -124,17 +130,11 @@ class PbOMPL():
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
                     return False
-
-        # Check self-collision
-        self.robot.set_state(stateList)
-        for link1, link2 in self.check_link_pairs:
-            if utils.pairwise_link_collision(self.robot_id, link1, self.robot_id, link2):
-                return False
               
         return True
 
     def setup_collision_detection(self, self_collisions = False):
-        if self.args.object == "Band" or self.args.object == "Rope":
+        if self.args.object in ["Band", "Rope"]:
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
         else:
@@ -318,7 +318,7 @@ class PbOMPL():
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
-            time.sleep(2/240)
+            time.sleep(20/240)
 
     # -------------
     # Configurations

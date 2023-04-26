@@ -66,7 +66,7 @@ if __name__ == '__main__':
             env.bound_shrink_search(useGreedySearch, initSearchBound=sce.basePosBounds, numIter=numInnerIter, maxTimeTaken=maxTimeTaken)
             
             # # Visualization
-            # env.visualize_bound_shrink_search(useGreedySearch) # visualize
+            # env.visualize_bisection_search(useGreedySearch) # visualize
             
             # Create new folder
             createFolder = 1 if i == frames[0] else 0
@@ -80,8 +80,8 @@ if __name__ == '__main__':
             record_data_benchmark_bound_shrink(env.escape_energy_list_runs, env.time_taken_list_runs, frameId, folderName)
 
         elif args.search == 'EnergyBiasedSearch':
-            isSolved = env.energy_minimize_search(numInnerIter)
-            # env.visualize_energy_minimize_search()
+            isSolved = env.energy_biased_search(numInnerIter)
+            # env.visualize_energy_biased_search()
             print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
     # Shut down pybullet (GUI)

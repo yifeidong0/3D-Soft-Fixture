@@ -32,7 +32,7 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='LBTRRT', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -43,24 +43,21 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Jelly', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Box', \
+    parser.add_argument('-l', '--obstacle', default='Bowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=6, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
-    
-    # parser.add_argument('-f', '--file', default=None, \
-    #     help='(Optional) Specify anoutput path for the found solution path.')
-    
+
     # Parse the arguments
     args = parser.parse_args()
 
@@ -68,6 +65,7 @@ def argument_parser():
 
 def path_collector():
     return {
+            # 'Fish': 'models/fine-fish/fine-fish.urdf', 
             'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
             'Starfish': 'models/starfish/starfish2.urdf', 

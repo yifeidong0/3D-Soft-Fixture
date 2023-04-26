@@ -36,6 +36,8 @@ class RigidObjectCaging():
         self.paths = path_collector()
         self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
         self.robot = ObjectFromUrdf(self.object_id)
+        # self.robot.set_state([0,0,2,0,0,0,1.57])
+        # sleep(30)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
@@ -133,7 +135,7 @@ class RigidObjectCaging():
                self.escape_energy_list.append(self.escape_energy_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
-    def energy_minimize_search(self, numIter=1):
+    def energy_biased_search(self, numIter=1):
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []
@@ -150,7 +152,7 @@ class RigidObjectCaging():
             return False
         return True
 
-    def visualize_energy_minimize_search(self):
+    def visualize_energy_biased_search(self):
         '''visualize the convergence of caging depth
         '''
         _, ax1 = plt.subplots()
@@ -231,7 +233,7 @@ class RigidObjectCaging():
             # Reset and prepare for the next run
             self.pb_ompl_interface.reset_bisec_energy_thres(initCUpper)
 
-    def visualize_bound_shrink_search(self):
+    def visualize_bisection_search(self):
         '''visualize the convergence of caging depth
         '''
         _, ax1 = plt.subplots()

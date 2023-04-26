@@ -289,13 +289,13 @@ if __name__ == '__main__':
             if args.search == 'BisectionSearch':
                 useBisecSearch = True # True: bisection search; False: Conservative search
                 env.bound_shrink_search(useBisecSearch)
-                escape_energy, z_thres = env.visualize_bound_shrink_search(useBisecSearch) # visualize
+                escape_energy, z_thres = env.visualize_bisection_search(useBisecSearch) # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
             elif args.search == 'EnergyBiasedSearch':
                 numInnerIter = 1
-                isSolved = env.energy_minimize_search(numInnerIter)
-                # env.visualize_energy_minimize_search()
+                isSolved = env.energy_biased_search(numInnerIter)
+                # env.visualize_energy_biased_search()
 
                 # Record start and escape energy
                 if isArticulatedObj:

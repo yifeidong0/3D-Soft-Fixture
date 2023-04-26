@@ -180,8 +180,6 @@ class objectElasticJelly(ObjectFromUrdf):
 
     def set_state(self, state):
         self.state = state
-        # for i in range(len(self.id)):
-        #     p.resetBasePositionAndOrientation(self.id[i], self.state[3*i:3*i+3], self.zeroQuaternion)
 
 
 class objectRope(ObjectFromUrdf):

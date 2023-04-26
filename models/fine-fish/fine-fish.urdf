@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<robot name="fish" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="head">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fine-fish/head2.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fine-fish/head2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="body">
+    <visual>
+      <origin rpy="0 0 0" xyz="-0.86 0 -0.01"/>
+      <geometry>
+        <mesh filename="package://fine-fish/body2.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="-0.86 0 -0.01"/>
+      <geometry>
+        <mesh filename="package://fine-fish/body2.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <!-- <link name="panda_rightfinger">
+    <visual>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/visual/finger.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.14159265359" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://franka_description/meshes/collision/finger.stl"/>
+      </geometry>
+    </collision>
+  </link> -->
+  <joint name="joint1" type="revolute">
+    <parent link="head"/>
+    <child link="body"/>
+    <origin rpy="0 0 0" xyz="-0.3 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="20" lower="-1.5" upper="1.5" velocity="0.2"/>
+  </joint>
+  <!-- <joint name="panda_finger_joint2" type="prismatic">
+    <parent link="panda_hand"/>
+    <child link="panda_rightfinger"/>
+    <origin rpy="0 0 0" xyz="0 0 0.0584"/>
+    <axis xyz="0 -1 0"/>
+    <limit effort="20" lower="0.0" upper="0.04" velocity="0.2"/>
+    <mimic joint="panda_finger_joint1"/>
+  </joint> -->
+
+</robot>
