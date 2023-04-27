@@ -1,0 +1,40 @@
+<?xml version="1.0" ?>
+<robot name="lock" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="body">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://snap-lock/snap-lock-body.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="1.57 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://snap-lock/snap-lock-body-vhacd.obj"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="arm">
+    <visual>
+      <origin rpy="0 0 0" xyz="-0. 0.22 -0.13"/>
+      <geometry>
+        <mesh filename="package://snap-lock/snap-lock-arm.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="1.57 0 0" xyz="-0. 0.22 -0.13"/>
+      <geometry>
+        <mesh filename="package://snap-lock/snap-lock-arm-vhacd.obj"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint1" type="revolute">
+    <parent link="body"/>
+    <child link="arm"/>
+    <origin rpy="0 0 0" xyz="-0. -0.22 0.13"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="20" lower="-1.5" upper="1.5" velocity="0.2"/>
+  </joint>
+
+</robot>

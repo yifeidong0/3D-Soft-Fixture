@@ -32,7 +32,7 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='RRTstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -43,16 +43,16 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Snaplock', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
-                 'Jelly', '3fGripper', 'PlanarRobot', 'PandaArm'], \
+                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Bowl', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Hole'], \
+    parser.add_argument('-l', '--obstacle', default='Ring', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=6, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -65,11 +65,12 @@ def argument_parser():
 
 def path_collector():
     return {
-            # 'Fish': 'models/fine-fish/fine-fish.urdf', 
-            'Fish': 'models/fish/articulate_fish.xacro', 
+            'Fish': 'models/fine-fish/fine-fish.urdf', 
+            # 'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
             'Starfish': 'models/starfish/starfish2.urdf', 
-            'Ring': 'models/fish/ring2.urdf', 
+            'Ring': 'models/fish/ring2_vhacd.OBJ', 
+            # 'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
@@ -78,7 +79,8 @@ def path_collector():
             'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
-            'Hourglass': 'models/hourglass/hourglass.obj'
+            'Hourglass': 'models/hourglass/hourglass.obj',
+            'Snaplock': 'models/snap-lock/snap-lock.urdf', 
             }
 
 def texture_path_list():
@@ -182,6 +184,33 @@ def get_state_energy(state, object):
     # elif object == "Band":
     # elif object == "Rope":
     return None
+
+def axiscreator(bodyId, linkId = -1):
+    '''For visualizing the link axis in Bullet.
+    '''
+    print(f'axis creator at bodyId = {bodyId} and linkId = {linkId} as XYZ->RGB')
+    x_axis = p.addUserDebugLine(lineFromXYZ = [0, 0, 0],
+                                lineToXYZ = [0.1, 0, 0],
+                                lineColorRGB = [1, 0, 0],
+                                lineWidth = 0.1,
+                                lifeTime = 0,
+                                parentObjectUniqueId = bodyId,
+                                parentLinkIndex = linkId )
+    y_axis = p.addUserDebugLine(lineFromXYZ = [0, 0, 0],
+                                lineToXYZ = [0, 0.1, 0],
+                                lineColorRGB = [0, 1, 0],
+                                lineWidth = 0.1,
+                                lifeTime = 0,
+                                parentObjectUniqueId = bodyId,
+                                parentLinkIndex = linkId)
+    z_axis = p.addUserDebugLine(lineFromXYZ = [0, 0, 0],
+                                lineToXYZ = [0, 0, 0.1],
+                                lineColorRGB = [0, 0, 1],
+                                lineWidth = 0.1,
+                                lifeTime = 0,
+                                parentObjectUniqueId = bodyId,
+                                parentLinkIndex = linkId)
+    return [x_axis, y_axis, z_axis]
 
 #####################################
 

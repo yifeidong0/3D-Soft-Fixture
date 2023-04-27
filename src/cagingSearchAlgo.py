@@ -31,12 +31,15 @@ class RigidObjectCaging():
 
         self.eps_thres = 1e-2 # bi-section search resolution
 
-    def load_object(self):
+    def load_object(self, scale=1):
         """Load object for caging."""
         self.paths = path_collector()
-        self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0))
+        self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0), globalScaling=scale)
         self.robot = ObjectFromUrdf(self.object_id)
-        # self.robot.set_state([0,0,2,0,0,0,1.57])
+        # FOR DEBUG - URDF TUNE
+        # self.robot.set_state([0,0,0,0,0,0,0.])
+        axiscreator(self.object_id, linkId = -1)
+        axiscreator(self.object_id, linkId = 0)
         # sleep(30)
 
     def reset_start_and_goal(self, start=None, goal=None):
@@ -61,18 +64,23 @@ class RigidObjectCaging():
         return True # bounds valid check passed
 
     def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
-        if  self.args.obstacle in ['Box']:
-            if  self.args.object in ['Rope']:
-                self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
-                self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
-                self.add_box([-.5, 0, 1.2], [0.2, .7, .6])
-                self.add_box([0, .5, 1.2], [.7, 0.2, .5])
-                self.add_box([0, -.5, 1.2], [.7, 0.2, .7])
-            else:
-                self.add_box([1.2, 0, 1.2], [1, 1, .2]) # add outer walls
-                self.add_box([-1.2, 0, 1.2], [1, 1, .2])
-                self.add_box([0, 1.2, 1.2], [1, 1, .2])
-                self.add_box([0, -1.2, 1.2], [1, 1, .2])
+        if self.args.obstacle in ['Box']:
+            # if self.args.object in ['Rope']:
+            self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
+            self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
+            self.add_box([-.5, 0, 1.2], [0.2, .7, .6])
+            self.add_box([0, .5, 1.2], [.7, 0.2, .5])
+            self.add_box([0, -.5, 1.2], [.7, 0.2, .7])
+        
+        elif self.args.obstacle in ['Hole']:
+            self.add_box([1.2, 0, 1.2], [1, 1, .2])
+            self.add_box([-1.2, 0, 1.2], [1, 1, .2])
+            self.add_box([0, 1.2, 1.2], [1, 1, .2])
+            self.add_box([0, -1.2, 1.2], [1, 1, .2])
+
+        # elif self.args.obstacle in ['Ring']:
+        #     self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos, qtn, globalScaling=scale[0])
+        #     self.obstacles.append(self.obstacle_id)
 
         elif self.args.obstacle in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
@@ -143,6 +151,7 @@ class RigidObjectCaging():
         solveds = []
         for i in range(numIter):
             self.robot.set_state(self.start)
+            # sleep(30)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             solved, _, sol_path_energy, sol_final_cost, _ = self.execute_search()
             self.sol_path_energy_list.append(sol_path_energy)      
@@ -248,24 +257,22 @@ class RigidObjectCaging():
 
 
 class ArticulatedObjectCaging(RigidObjectCaging):
-    def __init__(self, args):
+    def __init__(self, args, objScale):
         self.args = args
         self.obstacles = []
         self.rigidObjList = get_non_articulated_objects()
+        self.escape_cost_list = [] # successful escapes
 
         if args.visualization:
             vis = p.GUI
         else:
             vis = p.DIRECT
         p.connect(vis)     
-
         p.setTimeStep(1./240.)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-        self.load_object()
+        self.load_object(scale=objScale)
         self.reset_start_and_goal()
-
-        self.escape_cost_list = [] # successful escapes
 
 
 class ElasticBandCaging(RigidObjectCaging):

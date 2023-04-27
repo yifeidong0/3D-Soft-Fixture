@@ -220,7 +220,9 @@ class PbOMPL():
             if self.args.object in rigidObjs: # rigid object caging
                 self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
             elif self.args.object == "Fish":
-                self.potentialObjective = objective.TotalPotentialObjective(self.si, start, self.args)
+                self.potentialObjective = objective.FishPotentialObjective(self.si, start, self.args)
+            elif self.args.object == "Snaplock":
+                self.potentialObjective = objective.SnaplockPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Band":
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Jelly":
@@ -318,7 +320,7 @@ class PbOMPL():
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
-            time.sleep(20/240)
+            time.sleep(4/240)
 
     # -------------
     # Configurations

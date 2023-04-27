@@ -1,4 +1,7 @@
-
+import os.path as osp
+import sys
+sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
+from utils import *
 #########################################################################
 #########################################################################
 #########################################################################
@@ -21,11 +24,9 @@
 #########################################################################
 #########################################################################
 
-# CREATE CONCAVE SHAPES
-#  
-# from utils import *
-# name_in = 'models/bust/female_bust.obj'
-# name_out = 'models/bust/female_bust_vhacd.obj'
+# # CREATE CONCAVE SHAPES
+# name_in = 'models/snap-lock/snap-lock-arm.obj'
+# name_out = 'models/snap-lock/snap-lock-arm-vhacd.obj'
 # create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
@@ -472,73 +473,93 @@
 #########################################################################
 #########################################################################
 # Rope and band test
+import os.path as osp
+import sys
+sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 
-# import pybullet as p
-# import pybullet_data
-# import time
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import os
-# import subprocess
-# import glob
-# from utils import *
-# from cagingSearchAlgo import *
-# from pbOmplInterface import *
+import pybullet as p
+import pybullet_data
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import subprocess
+import glob
+from utils import *
+from cagingSearchAlgo import *
+from pbOmplInterface import *
 
-# # p.connect(p.GUI)
-# # # p.setGravity(0, 0, -9.8)
-# # p.setTimeStep(1./240.)
-# # p.setAdditionalSearchPath(pybullet_data.getDataPath())
+# p.connect(p.GUI)
+# # p.setGravity(0, 0, -9.8)
+# p.setTimeStep(1./240.)
+# p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
-# # p.setRealTimeSimulation(0)
-# # # id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=150)
-# # id2 = p.loadURDF("plane.urdf",[0,0,1], globalScaling=1)
+# p.setRealTimeSimulation(0)
+# # id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=150)
+# id2 = p.loadURDF("plane.urdf",[0,0,1], globalScaling=1)
 
-# args, parser = argument_parser()
-# # basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
+args, parser = argument_parser()
+# basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
-# # create caging environment and items in pybullet
-# if args.object in get_non_articulated_objects():
-#     env = RigidObjectCaging(args)
-#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+# create caging environment and items in pybullet
+if args.object in get_non_articulated_objects():
+    env = RigidObjectCaging(args)
+    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-# elif args.object == 'Fish':
-#     env = ArticulatedObjectCaging(args)
-#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+elif args.object == 'Fish':
+    objScale = 1
+    env = ArticulatedObjectCaging(args, objScale)
+    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-# elif args.object == 'Band':
-#     numCtrlPoint = 6
-#     start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
-#     goal = [0,0,2.18] * numCtrlPoint
-#     env = ElasticBandCaging(args, numCtrlPoint, start, goal)
-#     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+elif args.object == 'Band':
+    numCtrlPoint = 6
+    start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
+    goal = [0,0,2.18] * numCtrlPoint
+    env = ElasticBandCaging(args, numCtrlPoint, start, goal)
+    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
-# elif args.object == 'Rope':
-#     numCtrlPoint = 1
-#     linkLen = 0.3
-#     start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
-#     goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
-#     env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
-#     # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # box
-#     # env.add_obstacles(scale=[.1, .1, .3], pos=[0,0,-1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
-#     env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-#     # print('@@@@ env.obstacles', env.obstacles)
+elif args.object == 'Rope':
+    numCtrlPoint = 1
+    linkLen = 0.3
+    start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
+    goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
+    env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
+    # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # box
+    # env.add_obstacles(scale=[.1, .1, .3], pos=[0,0,-1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
+    env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
-# env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
+elif args.object == 'Snaplock':
+    objScale = 3
+    env = ArticulatedObjectCaging(args, objScale)
+    env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+    env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+    env.reset_start_and_goal(start=[0,0,1.5,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
 
+env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
-# i=0
+i=0
+'''Snaplock test'''
+while (1):
+    p.stepSimulation()
+    state = [-0.3,0,1.5+0.01*i,0,0,1.57]+[0+0.01*i]
+    env.robot.set_state(state)
+    print(env.pb_ompl_interface.is_state_valid(state))
+    # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+    # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+    # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+    i += 1
+    sleep(.1)
 
 # '''Rope test'''
-# # while (1):
-# #     p.stepSimulation()
-# #     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-# #     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-# #     # print(env.pb_ompl_interface.is_state_valid(state))
-# #     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-# #     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-# #     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-# #     i += 1
+# while (1):
+#     p.stepSimulation()
+#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+#     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # print(env.pb_ompl_interface.is_state_valid(state))
+#     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     i += 1
 
 # '''Band test'''
 # while (1):

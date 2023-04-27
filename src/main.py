@@ -4,6 +4,7 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from cagingSearchAlgo import *
 import pybullet as p
 from utils import *
+from time import sleep
 
 if __name__ == '__main__':
     args, parser = argument_parser()
@@ -20,8 +21,15 @@ if __name__ == '__main__':
         env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
     elif args.object == 'Fish':
-        env = ArticulatedObjectCaging(args)
+        objScale = 1
+        env = ArticulatedObjectCaging(args, objScale)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+    elif args.object == 'Snaplock':
+        objScale = 3
+        env = ArticulatedObjectCaging(args, objScale)
+        env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
+        env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
@@ -43,7 +51,7 @@ if __name__ == '__main__':
         start = [0,0,0] + [length,0,0] + [0,length,0] + [0,0,length]
         goal = [0,0,zg] + [length,0,zg] + [0,length,zg] + [0,0,zg+length]
         env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
-        env.add_obstacles()
+        env.add_obstacles() # hole
         env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
 
     # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)

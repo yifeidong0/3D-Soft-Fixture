@@ -4,7 +4,7 @@ import os.path as osp
 import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from pbOmplInterface import PbOMPL
-from cagingSearchAlgo import RigidObjectCaging, ArticulatedObjectCaging
+from cagingSearchAlgo import *
 from main import argument_parser
 import pybullet_data
 from utils import *
@@ -257,7 +257,8 @@ if __name__ == '__main__':
         if args.object in rigidObjectList:
             env = RigidObjectCaging(args)
         else:
-            env = ArticulatedObjectCaging(args)
+            objScale = 1
+            env = ArticulatedObjectCaging(args, objScale)
 
         # set searching bounds and add obstacles
         env.robot.set_search_bounds(sce.basePosBounds)
