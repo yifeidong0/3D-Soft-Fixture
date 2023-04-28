@@ -509,7 +509,7 @@ if args.object in get_non_articulated_objects():
 elif args.object == 'Fish':
     objScale = 1
     env = ArticulatedObjectCaging(args, objScale)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
 elif args.object == 'Band':
     numCtrlPoint = 6
@@ -541,14 +541,14 @@ i=0
 '''Snaplock test'''
 while (1):
     p.stepSimulation()
-    state = [-0.3,0,1.5+0.01*i,0,0,1.57]+[0+0.01*i]
+    state = [-0.3,0,1.5+0.01*i,0,1.5,0]+[-.0,0]
     env.robot.set_state(state)
     print(env.pb_ompl_interface.is_state_valid(state))
     # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
     i += 1
-    sleep(.1)
+    sleep(.03)
 
 # '''Rope test'''
 # while (1):

@@ -88,7 +88,7 @@ class ObjectFromUrdf(ObjectBase):
 
         self.set_search_bounds() # TODO: why joint bounds appear when running scenario multiple times
 
-    def set_search_bounds(self, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
+    def set_search_bounds(self, vis=1, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
         self.joint_bounds = basePosBounds # CoM pos
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
@@ -104,6 +104,10 @@ class ObjectFromUrdf(ObjectBase):
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
+        
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
 
     def set_bisec_thres(self, zmax):
         self.joint_bounds[2][1] = zmax
@@ -152,8 +156,12 @@ class objectElasticBand(ObjectFromUrdf):
 
         self.set_search_bounds()
 
-    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
         self.joint_bounds = self.numCtrlPoint * basePosBounds
+        
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
 
     def set_state(self, state):
         self.state = state
@@ -175,8 +183,12 @@ class objectElasticJelly(ObjectFromUrdf):
 
         self.set_search_bounds()
 
-    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
         self.joint_bounds = self.numCtrlPoint * basePosBounds
+
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
 
     def set_state(self, state):
         self.state = state
@@ -199,13 +211,14 @@ class objectRope(ObjectFromUrdf):
 
         self.set_search_bounds()
 
-    def set_search_bounds(self, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
         self.joint_bounds = basePosBounds # base pos
         for i in range(self.num_dim-3): # 3+2n rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
 
-    # def get_cur_nodes_positions(self):
-    #     return self.nodesPositions
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
     
     def set_state(self, state):
         self.nodesPositions, _ = ropeForwardKinematics(state, self.linkLen)

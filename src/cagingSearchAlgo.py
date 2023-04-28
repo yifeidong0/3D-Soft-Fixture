@@ -37,9 +37,10 @@ class RigidObjectCaging():
         self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0), globalScaling=scale)
         self.robot = ObjectFromUrdf(self.object_id)
         # FOR DEBUG - URDF TUNE
-        # self.robot.set_state([0,0,0,0,0,0,0.])
-        axiscreator(self.object_id, linkId = -1)
-        axiscreator(self.object_id, linkId = 0)
+        # self.robot.set_state([0,0,2,0,0,0]+[0.7,0.8])
+        # axiscreator(self.object_id, linkId = -1)
+        # axiscreator(self.object_id, linkId = 0) # first joint pose is displayed
+        # axiscreator(self.object_id, linkId = 1)
         # sleep(30)
 
     def reset_start_and_goal(self, start=None, goal=None):
