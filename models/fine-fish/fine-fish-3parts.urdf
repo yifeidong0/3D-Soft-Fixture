@@ -1,18 +1,118 @@
 <?xml version="1.0" ?>
 <robot name="fish" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<!-- All links coordinates are initially all at origin O. Each of the fish model component is centered at its geometric center in Blender,
+ and links are saved separately as stl. -->
+  <link name="p1">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="100"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
+    <visual>
+      <origin rpy="0 0 1.57" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p1-mgCenter.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 1.57" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p1-mgCenter.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Displayed in utils function axiscreator. -->
+  <joint name="joint1" type="revolute">
+    <parent link="p1"/>
+    <child link="p2"/>
+    <!-- P1_O: The xyz below is the position of joint1 (P1) in O frame. -->
+    <origin rpy="0 0 0" xyz="0 0.707 0"/> 
+    <axis xyz="1 0 0"/>
+    <limit effort="1000" lower="-1.5" upper="1.5" velocity="50"/>
+    <dynamics damping="0.001" friction="0.001"/>
+  </joint>
+
+  <link name="p2">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="100"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
+    <visual>
+      <!-- -P1_O : The xyz below is -P1_O, making link2 (p2) go back to the initially aligned position. -->
+      <origin rpy="0 0 1.57" xyz="0 0.756 -0.02"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p2-mgCenter.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 1.57" xyz="0 0.756 -0.02"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p2-mgCenter.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- values in the frame of joint1 (O1). -->
+  <joint name="joint2" type="revolute">
+    <parent link="p2"/>
+    <child link="p3"/>
+    <!-- P2_O1: The xyz below is the position of joint2 (P2) in O1. -->
+    <origin rpy="0 0 0" xyz="0 1.51 0"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="1000" lower="-1.5" upper="1.5" velocity="50"/>
+    <dynamics damping="0.001" friction="0.001"/>
+  </joint>
+
+  <link name="p3">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="100"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
+    <visual>
+    <!-- -P2_O = -(P1_O + P2_O1) : The xyz below is the minus of P2 in O. -->
+      <origin rpy="0 0 1.57" xyz="0 0.82 -0.04"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p3-mgCenter.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 1.57" xyz="0 0.82 -0.04"/>
+      <geometry>
+        <mesh filename="package://fine-fish/fish3p3-mgCenter.stl"/>
+      </geometry>
+    </collision>
+  </link>
+</robot>
+
+
+
+<!-- <?xml version="1.0" ?>
+<robot name="fish" xmlns:xacro="http://www.ros.org/wiki/xacro">
 <!-- All links coordinates are initially all at origin O. The fish model in Blender should 
 be aligned at World origin and links are saved separately as stl. -->
   <link name="p1">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p1.stl"/>
+        <mesh filename="package://fine-fish/fish3p1-cutpoly.stl"/>
       </geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p1.stl"/>
+        <mesh filename="package://fine-fish/fish3p1-cutpoly.stl"/>
       </geometry>
     </collision>
   </link>
@@ -24,21 +124,28 @@ be aligned at World origin and links are saved separately as stl. -->
     <!-- P1_O: The xyz below is the position of joint1 (P1) in O frame. -->
     <origin rpy="0 0 0" xyz="-0.74 0 0"/> 
     <axis xyz="0 1 0"/>
-    <limit effort="20" lower="-1.5" upper="1.5" velocity="0.2"/>
+    <limit effort="1000" lower="-1.5" upper="1.5" velocity="50"/>
+    <dynamics damping="0.001" friction="0.001"/>
   </joint>
 
   <link name="p2">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
     <visual>
       <!-- -P1_O : The xyz below is -P1_O, making link2 (p2) go back to the initially aligned position. -->
       <origin rpy="0 0 0" xyz="0.74 0 -0.0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p2.stl"/>
+        <mesh filename="package://fine-fish/fish3p2-cutpoly.stl"/>
       </geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0.74 0 -0.0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p2.stl"/>
+        <mesh filename="package://fine-fish/fish3p2-cutpoly.stl"/>
       </geometry>
     </collision>
   </link>
@@ -50,22 +157,29 @@ be aligned at World origin and links are saved separately as stl. -->
     <!-- P2_O1: The xyz below is the position of joint2 (P2) in O1. -->
     <origin rpy="0 0 0" xyz="1.5 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit effort="20" lower="-1.5" upper="1.5" velocity="0.2"/>
+    <limit effort="1000" lower="-1.5" upper="1.5" velocity="50"/>
+    <dynamics damping="0.001" friction="0.001"/>
   </joint>
 
   <link name="p3">
+    <self_collide>0</self_collide>
+    <inertial>
+      <mass value="10"/>
+      <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
+      <origin xyz="0 0 0." />
+    </inertial>
     <visual>
     <!-- -P2_O = -(P1_O + P2_O1) : The xyz below is the minus of P2 in O. -->
       <origin rpy="0 0 0" xyz="-0.76 0 -0.0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p3.stl"/>
+        <mesh filename="package://fine-fish/fish3p3-cutpoly.stl"/>
       </geometry>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="-0.76 0 -0.0"/>
       <geometry>
-        <mesh filename="package://fine-fish/fish3p3.stl"/>
+        <mesh filename="package://fine-fish/fish3p3-cutpoly.stl"/>
       </geometry>
     </collision>
   </link>
-</robot>
+</robot> -->

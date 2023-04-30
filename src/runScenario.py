@@ -46,14 +46,15 @@ class runScenario():
         match self.args.scenario:
             case 'FishFallsInBowl':
                 self.object = 'Fish'
-                self.objectPos = [0,0,2.4]
-                self.objectQtn = [0,1,0,1]
-                self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+                self.objectPos = [-.0,0,3.8]
+                # self.objectEul = [0,0.,0.]
+                self.objectEul = [0,0.5,0.8]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
                 self.obstacle = 'Bowl'
-                self.obstaclePos = [-0.5, 0.5, 0]
+                self.obstaclePos = [-0., 0., 0]
                 self.obstacleEul = [0, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1, .1, .1]
+                self.obstacleScale = [1, 1, 1]
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
                 self.goalCoMPose = [0,0,0.01] + [0]*3
             # case 'HookTrapsFish':
@@ -150,8 +151,6 @@ class runScenario():
         '''For the task of gripper clenching starfish'''
         i = 0
         # jbounds = self.obstacle.joint_bounds
-        # time.sleep(1)
-        # print('@@@initial joint positions: ', self.getJointStates(self.obstacleId))
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # set initial joint states
@@ -207,7 +206,7 @@ class runScenario():
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(1/240.)
+            time.sleep(4/240.)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
@@ -223,6 +222,7 @@ class runScenario():
                 self.objBaseQtnSce.append(list(gemQtn))
                 self.objJointPosSce.append(jointPositions)
                 self.idxSce.append(i)
+                print('!!!!!',gemPos, gemQtn, jointPositions)
 
             if i == self.endFrame:
                 p.disconnect()
@@ -250,6 +250,10 @@ if __name__ == '__main__':
         sce = runScenario(args)
         if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
             sce.runDynamicFalling()
+
+            # Record object state space data for Blender
+            record_state_data_for_blender(sce, args)
+
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
 
@@ -317,7 +321,6 @@ if __name__ == '__main__':
                 # Create txt, csv for data recording
                 if i == 0:
                     folderName = record_data_init(sce, args, env)
-                # print('@@@i: ',i)
                 
                 # Record data in this loop 
                 energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]

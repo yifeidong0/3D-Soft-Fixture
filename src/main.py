@@ -23,7 +23,7 @@ if __name__ == '__main__':
     elif args.object == 'Fish':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)
-        env.add_obstacles(scale=[.1]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+        env.add_obstacles(scale=[1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([0, 0, 0]))
         env.reset_start_and_goal(start=[0,0,3.8]+[0,0,0]+[0]*env.robot.articulate_num, goal=[0,0,.1]+[0,0,0]+[0]*env.robot.articulate_num)
     elif args.object == 'Snaplock':
         objScale = 3

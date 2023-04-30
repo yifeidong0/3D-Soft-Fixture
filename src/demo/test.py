@@ -509,7 +509,7 @@ if args.object in get_non_articulated_objects():
 elif args.object == 'Fish':
     objScale = 1
     env = ArticulatedObjectCaging(args, objScale)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
 elif args.object == 'Band':
     numCtrlPoint = 6

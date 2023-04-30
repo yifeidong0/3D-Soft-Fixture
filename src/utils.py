@@ -25,7 +25,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='BustTrapsBand', \
+    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
@@ -78,7 +78,8 @@ def path_collector():
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/small_bowl.stl', 
+            'Bowl': 'models/bowl/bowl_cut_polygon.stl', 
+            # 'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
             'Hourglass': 'models/hourglass/hourglass.obj',

@@ -32,9 +32,9 @@ def record_data_init(sce, args, env):
         headerObsJoint.append('obs_joint_{}_pos'.format(s))
 
     headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
-               'obj_qtn_0', 'obj_qtn_1', 'obj_qtn_2', 'obj_qtn_3'] + headerObjJoint
+               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
     headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
-               'obs_qtn_0', 'obs_qtn_1', 'obs_qtn_2', 'obs_qtn_3'] + headerObsJoint
+               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObsJoint
     headersOther = ['start_energy', 'start_gravity_energy', 'start_elastic_energy', 'escape_energy_cost']
     headers = headersObj + headersObs + headersOther
 
@@ -66,6 +66,39 @@ def record_data_loop(sce, energyData, folderName, i):
     with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(data)
+
+def record_state_data_for_blender(sce, args):
+    # get current time
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+    folderName = './results/{}_{}_4blender'.format(args.scenario, dt_string)
+    os.mkdir(folderName)
+
+    # create csv headers
+    objJointNum = len(sce.objJointPosSce[0])
+    headerObjJoint = []
+    for j in range(objJointNum):
+        headerObjJoint.append('obj_joint_{}_pos'.format(j))
+
+    headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
+               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
+    headers = headersObj
+
+    # write headers to csv
+    with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(i for i in headers)
+
+    for i in range(len(sce.idxSce)):
+        data = flatten_nested_list([
+            [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+            sce.objJointPosSce[i],
+            ])
+
+        with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(data)
+
 
 def record_data_benchmark_bound_shrink(costListRuns, timeTakenListRuns, frameId, folderName):
     with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
