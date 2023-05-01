@@ -67,7 +67,8 @@ def argument_parser():
 def path_collector():
     return {
             # 'Fish': 'models/fine-fish/fine-fish.urdf', 
-            'Fish': 'models/fine-fish/fine-fish-3parts.urdf', 
+            # 'Fish': 'models/fine-fish/fine-fish-3parts.urdf', 
+            'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
             # 'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
             'Starfish': 'models/starfish/starfish2.urdf', 

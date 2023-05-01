@@ -541,7 +541,7 @@ i=0
 '''Snaplock test'''
 while (1):
     p.stepSimulation()
-    state = [-0.3,0,1.5+0.01*i,0,1.5,0]+[-.0,0]
+    state = [-0.3,0,1.5,0,0,0]+[0,0,0,0,0,0,0,0,-.0+0.0*i]
     env.robot.set_state(state)
     print(env.pb_ompl_interface.is_state_valid(state))
     # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)

@@ -46,7 +46,7 @@ class runScenario():
         match self.args.scenario:
             case 'FishFallsInBowl':
                 self.object = 'Fish'
-                self.objectPos = [-.0,0,3.8]
+                self.objectPos = [.7,-.9,3.8]
                 # self.objectEul = [0,0.,0.]
                 self.objectEul = [0,0.5,0.8]
                 self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW

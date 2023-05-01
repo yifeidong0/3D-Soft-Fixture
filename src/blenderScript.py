@@ -1,43 +1,14 @@
 
 import bpy
 import math
+import csv
 
-def reset_fish():
-    # Get the active object
-    obj = bpy.context.active_object
-
-    # Get the animation data for the object
-    anim_data = obj.animation_data
-
-    # If the animation data exists, remove all the previous keyframes
-    if anim_data is not None:
-        for fcurve in anim_data.action.fcurves:
-            fcurve.keyframe_points.clear()
-            
-    # Get a reference to the armature object
-    armature = bpy.data.objects['Armature']
-
-    # Enter pose mode for the armature
-    bpy.context.view_layer.objects.active = armature
-    bpy.ops.object.mode_set(mode='POSE')
-
-    # Get a reference to the pose bones in the armature
-    bone = armature.pose.bones['Bone']
-    bone001 = armature.pose.bones['Bone.001']
-    bone002 = armature.pose.bones['Bone.002']
-
-    bone.rotation_mode = 'XYZ'
-    bone001.rotation_mode = 'XYZ'
-    bone002.rotation_mode = 'XYZ'
-
-    bone.location = (0.0, 0.0, 0.0)
-    bone.rotation_euler = (0.0, 0.0, 0.0)
-    bone001.rotation_euler = (0,0,0)
-    bone002.rotation_euler = (0,0,0)
-
+'''Run the script in Blender background mode:
+/snap/bin$ ./blender -b ~/Documents/blender-models/slicingFish.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
+'''
 def get_mesh_data():
     # Get a reference to the active object in the scene
-    obj = bpy.data.objects['bowl']
+    obj = bpy.data.objects['fishOBJ']
 
     # Get the total number of vertices in the object
     num_vertices = len(obj.data.vertices)
@@ -51,82 +22,129 @@ def get_mesh_data():
 
 def cut_num_polygon():
     # Get the active object
-    obj = bpy.data.objects['bowl']
+    obj = bpy.data.objects['fishOBJ']
 
     # Add a Decimate modifier to the object
     decimate_mod = obj.modifiers.new(name='Decimate', type='DECIMATE')
 
     # Set the Decimate ratio to 0.5 (50% reduction in polygon count)
-    decimate_mod.ratio = 0.5
+    decimate_mod.ratio = 0.8
 
     # Apply the modifier
     bpy.ops.object.modifier_apply(modifier=decimate_mod.name)
 
-def add_keyframes():
+def get_bones_and_set_mode(armature):
+    # Get a reference to the pose bones in the armature
+    bone_names = ['Bone01', 'Bone02', 'Bone03', 'Bone04', 'Bone05', 
+                  'Bone06', 'Bone07', 'Bone08', 'Bone09', 'Bone10']
+    bones = [armature.pose.bones[n] for n in bone_names]
+    # bone = armature.pose.bones['Bone']
+    # bone001 = armature.pose.bones['Bone.001']
+    # bone002 = armature.pose.bones['Bone.002']
+    bones[0].rotation_mode = 'QUATERNION' # tail/base component
+    for bone in bones[1:]:
+        bone.rotation_mode = 'XYZ'
+
+    return bones
+
+def reset_fish(armatureName):
+    # Get the active object
+    armature = bpy.data.objects[armatureName]
+    # obj = bpy.context.active_object
+
+    # Get the animation data for the object
+    anim_data = armature.animation_data
+
+    # If the animation data exists, remove all the previous keyframes
+    if anim_data is not None:
+        for fcurve in anim_data.action.fcurves:
+            fcurve.keyframe_points.clear()
+            
     # Get a reference to the armature object
-    armature = bpy.data.objects['Armature']
+    # armature = bpy.data.objects['Armature']
+
+    # Enter pose mode for the armature
+    bpy.context.view_layer.objects.active = armature
+    bpy.ops.object.mode_set(mode='POSE')
+
+    # # Get a reference to the pose bones in the armature
+    # bone = armature.pose.bones['Bone']
+    # bone001 = armature.pose.bones['Bone.001']
+    # bone002 = armature.pose.bones['Bone.002']
+
+    # bone.rotation_mode = 'XYZ'
+    # bone001.rotation_mode = 'XYZ'
+    # bone002.rotation_mode = 'XYZ'
+    
+    # Get bones and set rotational modes
+    bones = get_bones_and_set_mode(armature)
+
+    bones[0].location = (0.0, 0.0, 0.0)
+    bones[0].rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+    for k,bone in enumerate(bones[1:]):
+        bone.rotation_euler = (0,0,0)
+    # bone001.rotation_euler = (0,0,0)
+    # bone002.rotation_euler = (0,0,0)
+
+def add_a_keyframe(armature, position, quaternion_xyzw, joint_positions, i):
+    # Enter pose mode for the armature
+    bpy.ops.object.mode_set(mode='POSE')
+
+    # Get bones and set rotational modes
+    bones = get_bones_and_set_mode(armature)
+    
+    # Rotate the bone
+    # Pybullet - XYZW, Blender - WXYZ
+    xyzw = tuple(quaternion_xyzw)
+    bones[0].rotation_quaternion = (xyzw[-1],) + xyzw[:3]
+    bones[0].location = tuple(position)
+    for k,bone in enumerate(bones[1:]):
+        bone.rotation_euler = (joint_positions[k],0,0)
+    # bone002.rotation_euler = (joint_positions[1],0,0)
+
+    # Insert a keyframe
+    bpy.ops.object.mode_set(mode='OBJECT')
+    bones[0].keyframe_insert(data_path="rotation_quaternion" ,frame=i)
+    bones[0].keyframe_insert(data_path="location" ,frame=i)
+    for bone in bones[1:]:
+        bone.keyframe_insert(data_path="rotation_euler" ,frame=i)
+    # bone002.keyframe_insert(data_path="rotation_euler" ,frame=i)
+
+def add_keyframes(dataFolderPath, armatureName):
+    # Get a reference to the armature object
+    armature = bpy.data.objects[armatureName]
     
     # Set the transform orientation to global
     bpy.context.scene.transform_orientation_slots[0].type = 'GLOBAL'
     
     # Enter pose mode for the armature
     bpy.context.view_layer.objects.active = armature
-    bpy.ops.object.mode_set(mode='POSE')
 
-    # Get a reference to the pose bones in the armature
-    #pose_bones = armature.pose.bones
-    bone = armature.pose.bones['Bone']
-    bone001 = armature.pose.bones['Bone.001']
-    bone002 = armature.pose.bones['Bone.002']
-    bone.rotation_mode = 'QUATERNION'
-    bone001.rotation_mode = 'XYZ'
-    bone002.rotation_mode = 'XYZ'
-    
-    # Rotate the bone
-#    bone.rotation_euler = (0,0,0)
-    # Pybullet - XYZW, Blender - WXYZ
-    xyzw = (-0.09634363969349324, 0.2278741366312202, 0.3773122691048194, 0.892427438242549)
-    bone.rotation_quaternion = (xyzw[-1],) + xyzw[:3]
-    bone.location = (-0.0, 0.0, 3.8)
-    bone001.rotation_euler = (0,0,0)
-    bone002.rotation_euler = (0,0,0.0)
-
-#    bone001.rotation_mode = 'XYZ'
-#    axis = 'Z'
-#    bone001.rotation_euler.rotate_axis(axis, math.radians(0))
-
-    #insert a keyframe
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bone.keyframe_insert(data_path="rotation_quaternion" ,frame=1)
-    bone.keyframe_insert(data_path="location" ,frame=1)
-    bone001.keyframe_insert(data_path="rotation_euler" ,frame=1)
-    bone002.keyframe_insert(data_path="rotation_euler" ,frame=1)
-
-    #### A new keyframe
-    bpy.context.view_layer.objects.active = armature
-    bpy.ops.object.mode_set(mode='POSE')
-
-    # Rotate the bone
-#    bone.rotation_euler = (0,0,1.57)
-    xyzw = (0.0678753016671461, -0.09251900858011555, 0.35990045472575954, 0.9259075759292273)
-    bone.rotation_quaternion = (xyzw[-1],) + xyzw[:3]
-    bone.location = (0.12476876503735303, 0.26639682612923915, -0.34633731946807855)
-    bone001.rotation_euler = (1.2410960138431641,0,0)
-    bone002.rotation_euler = (0.15560453399317326,0,0)
-
-#    bone001.rotation_euler.rotate_axis(axis, math.radians(60))
-    
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bone.keyframe_insert(data_path="rotation_quaternion" ,frame=150)
-    bone.keyframe_insert(data_path="location" ,frame=150)
-    bone001.keyframe_insert(data_path="rotation_euler" ,frame=150)
-    bone002.keyframe_insert(data_path="rotation_euler" ,frame=150)
+    with open('{}/data.csv'.format(dataFolderPath), 'r') as csvfile:
+        csvreader = csv.reader(csvfile)
+        i = 1
+        for row in csvreader:
+            if i == 1: # skip the headers
+                i += 1
+                continue
+            data = [float(d) for d in row]
+            position = data[1:4]
+            quaternion_xyzw = data[4:8]
+            joint_positions = data[8:]
+            add_a_keyframe(armature, position, quaternion_xyzw, joint_positions, i)
+            i += 1
 
 
-#cut_num_polygon()
+'''Main loop'''
+# cut_num_polygon()
+# get_mesh_data()
 
-reset_fish()
+armatureName = 'ArmatureOriginal'
+reset_fish(armatureName)
 
-#get_mesh_data()
+# data file foe 3-link fish
+# dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/FishFallsInBowl_30-04-2023-13-38-45_4blender/'
+# data file foe 10-link fish
+dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/FishFallsInBowl_01-05-2023-10-35-08_4blender'
 
-add_keyframes()
+# add_keyframes(dataFolderPath, armatureName)
