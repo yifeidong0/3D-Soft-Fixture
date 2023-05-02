@@ -25,15 +25,15 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='FishFallsInBowl', \
-        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand'], \
+    parser.add_argument('-c', '--scenario', default='RopeBucket', \
+        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', 'RopeBucket'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='PRMstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -44,16 +44,16 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Rope', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Bowl', \
+    parser.add_argument('-l', '--obstacle', default='Bucket', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=22, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=150, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -83,6 +83,7 @@ def path_collector():
             # 'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
+            'Bucket': 'models/bucket/bucket-cutPoly.stl',
             'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
             }
@@ -95,7 +96,7 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass']
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', 'Bucket']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -125,7 +126,7 @@ def generate_circle_points(n, rad, z):
 def ropeForwardKinematics(state, linkLen, baseDof_=6, ctrlPointDof_=2, TLastRow_=np.array([[0.,0.,0.,1.]])):
     numStateSpace_ = len(state)
     numCtrlPoint_ = int((numStateSpace_-baseDof_) / ctrlPointDof_)
-    nextFPosInThisF_ = np.array([[0.], [0.], [linkLen], [1.]]) # 4*1
+    nextFPosInThisF_ = np.array([[0.], [linkLen], [0.], [1.]]) # 4*1
 
     # Data structure
     nodePositionsInWorld = [] # all nodes (numCtrlPoint+2): base + numCtrlPoint + end
@@ -156,8 +157,9 @@ def ropeForwardKinematics(state, linkLen, baseDof_=6, ctrlPointDof_=2, TLastRow_
         # Fip1: F_{i+1} the (i+1)'th frame
 
         # Build local rotation matrix
-        FiEulInFi_1 = state[6+2*i:6+2*(i+1)]
-        FiEulInFi_1.append(0.) # euler
+        FiEulInFi_1 = state[6+2*i:6+2*(i+1)] # (x,z)
+        FiEulInFi_1 = [FiEulInFi_1[0], 0.0, FiEulInFi_1[1]] # (x,0,z)
+        # FiEulInFi_1.append(0.) # euler
         FiQuatInFi_1 = p.getQuaternionFromEuler(FiEulInFi_1)
         r = R.from_quat(FiQuatInFi_1)
         mat = r.as_matrix() # (3,3)

@@ -4,11 +4,11 @@ import math
 import csv
 
 '''Run the script in Blender background mode:
-/snap/bin$ ./blender -b ~/Documents/blender-models/slicingFish.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
+/snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
-def get_mesh_data():
+def get_mesh_data(objectName: str) -> None:
     # Get a reference to the active object in the scene
-    obj = bpy.data.objects['fishOBJ']
+    obj = bpy.data.objects[objectName]
 
     # Get the total number of vertices in the object
     num_vertices = len(obj.data.vertices)
@@ -20,37 +20,33 @@ def get_mesh_data():
     print("Total vertices:", num_vertices)
     print("Total faces:", num_faces)
 
-def cut_num_polygon():
+def cut_num_polygon(ratio: float, objectName: str) -> None:
     # Get the active object
-    obj = bpy.data.objects['fishOBJ']
+    obj = bpy.data.objects[objectName]
 
     # Add a Decimate modifier to the object
     decimate_mod = obj.modifiers.new(name='Decimate', type='DECIMATE')
 
     # Set the Decimate ratio to 0.5 (50% reduction in polygon count)
-    decimate_mod.ratio = 0.8
+    decimate_mod.ratio = ratio
 
     # Apply the modifier
     bpy.ops.object.modifier_apply(modifier=decimate_mod.name)
 
-def get_bones_and_set_mode(armature):
+def get_bones_and_set_mode(armature) -> list:
     # Get a reference to the pose bones in the armature
     bone_names = ['Bone01', 'Bone02', 'Bone03', 'Bone04', 'Bone05', 
-                  'Bone06', 'Bone07', 'Bone08', 'Bone09', 'Bone10']
+                  'Bone06', 'Bone07']
     bones = [armature.pose.bones[n] for n in bone_names]
-    # bone = armature.pose.bones['Bone']
-    # bone001 = armature.pose.bones['Bone.001']
-    # bone002 = armature.pose.bones['Bone.002']
-    bones[0].rotation_mode = 'QUATERNION' # tail/base component
+    bones[0].rotation_mode = 'XYZ' # tail/base component
     for bone in bones[1:]:
         bone.rotation_mode = 'XYZ'
 
     return bones
 
-def reset_fish(armatureName):
+def reset_rope(armatureName):
     # Get the active object
     armature = bpy.data.objects[armatureName]
-    # obj = bpy.context.active_object
 
     # Get the animation data for the object
     anim_data = armature.animation_data
@@ -60,33 +56,22 @@ def reset_fish(armatureName):
         for fcurve in anim_data.action.fcurves:
             fcurve.keyframe_points.clear()
             
-    # Get a reference to the armature object
-    # armature = bpy.data.objects['Armature']
-
     # Enter pose mode for the armature
     bpy.context.view_layer.objects.active = armature
     bpy.ops.object.mode_set(mode='POSE')
 
-    # # Get a reference to the pose bones in the armature
-    # bone = armature.pose.bones['Bone']
-    # bone001 = armature.pose.bones['Bone.001']
-    # bone002 = armature.pose.bones['Bone.002']
-
-    # bone.rotation_mode = 'XYZ'
-    # bone001.rotation_mode = 'XYZ'
-    # bone002.rotation_mode = 'XYZ'
-    
     # Get bones and set rotational modes
     bones = get_bones_and_set_mode(armature)
 
     bones[0].location = (0.0, 0.0, 0.0)
-    bones[0].rotation_quaternion = (1.0, 0.0, 0.0, 0.0)
+    bones[0].rotation_euler = (0.0, 0.0, 0.0)
     for k,bone in enumerate(bones[1:]):
         bone.rotation_euler = (0,0,0)
-    # bone001.rotation_euler = (0,0,0)
-    # bone002.rotation_euler = (0,0,0)
 
-def add_a_keyframe(armature, position, quaternion_xyzw, joint_positions, i):
+def add_a_keyframe(armature, position: list, rotation_euler: list, joint_positions: list, i: int) -> None:
+    '''joint_positions: 
+            list[x1,z1,x2,z2...,xn,zn], xi, zi are the 1st and 3rd euler angle at joint i
+    '''
     # Enter pose mode for the armature
     bpy.ops.object.mode_set(mode='POSE')
 
@@ -94,23 +79,19 @@ def add_a_keyframe(armature, position, quaternion_xyzw, joint_positions, i):
     bones = get_bones_and_set_mode(armature)
     
     # Rotate the bone
-    # Pybullet - XYZW, Blender - WXYZ
-    xyzw = tuple(quaternion_xyzw)
-    bones[0].rotation_quaternion = (xyzw[-1],) + xyzw[:3]
+    bones[0].rotation_euler = tuple(rotation_euler)
     bones[0].location = tuple(position)
     for k,bone in enumerate(bones[1:]):
-        bone.rotation_euler = (joint_positions[k],0,0)
-    # bone002.rotation_euler = (joint_positions[1],0,0)
+        bone.rotation_euler = (joint_positions[2*k],0,joint_positions[2*k+1])
 
     # Insert a keyframe
     bpy.ops.object.mode_set(mode='OBJECT')
-    bones[0].keyframe_insert(data_path="rotation_quaternion" ,frame=i)
+    bones[0].keyframe_insert(data_path="rotation_euler" ,frame=i)
     bones[0].keyframe_insert(data_path="location" ,frame=i)
     for bone in bones[1:]:
         bone.keyframe_insert(data_path="rotation_euler" ,frame=i)
-    # bone002.keyframe_insert(data_path="rotation_euler" ,frame=i)
 
-def add_keyframes(dataFolderPath, armatureName):
+def add_keyframes(dataFolderPath: str, armatureName: str) -> None:
     # Get a reference to the armature object
     armature = bpy.data.objects[armatureName]
     
@@ -128,23 +109,23 @@ def add_keyframes(dataFolderPath, armatureName):
                 i += 1
                 continue
             data = [float(d) for d in row]
-            position = data[1:4]
-            quaternion_xyzw = data[4:8]
-            joint_positions = data[8:]
-            add_a_keyframe(armature, position, quaternion_xyzw, joint_positions, i)
+            position = data[:3]
+            rotation_euler = data[3:6]
+            joint_positions = data[6:]
+            add_a_keyframe(armature, position, rotation_euler, joint_positions, i)
             i += 1
 
 
 '''Main loop'''
-# cut_num_polygon()
-# get_mesh_data()
+objName = 'bucket'
+ratio = 0.8
+# get_mesh_data(objName)
+# cut_num_polygon(ratio, objName)
 
-armatureName = 'ArmatureOriginal'
-reset_fish(armatureName)
+armatureName = 'Armature'
+reset_rope(armatureName)
 
-# data file foe 3-link fish
-# dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/FishFallsInBowl_30-04-2023-13-38-45_4blender/'
-# data file foe 10-link fish
-dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/FishFallsInBowl_01-05-2023-10-35-08_4blender'
+# data file foe 6-control-point rope (7 bones) 
+dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/RopeBucket_02-05-2023-11-52-53_escape_path_4blender'
 
-# add_keyframes(dataFolderPath, armatureName)
+add_keyframes(dataFolderPath, armatureName)

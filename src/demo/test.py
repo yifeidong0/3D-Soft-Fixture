@@ -519,14 +519,14 @@ elif args.object == 'Band':
     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
 elif args.object == 'Rope':
-    numCtrlPoint = 1
-    linkLen = 0.3
-    start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
+    numCtrlPoint = 6
+    linkLen = 0.2
+    start = [0,0,.7,0,0,0] + [0,0]*numCtrlPoint
     goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
     env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
     # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # box
-    # env.add_obstacles(scale=[.1, .1, .3], pos=[0,0,-1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
-    env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+    # env.add_obstacles(scale=[.3]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
+    env.add_obstacles(scale=[1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bucket
 
 elif args.object == 'Snaplock':
     objScale = 3
@@ -539,27 +539,29 @@ env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
 i=0
 '''Snaplock test'''
-while (1):
-    p.stepSimulation()
-    state = [-0.3,0,1.5,0,0,0]+[0,0,0,0,0,0,0,0,-.0+0.0*i]
-    env.robot.set_state(state)
-    print(env.pb_ompl_interface.is_state_valid(state))
-    # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-    # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-    # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-    i += 1
-    sleep(.03)
-
-# '''Rope test'''
 # while (1):
 #     p.stepSimulation()
-#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-#     state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # print(env.pb_ompl_interface.is_state_valid(state))
-#     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     state = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
+#     # state = [-0.3,0,1.5,0,0,0]+[0,0,0,0,0,0,0,0,-.0+0.0*i] # 10-link fish
+#     env.robot.set_state(state)
+#     print(env.pb_ompl_interface.is_state_valid(state))
+#     # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
 #     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
 #     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
 #     i += 1
+#     sleep(.03)
+
+# '''Rope test'''
+while (1):
+    p.stepSimulation()
+    # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+    state = [0,0,0]+[0,0,0] + [0,0] + [0,i*np.pi/60] + [0,0]*(numCtrlPoint-2)
+    start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
+    # print(env.pb_ompl_interface.is_state_valid(state))
+    rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+    # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+    # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+    i += 1
 
 # '''Band test'''
 # while (1):

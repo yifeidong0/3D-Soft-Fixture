@@ -222,7 +222,7 @@ class runScenario():
                 self.objBaseQtnSce.append(list(gemQtn))
                 self.objJointPosSce.append(jointPositions)
                 self.idxSce.append(i)
-                print('!!!!!',gemPos, gemQtn, jointPositions)
+                # print('!!!!!',gemPos, gemQtn, jointPositions)
 
             if i == self.endFrame:
                 p.disconnect()

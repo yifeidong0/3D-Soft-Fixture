@@ -10,6 +10,7 @@ from object import *
 from utils import *
 import copy
 from pbOmplInterface import PbOMPL
+from visualization import *
 
 class RigidObjectCaging():
     def __init__(self, args):
@@ -144,7 +145,7 @@ class RigidObjectCaging():
                self.escape_energy_list.append(self.escape_energy_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
-    def energy_biased_search(self, numIter=1):
+    def energy_biased_search(self, numIter=1, save_escape_path=1):
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []
@@ -154,7 +155,13 @@ class RigidObjectCaging():
             self.robot.set_state(self.start)
             # sleep(30)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
-            solved, _, sol_path_energy, sol_final_cost, _ = self.execute_search()
+            solved, path, sol_path_energy, sol_final_cost, _ = self.execute_search()
+            
+            # Save escape path to csv
+            if save_escape_path:
+                save_escape_path_4blender(self.args, path)
+
+            # Record data
             self.sol_path_energy_list.append(sol_path_energy)      
             self.sol_final_costs.append(sol_final_cost)
             solveds.append(solved)
@@ -348,7 +355,6 @@ class RopeCaging(RigidObjectCaging):
         self.object_id = []
         for i in range(self.numCtrlPoint+2): # number of nodes
            self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.01)) # '1cm': diameter
-        # print('@@@@ self.object_id', self.object_id)
         self.robot = objectRope(self.object_id, self.numCtrlPoint, self.linkLen)
 
     def reset_start_and_goal(self, start=None, goal=None):

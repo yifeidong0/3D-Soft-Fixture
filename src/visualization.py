@@ -89,6 +89,7 @@ def record_state_data_for_blender(sce, args):
         writer = csv.writer(csvfile)
         writer.writerow(i for i in headers)
 
+    # write data to csv
     for i in range(len(sce.idxSce)):
         data = flatten_nested_list([
             [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
@@ -99,6 +100,25 @@ def record_state_data_for_blender(sce, args):
             writer = csv.writer(csvfile)
             writer.writerow(data)
 
+def save_escape_path_4blender(args, path: list) -> None:
+    '''Save escape paths from planners as csv files for Blender.
+    '''
+    # get current time
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+    folderName = './results/{}_{}_escape_path_4blender'.format(args.scenario, dt_string)
+    os.mkdir(folderName)
+
+    # write headers to csv
+    with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(' ')
+
+    # write data to csv
+    for state in path:
+        with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(state)
 
 def record_data_benchmark_bound_shrink(costListRuns, timeTakenListRuns, frameId, folderName):
     with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:

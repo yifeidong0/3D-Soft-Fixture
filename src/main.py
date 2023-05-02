@@ -38,13 +38,12 @@ if __name__ == '__main__':
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
     elif args.object == 'Rope':
-        numCtrlPoint = 1
-        linkLen = 0.1
-        start = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
-        goal = [0,0,.1,1.57,0,0] + [0,0]*numCtrlPoint
+        numCtrlPoint = 6
+        linkLen = 0.2
+        start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
+        goal = [0,0,.1,0,0,0] + [0,0]*numCtrlPoint
         env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
-        env.add_obstacles()
-        # env.add_obstacles(scale=[.03, .03, .1], pos=[0,0,-0.5], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+        env.add_obstacles(scale=[1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bucket
     elif args.object == 'Jelly':
         numCtrlPoint = 4
         length = .8
