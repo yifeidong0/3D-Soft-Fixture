@@ -131,13 +131,14 @@ class ElasticJellyPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.args_ = args
+        self.incrementalCost = 0
 
         # parameters of articulated object
         self.numStateSpace = len(start)
         self.numCtrlPoint = int(self.numStateSpace/3)
         self.numEdges = int(self.numCtrlPoint * (self.numCtrlPoint-1) / 2) # 4 vertices, 6 edges
         self.stiffnesss = [10] * self.numEdges
-        self.springneutralLen = .5
+        self.springneutralLen = [1,1.414,1.414,1,1,1.414]
         self.masses = [.1] * self.numCtrlPoint
         self.g = 9.81
         
@@ -155,7 +156,7 @@ class ElasticJellyPotentialObjective(ob.OptimizationObjective):
         # Retrieve displacement of control points
         springDisplaces = []
         for i in range(self.numEdges):
-            springDisp = np.linalg.norm(edgeStartPoints[i]-edgeEndPoints[i])-self.springneutralLen
+            springDisp = np.linalg.norm(edgeStartPoints[i]-edgeEndPoints[i])-self.springneutralLen[i]
             # springDisp = max(np.linalg.norm(edgeStartPoints[i]-edgeEndPoints[i])-self.springneutralLen, 0.0)
             springDisplaces.append(springDisp)
 
@@ -177,12 +178,19 @@ class ElasticJellyPotentialObjective(ob.OptimizationObjective):
         return self.getElasticEnergy(state) + self.getGravityEnergy(state)
     
     def motionCost(self, state1, state2):
-        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
-        energyState2 = self.stateEnergy(state2)
-        return ob.Cost(energyState2 - self.energyStart)
+        state2 = [state2[i] for i in range(self.numStateSpace)]
+        # return ob.Cost(energyState2 - self.energyStart)
+        if self.incrementalCost:
+            state1 = [state1[i] for i in range(self.numStateSpace)]
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
 
     def combineCosts(self, cost1, cost2):
-        return ob.Cost(max(cost1.value(), cost2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
     
 
 class GravityPotentialObjective(ob.OptimizationObjective):

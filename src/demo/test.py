@@ -535,6 +535,17 @@ elif args.object == 'Snaplock':
     env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
     env.reset_start_and_goal(start=[0,0,1.5,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
 
+elif args.object == 'Jelly':
+    numCtrlPoint = 4
+    l = 1
+    zs = 1
+    ofs = 0.7
+    start = [-l/2,-l/2,-l/2+zs] + [-l/2,-l/2,l/2+zs] + [l/2,-l/2,l/2+zs] + [-l/2,l/2,l/2+zs]
+    goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
+    env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
+    env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
+
 env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
 i=0
@@ -563,13 +574,22 @@ i=0
 #     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
 #     i += 1
 
-# '''Band test'''
+# # '''Band test'''
+# while (1):
+#     p.stepSimulation()
+#     start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
+#     # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+#     band_collision_raycast(start, visRays=1)
+#     i += 1
+#     if 1.2-i/100 < 0:
+#         break
+
+# '''Jelly test'''
 while (1):
     p.stepSimulation()
-    start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
-    # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+    ofs = 0.7 - 0.005*i
+    goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
     # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
-    band_collision_raycast(start, visRays=1)
+    jelly_collision_raycast(goal, visRays=1)
     i += 1
-    if 1.2-i/100 < 0:
-        break

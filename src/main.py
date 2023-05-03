@@ -47,12 +47,13 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bucket
     elif args.object == 'Jelly':
         numCtrlPoint = 4
-        length = .8
-        zg = 2.0
-        start = [0,0,0] + [length,0,0] + [0,length,0] + [0,0,length]
-        goal = [0,0,zg] + [length,0,zg] + [0,length,zg] + [0,0,zg+length]
+        l = 1
+        zs = 1
+        ofs = 0.7
+        start = [-l/2,-l/2,-l/2+zs] + [-l/2,-l/2,l/2+zs] + [l/2,-l/2,l/2+zs] + [-l/2,l/2,l/2+zs]
+        goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
         env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
-        env.add_obstacles() # hole
+        env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
         env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
 
     # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)

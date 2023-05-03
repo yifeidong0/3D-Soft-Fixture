@@ -25,8 +25,9 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='BandHourglass', \
-        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', 'RopeBucket', 'BandHourglass'], \
+    parser.add_argument('-c', '--scenario', default='JellyMaze', \
+        choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
+                 'RopeBucket', 'BandHourglass', 'JellyMaze'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -44,13 +45,13 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Band', \
+    parser.add_argument('-j', '--object', default='Jelly', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hourglass', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole'], \
+    parser.add_argument('-l', '--obstacle', default='Maze', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', 'Maze'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
     parser.add_argument('-t', '--runtime', type=float, default=120, help=\
@@ -87,6 +88,7 @@ def path_collector():
             'Hourglass': 'models/hourglass/hourglass-cutPoly.stl',
             # 'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
+            'Maze': 'models/maze/maze_cutpoly.stl', 
             }
 
 def texture_path_list():
@@ -97,7 +99,7 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', 'Bucket']
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', 'Bucket', 'Maze']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
