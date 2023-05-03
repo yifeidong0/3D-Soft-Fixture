@@ -516,7 +516,7 @@ elif args.object == 'Band':
     start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
     goal = [0,0,2.18] * numCtrlPoint
     env = ElasticBandCaging(args, numCtrlPoint, start, goal)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
 elif args.object == 'Rope':
     numCtrlPoint = 6
@@ -552,24 +552,24 @@ i=0
 #     sleep(.03)
 
 # '''Rope test'''
-while (1):
-    p.stepSimulation()
-    # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-    state = [0,0,0]+[0,0,0] + [0,0] + [0,i*np.pi/60] + [0,0]*(numCtrlPoint-2)
-    start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
-    # print(env.pb_ompl_interface.is_state_valid(state))
-    rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-    # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-    # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-    i += 1
-
-# '''Band test'''
 # while (1):
 #     p.stepSimulation()
-#     start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
-#     # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
-#     band_collision_raycast(start, visRays=1)
+#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+#     state = [0,0,0]+[0,0,0] + [0,0] + [0,i*np.pi/60] + [0,0]*(numCtrlPoint-2)
+#     start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
+#     # print(env.pb_ompl_interface.is_state_valid(state))
+#     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
 #     i += 1
-#     if 1.2-i/100 < 0:
-#         break
+
+# '''Band test'''
+while (1):
+    p.stepSimulation()
+    start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
+    # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+    # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+    band_collision_raycast(start, visRays=1)
+    i += 1
+    if 1.2-i/100 < 0:
+        break

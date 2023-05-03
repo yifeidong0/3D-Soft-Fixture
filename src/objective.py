@@ -77,6 +77,7 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.args_ = args
+        self.incrementalCost = 0
 
         # parameters of articulated object
         self.numStateSpace = len(start)
@@ -109,12 +110,19 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         return self.getElasticEnergy(state)
     
     def motionCost(self, state1, state2):
-        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
-        energyState2 = self.stateEnergy(state2)
-        return ob.Cost(energyState2 - self.energyStart)
+        state2 = [state2[i] for i in range(self.numStateSpace)]
+        # return ob.Cost(energyState2 - self.energyStart)
+        if self.incrementalCost:
+            state1 = [state1[i] for i in range(self.numStateSpace)]
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
 
     def combineCosts(self, cost1, cost2):
-        return ob.Cost(max(cost1.value(), cost2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
     
 
 class ElasticJellyPotentialObjective(ob.OptimizationObjective):

@@ -34,9 +34,10 @@ if __name__ == '__main__':
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
-        goal = [0,0,2.18] * numCtrlPoint
+        goal = generate_circle_points(numCtrlPoint, rad=.2, z=2.18)
+        # goal = [0,0,2.18] * numCtrlPoint
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
-        env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+        env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     elif args.object == 'Rope':
         numCtrlPoint = 6
         linkLen = 0.2
