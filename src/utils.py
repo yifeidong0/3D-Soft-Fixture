@@ -25,9 +25,9 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='JellyMaze', \
+    parser.add_argument('-c', '--scenario', default='2DSnapLock', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
-                 'RopeBucket', 'BandHourglass', 'JellyMaze'], \
+                 'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -45,16 +45,17 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Jelly', \
+    parser.add_argument('-j', '--object', default='2Dlock', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
-                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm'], \
+                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Maze', \
-        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', 'Maze'], \
+    parser.add_argument('-l', '--obstacle', default='2Dkey', \
+        choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
+                 'Maze', '2Dkey'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=22, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -88,7 +89,9 @@ def path_collector():
             'Hourglass': 'models/hourglass/hourglass-cutPoly.stl',
             # 'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
-            'Maze': 'models/maze/maze_cutpoly.stl', 
+            'Maze': 'models/maze/maze_cutpoly.stl',
+            '2Dlock': 'models/2Dsnap-lock/snap-lock.urdf',
+            '2Dkey': 'models/2Dsnap-lock/p3-vhacd.obj',
             }
 
 def texture_path_list():
@@ -99,7 +102,8 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', 'Bucket', 'Maze']
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
+            'Bucket', 'Maze', '2Dkey']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -251,6 +255,7 @@ def expand_links(body):
     return body, links
 
 def any_link_pair_collision(body1, links1, body2, links2=None, **kwargs):
+    # print('@@@@@@@any_link_pair_collision')
     # TODO: this likely isn't needed anymore
     if links1 is None:
         links1 = get_all_links(body1)
@@ -301,13 +306,22 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
 
     return collisionExists
 
-def jelly_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+def plane_equation(point, a, b, c, d):
+    '''Define the equation of the plane
+    '''
+    x, y, z = point
+    return (a * x) + (b * y) + (c * z) + d
+
+def jelly_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], 
+                            visRays=0, checkCoPlane=0, coPlaneRatio=0.3, startSumDistance=0.87, latticeLength=1.0):
     '''
     Description:
         check if the lines connecting any two adjacent control points along a band penetrate obstacles.
         Pybullet Raycast method applied here.
     Input: 
         state: list of planner state vector, length is 3*numCtrlPoint
+    Return:
+        bool, collision exists or four control points "co-plane"
     '''
     # Construct start and end positions of rays
     numCtrlPoint = int(len(state)/3)
@@ -322,6 +336,35 @@ def jelly_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vi
     hitObjectUids = [results[i][0] for i in range(len(results))]
     idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
     collisionExists = (idMask.count(True) > 0)
+    
+    # Check if four points gather around a plane for better jello monkey visualization
+    if checkCoPlane:
+        # Define the four 3D points as numpy arrays
+        point1, point2, point3, point4 = ctrlPointPos
+        matrix = np.vstack((point1, point2, point3, point4))
+        centroid = np.mean(matrix, axis=0)
+        matrix -= centroid
+
+        # Calculate the singular value decomposition of the matrix
+        u, s, v = np.linalg.svd(matrix)
+
+        # The normal vector of the plane is the last row of the V matrix
+        normal = v[-1]
+        a, b, c = normal
+
+        # The distance from the origin to the plane is the dot product of the normal and the centroid
+        d = -np.dot(normal, centroid)
+        # plane_equation = np.append(normal, d)
+        # print("The equation of the plane is: {}x + {}y + {}z + {} = 0".format(plane_equation[0], plane_equation[1], plane_equation[2], plane_equation[3]))
+
+        # Calculate the sum of distances from the points to the plane
+        distances = [abs(plane_equation(point, a, b, c, d)) / np.sqrt(a**2 + b**2 + c**2) for point in [point1, point2, point3, point4]]
+        sum_distances = sum(distances)
+        # print("The sum of distances from the points to the plane is: {:.2f}".format(sum_distances))
+
+        # Judge if "co-plane"
+        if sum_distances < coPlaneRatio*startSumDistance*latticeLength:
+            return True
 
     # Visualize the band after running the planner
     if visRays:

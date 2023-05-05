@@ -106,7 +106,7 @@ class PbOMPL():
 
         # Scenarios with an elastic jelly
         elif self.args.object in ["Jelly"]:
-            if utils.jelly_collision_raycast(stateList):
+            if utils.jelly_collision_raycast(stateList, checkCoPlane=1):
                 return False
             
         # Scenarios with a rope
@@ -133,16 +133,16 @@ class PbOMPL():
               
         return True
 
-    def setup_collision_detection(self, self_collisions = False):
+    def setup_collision_detection(self, self_collisions = False, allow_collision_links=[]):
         if self.args.object in ["Band", "Rope"]:
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
         else:
             self.check_link_pairs = utils.get_self_link_pairs(self.robot.id, self.robot.joint_idx) if self_collisions else []
             # moving_links = frozenset(
-            #     [item for item in utils.get_moving_links(robot.id, robot.joint_idx) if not item in allow_collision_links])
+                # [item for item in utils.get_moving_links(self.robot.id, self.robot.joint_idx) if not item in allow_collision_links])
             moving_bodies = [self.robot.id] # for deformable ball
-            # moving_bodies = [(robot.id, moving_links)] # original 
+            # moving_bodies = [(self.robot.id, moving_links)] # original 
             self.check_body_pairs = list(product(moving_bodies, self.obstacles))
 
     def reset_robot_state_bound(self):
@@ -229,6 +229,8 @@ class PbOMPL():
                 self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
+            elif self.args.object == "2Dlock":
+                self.potentialObjective = objective.SnapLock2DPotentialObjective(self.si, start, self.args)
             self.pdef.setOptimizationObjective(self.potentialObjective)
 
         self.planner.setProblemDefinition(self.pdef)
@@ -320,7 +322,7 @@ class PbOMPL():
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
-            time.sleep(1/240)
+            time.sleep(20/240)
 
     # -------------
     # Configurations

@@ -25,8 +25,8 @@ from utils import *
 #########################################################################
 
 # # CREATE CONCAVE SHAPES
-# name_in = 'models/snap-lock/snap-lock-arm.obj'
-# name_out = 'models/snap-lock/snap-lock-arm-vhacd.obj'
+# name_in = 'models/2Dsnap-lock/p3.obj'
+# name_out = 'models/2Dsnap-lock/p3-vhacd.obj'
 # create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
@@ -532,7 +532,7 @@ elif args.object == 'Snaplock':
     objScale = 3
     env = ArticulatedObjectCaging(args, objScale)
     env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-    env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+    # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
     env.reset_start_and_goal(start=[0,0,1.5,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
 
 elif args.object == 'Jelly':
@@ -546,50 +546,124 @@ elif args.object == 'Jelly':
     env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
     env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
 
+elif args.object == '2Dlock':
+    objScale = 1
+    basePosBounds = [[-5, 5], [-5, 5]]
+    env = SnapLock2DCaging(args, objScale, basePosBounds)
+    # env.add_obstacles(scale=[1]*3, pos=[3,3,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
+    env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
+    env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
+
+
 env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 
 i=0
-'''Snaplock test'''
-# while (1):
-#     p.stepSimulation()
-#     state = [0,0,1,0,0,0] + [0,0]*numCtrlPoint
-#     # state = [-0.3,0,1.5,0,0,0]+[0,0,0,0,0,0,0,0,-.0+0.0*i] # 10-link fish
-#     env.robot.set_state(state)
-#     print(env.pb_ompl_interface.is_state_valid(state))
-#     # rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-#     i += 1
-#     sleep(.03)
+if args.object == 'Snaplock':
+    while (1):
+        p.stepSimulation()
+        start = [0,0-0.01*i,2,0,0,1.57]+[0-0.01*i]
+        env.robot.set_state(start)
+        print(env.pb_ompl_interface.is_state_valid(start))
+        # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+        i += 1
+        sleep(.03)
 
-# '''Rope test'''
-# while (1):
-#     p.stepSimulation()
-#     # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
-#     state = [0,0,0]+[0,0,0] + [0,0] + [0,i*np.pi/60] + [0,0]*(numCtrlPoint-2)
-#     start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
-#     # print(env.pb_ompl_interface.is_state_valid(state))
-#     rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-#     # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
-#     i += 1
+if args.object == 'Fish':
+    while (1):
+        p.stepSimulation()
+        start = [0-0.003*i,0-0.003*i,1.4-0.001*i,0,0,1.57]+[0-0.001*i]*env.robot.articulate_num
+        env.robot.set_state(start)
+        print(env.pb_ompl_interface.is_state_valid(start))
+        # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+        i += 1
+        sleep(.05)
 
-# # '''Band test'''
-# while (1):
-#     p.stepSimulation()
-#     start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
-#     # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
-#     # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
-#     band_collision_raycast(start, visRays=1)
-#     i += 1
-#     if 1.2-i/100 < 0:
-#         break
+elif args.object == 'Rope':
+    while (1):
+        p.stepSimulation()
+        # start = [0.1,0,1.1,0,20*np.pi/60,0] + [0,0]*numCtrlPoint
+        state = [0,0,0]+[0,0,0] + [0,0] + [0,i*np.pi/60] + [0,0]*(numCtrlPoint-2)
+        start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
+        # print(env.pb_ompl_interface.is_state_valid(state))
+        rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+        # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+        # rope_collision_raycast(goal, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=1)
+        i += 1
 
-# '''Jelly test'''
-while (1):
-    p.stepSimulation()
-    ofs = 0.7 - 0.005*i
-    goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
-    # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
-    jelly_collision_raycast(goal, visRays=1)
-    i += 1
+elif args.object == 'Band':
+    while (1):
+        p.stepSimulation()
+        start = generate_circle_points(numCtrlPoint, rad=1.4-i/100, z=1.2)
+        # state = [-.2,-.2,1.5,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+        # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+        band_collision_raycast(start, visRays=1)
+        i += 1
+        if 1.2-i/100 < 0:
+            break
+
+elif args.object == 'Jelly':
+    while (1):
+        p.stepSimulation()
+        ofs = 0.7 - 0.005*i
+        goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
+        # print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(start))
+        jelly_collision_raycast(goal, visRays=1)
+        i += 1
+
+elif args.object == '2Dlock':
+    while (1):
+        p.stepSimulation()
+        # state = [-2.8,-.5,1.-0.8-0.01*i,1]
+        state = [-2,2,0,-0.36]
+        env.robot.set_state(state)
+        print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(state))
+        i += 1
+        sleep(.07)
+
+#########################################################################
+#########################################################################
+#########################################################################
+# Jelly contorl points co-plane checking
+
+# import numpy as np
+
+# # Define the four 3D points as numpy arrays
+# point1 = np.array([-.5, -.5, -.5])
+# point2 = np.array([-.5, -.5, .5])
+# point3 = np.array([.5, -.5, .5])
+# point4 = np.array([-.5, .5, .5])
+
+# # Create a matrix of the points
+# matrix = np.vstack((point1, point2, point3, point4))
+
+# # Calculate the centroid of the points
+# centroid = np.mean(matrix, axis=0)
+
+# # Subtract the centroid from the points
+# matrix -= centroid
+
+# # Calculate the singular value decomposition of the matrix
+# u, s, v = np.linalg.svd(matrix)
+
+# # The normal vector of the plane is the last row of the V matrix
+# normal = v[-1]
+# a, b, c = normal
+
+# # The distance from the origin to the plane is the dot product of the normal and the centroid
+# d = -np.dot(normal, centroid)
+
+# # The equation of the plane is: ax + by + cz + d = 0, where [a, b, c] is the normal vector
+# plane_equation = np.append(normal, d)
+
+# print("The equation of the plane is: {}x + {}y + {}z + {} = 0".format(plane_equation[0], plane_equation[1], plane_equation[2], plane_equation[3]))
+
+# # Define the equation of the plane
+# def plane_equation(point, a, b, c, d):
+#     x, y, z = point
+#     return (a * x) + (b * y) + (c * z) + d
+
+# # Calculate the sum of distances from the points to the plane
+# distances = [abs(plane_equation(point, a, b, c, d)) / np.sqrt(a**2 + b**2 + c**2) for point in [point1, point2, point3, point4]]
+# sum_distances = sum(distances)
+
+# print("The sum of distances from the points to the plane is: {:.2f}".format(sum_distances))

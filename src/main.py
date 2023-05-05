@@ -55,6 +55,12 @@ if __name__ == '__main__':
         env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
         env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
+    elif args.object == '2Dlock':
+        objScale = 1
+        basePosBounds = [[-5, 5], [-5, 5]]
+        env = SnapLock2DCaging(args, objScale, basePosBounds)
+        env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
+        env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
 
     # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
     env.create_ompl_interface()

@@ -318,12 +318,9 @@ class SnaplockPotentialObjective(ob.OptimizationObjective):
         self.numStateSpace = len(start)
         self.comDof = 6
         self.numJoints = self.numStateSpace - self.comDof
-        self.numLinks = self.numJoints + 1
         self.mg = 1
         self.stiffnesss = [10] * self.numJoints
-        self.o = np.array([1.])
         self.path = path_collector()
-        self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
@@ -346,6 +343,61 @@ class SnaplockPotentialObjective(ob.OptimizationObjective):
         energyGravity = self.getGravityEnergy(state)
         energySum = energyElastic + energyGravity
         return energySum
+    
+    def motionCost(self, state1, state2):
+        state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list
+
+        if self.incrementalCost:
+            state1 = [state1[i] for i in range(self.numStateSpace)]
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
+        
+    def combineCosts(self, cost1, cost2):
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
+        
+
+class SnapLock2DPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, args):
+        super(SnapLock2DPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.args_ = args
+
+        # parameters of articulated object
+        self.incrementalCost = 0
+        self.numStateSpace = len(start)
+        self.comDof = 3
+        self.numJoints = self.numStateSpace - self.comDof
+        # self.mg = 1
+        self.stiffnesss = [10] * self.numJoints
+        self.restAngle = -0.36
+        self.path = path_collector()
+        
+        # calculated energy of initial pose
+        self.energyStart = self.stateEnergy(self.start_)
+
+    def getElasticEnergy(self, state):
+        # read joint stiffnesses
+        jointAngles = state[self.comDof:]
+
+        # get elastic potential energy
+        jointEnergies = [self.stiffnesss[i] * (jointAngles[i]-self.restAngle)**2 for i in range(self.numJoints)]
+        energyElastic = 0.5 * sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
+
+        return energyElastic
+
+    # def getGravityEnergy(self, state):
+    #     return self.mg * state[2]
+      
+    def stateEnergy(self, state):
+        energyElastic = self.getElasticEnergy(state)
+        # energyGravity = self.getGravityEnergy(state)
+        # energySum = energyElastic + energyGravity
+        return energyElastic
     
     def motionCost(self, state1, state2):
         state2 = [state2[i] for i in range(self.numStateSpace)] # RealVectorStateInternal to list

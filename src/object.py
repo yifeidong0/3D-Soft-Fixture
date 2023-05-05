@@ -142,6 +142,52 @@ class ObjectFromUrdf(ObjectBase):
             p.resetJointState(self.id, joint, value, targetVelocity=0)
 
 
+class SnapLock2D(ObjectFromUrdf):
+    '''
+    An elastic band composed of several control points.
+    '''
+    def __init__(self, id, basePosBounds) -> None:
+        self.id = id # a list
+        self.comDof = 2 + 1 # SE2
+        self.articulate_num = p.getNumJoints(id)
+        self.num_dim = self.comDof + self.articulate_num
+        self.joint_idx = []
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
+        self.set_search_bounds(basePosBounds=basePosBounds)
+
+    def set_search_bounds(self, vis=1, basePosBounds=[[-5, 5], [-5, 5]]):
+        self.joint_bounds = basePosBounds # origin position
+        self.joint_bounds.append([math.radians(-180), math.radians(180)]) # rotation around origin
+        
+        for i in range(self.articulate_num): # articulated joints
+            info = p.getJointInfo(self.id, i)
+            jointType = info[2]
+
+            # record non-fixed joints' index and bounds
+            if (jointType == p.JOINT_PRISMATIC or jointType == p.JOINT_REVOLUTE):
+                bounds = p.getJointInfo(self.id, i)[8:10] # joint limits
+                if bounds[0] >= bounds[1]:
+                    continue
+                self.joint_idx.append(i)
+                self.joint_bounds.append(bounds) # joint_0-3
+        
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds[:2]+[[-0.02,0.02],])
+
+    def set_state(self, state):
+        # Get position and quaternion of base origin
+        pos = state[:2] + [0.0,]
+        eulerRot = [0.0, 0.0] + [state[2],]
+        quat = p.getQuaternionFromEuler(eulerRot)
+
+        # Reset base and joint state
+        p.resetBasePositionAndOrientation(self.id, pos, quat)
+        self._set_joint_positions(self.joint_idx, state[3:])
+        self.state = state
+
+
 class objectElasticBand(ObjectFromUrdf):
     '''
     An elastic band composed of several control points.

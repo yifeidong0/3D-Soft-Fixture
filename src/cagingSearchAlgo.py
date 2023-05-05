@@ -57,6 +57,7 @@ class RigidObjectCaging():
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
+        print('@@@@@@@@@len(jbounds), self.start', len(jbounds), len(self.start))
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
@@ -281,6 +282,53 @@ class ArticulatedObjectCaging(RigidObjectCaging):
 
         self.load_object(scale=objScale)
         self.reset_start_and_goal()
+
+
+class SnapLock2DCaging(RigidObjectCaging):
+    def __init__(self, args, objScale, basePosBounds):
+        self.args = args
+        self.basePosBounds = basePosBounds
+        self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
+        self.escape_cost_list = [] # successful escapes
+
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)     
+        p.setTimeStep(1./240.)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+        self.load_object(scale=objScale)
+        self.reset_start_and_goal()
+
+    def load_object(self, scale=1):
+        """Load object for caging."""
+        self.paths = path_collector()
+        self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0), globalScaling=scale)
+        self.robot = SnapLock2D(self.object_id, self.basePosBounds)
+
+    def reset_start_and_goal(self, start=None, goal=None):
+        # Set start and goal nodes of searching algorithms
+        if start is None:
+            self.start = [0,0,0] + [0]*self.robot.articulate_num
+        else:
+            self.start = start
+        if goal is None:
+            self.goal = [1,0,0] + [0]*self.robot.articulate_num
+        else:
+            self.goal = goal
+
+        # make sure states are within search bounds
+        jbounds = self.robot.get_joint_bounds()
+        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+            print('The start or goal states violates search boundary conditions!')
+            return False 
+        
+        return True # bounds valid check passed
 
 
 class ElasticBandCaging(RigidObjectCaging):

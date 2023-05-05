@@ -88,9 +88,9 @@ def add_keyframes(dataFolderPath: str, objName: str) -> None:
 
     with open('{}/data.csv'.format(dataFolderPath), 'r') as csvfile:
         csvreader = csv.reader(csvfile)
-        i = 1
+        i = 0
         for row in csvreader:
-            if i == 1: # skip the headers
+            if i == 0: # skip the headers
                 i += 1
                 continue
             data = [float(d) for d in row]
@@ -106,9 +106,9 @@ ratio = 0.1
 objName = 'Lattice'
 
 # data file foe 4-control-point jello monkey 
-dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/JellyMaze_03-05-2023-17-56-13_escape_path_4blender'
-# add_keyframes(dataFolderPath, objName)
+dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/JellyMaze_04-05-2023-11-46-33_escape_path_4blender'
+add_keyframes(dataFolderPath, objName)
 
 # reset jelly
-zstart = 1
-reset_jelly(objName, zstart)
+zstart = 0
+# reset_jelly(objName, zstart)
