@@ -25,9 +25,9 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='2DSnapLock', \
+    parser.add_argument('-c', '--scenario', default='3DSnapLock', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
-                 'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock'], \
+                 'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock',], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -45,12 +45,12 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='2Dlock', \
+    parser.add_argument('-j', '--object', default='Snaplock', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='2Dkey', \
+    parser.add_argument('-l', '--obstacle', default='Ring', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey'], \
         help='(Optional) Specify the obstacle that cages the object.')
@@ -201,7 +201,7 @@ def get_state_energy(state, object):
 def axiscreator(bodyId, linkId = -1):
     '''For visualizing the link axis in Bullet.
     '''
-    print(f'axis creator at bodyId = {bodyId} and linkId = {linkId} as XYZ->RGB')
+    # print(f'axis creator at bodyId = {bodyId} and linkId = {linkId} as XYZ->RGB')
     x_axis = p.addUserDebugLine(lineFromXYZ = [0, 0, 0],
                                 lineToXYZ = [1, 0, 0],
                                 lineColorRGB = [1, 0, 0],

@@ -533,7 +533,7 @@ elif args.object == 'Snaplock':
     env = ArticulatedObjectCaging(args, objScale)
     env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
-    env.reset_start_and_goal(start=[0,0,1.5,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
+    env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
 
 elif args.object == 'Jelly':
     numCtrlPoint = 4
@@ -551,7 +551,7 @@ elif args.object == '2Dlock':
     basePosBounds = [[-5, 5], [-5, 5]]
     env = SnapLock2DCaging(args, objScale, basePosBounds)
     # env.add_obstacles(scale=[1]*3, pos=[3,3,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
-    env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
 
 
@@ -560,9 +560,14 @@ env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
 i=0
 if args.object == 'Snaplock':
     while (1):
+        i=60
         p.stepSimulation()
-        start = [0,0-0.01*i,2,0,0,1.57]+[0-0.01*i]
+        start = [0,0,1.8-0.01*i,0,0,1.57]+[0]
+        # start = [0,0-0.01*i,2,0,0,1.57]+[0-0.01*i]
         env.robot.set_state(start)
+        axiscreator(env.robot.id, linkId = -1)
+        axiscreator(env.robot.id, linkId = 0) # first joint pose is displayed
+
         print(env.pb_ompl_interface.is_state_valid(start))
         # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
         i += 1
@@ -614,7 +619,7 @@ elif args.object == '2Dlock':
     while (1):
         p.stepSimulation()
         # state = [-2.8,-.5,1.-0.8-0.01*i,1]
-        state = [-2,2,0,-0.36]
+        state = [0,0,0,0]
         env.robot.set_state(state)
         print('is_state_valid: ', env.pb_ompl_interface.is_state_valid(state))
         i += 1

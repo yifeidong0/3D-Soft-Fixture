@@ -29,7 +29,7 @@ if __name__ == '__main__':
         objScale = 3
         env = ArticulatedObjectCaging(args, objScale)
         env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
-        env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
     elif args.object == 'Band':
         numCtrlPoint = 6
