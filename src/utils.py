@@ -25,7 +25,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='3DSnapLock', \
+    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock',], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
@@ -45,12 +45,12 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Snaplock', \
+    parser.add_argument('-j', '--object', default='Starfish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Ring', \
+    parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey'], \
         help='(Optional) Specify the obstacle that cages the object.')
@@ -73,9 +73,10 @@ def path_collector():
             'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
             # 'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
-            'Starfish': 'models/starfish/starfish2.urdf', 
-            'Ring': 'models/fish/ring2_vhacd.OBJ', 
-            # 'Ring': 'models/fish/ring2.urdf', 
+            # 'Starfish': 'models/starfish/starfish2.urdf', 
+            'Starfish': 'models/starfish-soft/starfish.urdf', 
+            # 'Ring': 'models/fish/ring2_vhacd.OBJ', 
+            'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',

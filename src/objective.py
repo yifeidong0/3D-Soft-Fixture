@@ -198,9 +198,9 @@ class GravityPotentialObjective(ob.OptimizationObjective):
         super(GravityPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
-        self.startStateEnergy = self.stateEnergy(self.start_)
         self.incrementalCost = 0
         self.mg = 1
+        self.startStateEnergy = self.stateEnergy(self.start_)
 
     def stateEnergy(self, state):
         return self.mg * state[2]

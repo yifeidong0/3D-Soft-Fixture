@@ -57,7 +57,7 @@ class RigidObjectCaging():
 
         # make sure states are within search bounds
         jbounds = self.robot.get_joint_bounds()
-        print('@@@@@@@@@len(jbounds), self.start', len(jbounds), len(self.start))
+        # print('@@@@@@@@@len(jbounds), self.start', len(jbounds), len(self.start))
         startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
         goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
@@ -113,9 +113,9 @@ class RigidObjectCaging():
 
         elif self.args.obstacle in ['3fGripper']:
             self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
-                                          pos, qtn, globalScaling=scale)
+                                          pos, qtn, globalScaling=scale[0])
             self.obstacle = obstascle3fGripper(self.obstacle_id)
-            self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
+            # self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
             self.obstacles.append(self.obstacle_id)
 
     def add_box(self, box_pos, half_box_size):

@@ -61,6 +61,7 @@ class PbOMPL():
         self.robot = robot
         self.robot_id = robot.id
         self.obstacles = obstacles
+        print('!!!!!!robot.num_dim', robot.num_dim)
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
         self.use_bisection_search = 0
@@ -206,6 +207,7 @@ class PbOMPL():
         start = self.robot.get_cur_state()
         s = ob.State(self.space)
         g = ob.State(self.space)
+        print('!!!!!!start', start)
         for i in range(len(start)):
             s[i] = start[i]
             g[i] = goal[i]

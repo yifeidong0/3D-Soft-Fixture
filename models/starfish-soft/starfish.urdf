@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot name="starfish">
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://starfish-soft/starfish_lod3.obj" scale="50 50 50"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://starfish-soft/starfish_lod3.obj" scale="50 50 50" />
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

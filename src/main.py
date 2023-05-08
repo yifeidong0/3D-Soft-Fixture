@@ -18,7 +18,7 @@ if __name__ == '__main__':
     if args.object == 'Ring':
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
-        env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
     elif args.object == 'Fish':
         objScale = 1
@@ -31,6 +31,12 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
         # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
+    elif args.object == 'Starfish':
+        objScale = 1
+        env = ArticulatedObjectCaging(args, objScale)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # ring
+        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57], goal=[0,0,.01]+[0,1.57,0])
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
