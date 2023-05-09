@@ -57,18 +57,6 @@ class runScenario():
                 self.obstacleScale = [1, 1, 1]
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
                 self.goalCoMPose = [0,0,0.01] + [0]*3
-            # case 'HookTrapsFish':
-            #     self.object = 'FishWithRing'
-            #     self.objectPos = [.7,-2.1,3.4]
-            #     self.objectQtn = [0,1,0,1]
-            #     self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
-            #     self.obstacle = 'Hook'
-            #     self.obstaclePos = [0, 0, 2]
-            #     self.obstacleEul = [1.57, 0, 0]
-            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-            #     self.obstacleScale = [.1,.1,.1]
-            #     self.basePosBounds=[[-2,2], [-2.5,2.5], [-0.5,3.5]] # searching bounds
-            #     self.goalCoMPose = [0,0,-0.49] + [0]*3
             case 'HookTrapsRing':
                 self.object = 'Ring'
                 self.objectPos = [1.3,-.1,3.4]
@@ -93,32 +81,34 @@ class runScenario():
                 self.obstacleScale = 10.0 # float for loadURDF globalScaling
                 self.basePosBounds=[[-2,2], [-2,2], [-.5,3]] # searching bounds
                 self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
-   
+            case 'StarfishSplashBowl':
+                self.object = 'Starfish'
+                self.objectPos = [0,0,3]
+                self.objectEul = [0,0,0]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = 'SplashBowl'
+                self.obstaclePos = [0,0,0.6]
+                self.obstacleEul = [0, 0, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [1, 1, 1]
+                self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
+                self.goalCoMPose = [0,0,0.01] + [0]*3
+
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)
         self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
-        # texUid = p.loadTexture(self.pathsTex[self.object])
-        # p.changeVisualShape(self.objectId, -1, textureUniqueId=texUid)
 
     def loadObstacle(self):
         obst = self.args.obstacle
-        if obst == 'Bowl' or obst == 'Hook':
+        if obst in ['Bowl', 'Hook', 'SplashBowl']:
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
                 meshScale=self.obstacleScale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
-            # mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
-            #     fileName="models/bowl/small_bowl.obj",
-            #     rgbaColor=[1, 1, 1, 1],
-            #     specularColor=[0.4, .4, 0],
-            #     # visualFramePosition=shift,
-            #     meshScale=mesh_scale
-            # )
             mesh_visual_shape = -1  # Use the same shape for visualization
             self.obstacleId = p.createMultiBody(
-                # baseMass=1.,
                 baseCollisionShapeIndex=mesh_collision_shape,
                 baseVisualShapeIndex=mesh_visual_shape,
                 basePosition=self.obstaclePos,
@@ -131,10 +121,6 @@ class runScenario():
                                           globalScaling=self.obstacleScale
                                           )
             self.obstacle = obstascle3fGripper(self.obstacleId)
-
-        # Load texture file - png
-        # texObsId = p.loadTexture(self.pathsTex[self.obstacle])
-        # p.changeVisualShape(self.obstacleId, -1, textureUniqueId=texObsId)
 
     def getJointStates(self, id):
         numJoints = p.getNumJoints(id)
@@ -248,7 +234,7 @@ if __name__ == '__main__':
     
         # run a dynamic falling scenario and analyze frame-wise escape energy
         sce = runScenario(args)
-        if args.scenario in ['FishFallsInBowl', 'HookTrapsFish', 'HookTrapsRing']:
+        if args.scenario in ['FishFallsInBowl', 'StarfishSplashBowl', 'HookTrapsRing']:
             sce.runDynamicFalling()
 
             # Record object state space data for Blender

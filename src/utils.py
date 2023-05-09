@@ -25,9 +25,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
+    parser.add_argument('-c', '--scenario', default='StarfishSplashBowl', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
-                 'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock',], \
+                 'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
+                 'StarfishSplashBowl'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -50,9 +51,9 @@ def argument_parser():
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
+    parser.add_argument('-l', '--obstacle', default='SplashBowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
-                 'Maze', '2Dkey'], \
+                 'Maze', '2Dkey', 'SplashBowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
     parser.add_argument('-t', '--runtime', type=float, default=22, help=\
@@ -74,7 +75,8 @@ def path_collector():
             # 'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
             # 'Starfish': 'models/starfish/starfish2.urdf', 
-            'Starfish': 'models/starfish-soft/starfish.urdf', 
+            'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
+            # 'Starfish': 'models/starfish-soft/starfish-soft.urdf', 
             # 'Ring': 'models/fish/ring2_vhacd.OBJ', 
             'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
@@ -83,6 +85,7 @@ def path_collector():
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
             'Bowl': 'models/bowl/bowl_cut_polygon.stl', 
+            'SplashBowl': 'models/splash-bowl/splash-bowl.stl', 
             # 'Bowl': 'models/bowl/small_bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
@@ -104,7 +107,7 @@ def texture_path_list():
 
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
-            'Bucket', 'Maze', '2Dkey']
+            'Bucket', 'Maze', '2Dkey', 'SplashBowl']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red

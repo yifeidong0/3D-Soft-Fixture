@@ -34,9 +34,10 @@ if __name__ == '__main__':
     elif args.object == 'Starfish':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)
-        env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # ring
+        env.add_obstacles(scale=[1]*3, pos=[0,0,.6], qtn=p.getQuaternionFromEuler([0, 0, 0])) # splash bowl
+        # env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # 3fGripper
         # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
-        env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57], goal=[0,0,.01]+[0,1.57,0])
+        env.reset_start_and_goal(start=[0,0,3,0,0,0]+[0]*env.robot.articulate_num, goal=[0,0,.01]+[0,0,1.57]+[0]*env.robot.articulate_num)
     elif args.object == 'Band':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
