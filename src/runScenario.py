@@ -25,8 +25,8 @@ class runScenario():
         self.pathsTex = texture_path_list()
         self.args = args
         self.gravity = -9.81
-        self.downsampleRate = 8
-        self.endFrame = 800
+        self.downsampleRate = 1
+        self.endFrame = 400
 
         # load object and obstacle
         self.initializeParams()
@@ -83,7 +83,7 @@ class runScenario():
                 self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
             case 'StarfishSplashBowl':
                 self.object = 'Starfish'
-                self.objectPos = [0,0,3]
+                self.objectPos = [0,0,5]
                 self.objectEul = [0,0,0]
                 self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
                 self.obstacle = 'SplashBowl'

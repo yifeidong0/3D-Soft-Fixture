@@ -115,7 +115,7 @@ def add_keyframes(dataFolderPath, armatureName):
 armatureName = 'Armature'
 # reset_fish(armatureName)
 
-dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/StarfishSplashBowl_09-05-2023-13-14-58_4blender'
+dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/StarfishSplashBowl_10-05-2023-09-17-59_4blender'
 
 add_keyframes(dataFolderPath, armatureName)
 
