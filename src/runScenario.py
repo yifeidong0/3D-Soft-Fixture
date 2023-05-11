@@ -26,7 +26,7 @@ class runScenario():
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 1
-        self.endFrame = 400
+        self.endFrame = 4000
 
         # load object and obstacle
         self.initializeParams()
@@ -135,18 +135,16 @@ class runScenario():
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
-        i = 0
-        # jbounds = self.obstacle.joint_bounds
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # set initial joint states
         jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
-        # obstacleJointPos = [j+1/1000 for j in jointPositions]
         obstacleJointPos = [jointPositions[i]-450/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
         obstacleState = self.obstaclePose + obstacleJointPos
         self.obstacle.set_state(obstacleState)
         
         # start simulation of clenching the fist
+        i = 0
         while (1):
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
@@ -154,8 +152,7 @@ class runScenario():
             
             # get obstacle joint positions and update them
             jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
-            # obstacleJointPos = [j+1/1000 for j in jointPositions]
-            obstacleJointPos = [jointPositions[i]+.8/1000 for i in range(len(jointPositions))]
+            obstacleJointPos = [jointPositions[k]+.8/1000 for k in range(len(jointPositions))]
             obstacleState = self.obstaclePose + obstacleJointPos
             self.obstacle.set_state(obstacleState)
 

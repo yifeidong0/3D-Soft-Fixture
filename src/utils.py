@@ -25,7 +25,7 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='StarfishSplashBowl', \
+    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishSplashBowl'], \
@@ -51,7 +51,7 @@ def argument_parser():
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='SplashBowl', \
+    parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl'], \
         help='(Optional) Specify the obstacle that cages the object.')
@@ -74,8 +74,8 @@ def path_collector():
             'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
             # 'Fish': 'models/fish/articulate_fish.xacro', 
             'FishWithRing': 'models/fish/fishWithRing.xacro', 
-            # 'Starfish': 'models/starfish/starfish2.urdf', 
-            'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
+            'Starfish': 'models/starfish/starfish2.urdf', 
+            # 'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
             # 'Starfish': 'models/starfish-soft/starfish-soft.urdf', 
             # 'Ring': 'models/fish/ring2_vhacd.OBJ', 
             'Ring': 'models/fish/ring2.urdf', 
