@@ -35,7 +35,7 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='BITstar', \
+    parser.add_argument('-p', '--planner', default='PRMstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -46,17 +46,17 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Starfish', \
+    parser.add_argument('-j', '--object', default='Band', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
+    parser.add_argument('-l', '--obstacle', default='Radish', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
-                 'Maze', '2Dkey', 'SplashBowl'], \
+                 'Maze', '2Dkey', 'SplashBowl', 'Radish'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=22, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=200, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -96,6 +96,7 @@ def path_collector():
             'Maze': 'models/maze/maze_cutpoly.stl',
             '2Dlock': 'models/2Dsnap-lock/snap-lock.urdf',
             '2Dkey': 'models/2Dsnap-lock/p3-vhacd.obj',
+            'Radish': 'models/radish/radish.stl',
             }
 
 def texture_path_list():
@@ -107,7 +108,7 @@ def texture_path_list():
 
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
-            'Bucket', 'Maze', '2Dkey', 'SplashBowl']
+            'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red

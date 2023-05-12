@@ -77,13 +77,13 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.args_ = args
-        self.incrementalCost = 0
+        self.incrementalCost = 1
 
         # parameters of articulated object
         self.numStateSpace = len(start)
         self.numCtrlPoint = int(self.numStateSpace/3)
         self.stiffnesss = [10] * self.numCtrlPoint
-        self.springneutralLen = .8
+        self.springneutralLen = .1
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)

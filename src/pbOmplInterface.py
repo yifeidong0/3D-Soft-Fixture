@@ -183,10 +183,10 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            self.planner.params().setParam("samples_per_batch", "3000") # fish, starfish, hook
+            self.planner.params().setParam("samples_per_batch", "5000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
+            self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "AITstar":
@@ -324,7 +324,7 @@ class PbOMPL():
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
-            time.sleep(20/240)
+            time.sleep(7/240)
 
     # -------------
     # Configurations
