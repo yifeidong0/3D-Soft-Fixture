@@ -36,9 +36,11 @@ class runScenario():
         # data structures for object and obstacle configs
         self.objBasePosSce = []
         self.objBaseQtnSce = []
+        self.objBaseEulSce = []
         self.objJointPosSce = []
         self.obsBasePosSce = []
         self.obsBaseQtnSce = []
+        self.obsBaseEulSce = []
         self.obsJointPosSce = []
         self.idxSce = []
 
@@ -95,11 +97,6 @@ class runScenario():
                 self.goalCoMPose = [0,0,0.01] + [0]*3
             case 'HookFishHole':
                 self.object = 'FishHole'
-                # self.objectPos = [.55,-.4,5.4]
-                # self.objectEul = [3.14,0,3.14]
-                # self.obstaclePos = [0, 0, 2]
-                # self.obstacleEul = [1.57, -0.3, 0]
-
                 self.objectPos = [.0,-.4,1.4]
                 self.objectEul = [3.14,3.14,3.14]
                 self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
@@ -109,7 +106,10 @@ class runScenario():
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
                 self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
-                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+                self.goalCoMPose = [1.5,0,.01] + [0, 0, 0]
+                self.endFrame = 18000
+                self.downsampleRate = 5000
+                self.half_box_size = [1,2.5,.1]
 
 
     def loadObject(self):
@@ -208,15 +208,16 @@ class runScenario():
         # Add a table
         box_pos = [0,-2.78,1]
         box_state = box_pos + [0,0,0]
-        colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=[1,2.5,.1])
+        colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
         box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBox_id, basePosition=[0,-2.78,1])
         self.box = ObjectFromUrdf(box_id)
+        self.boxBasePosSce = []
 
         while (1):
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(.5/240.)
+            time.sleep(.1/240.)
             
             i_thres = 4500
             if i < i_thres:
@@ -227,15 +228,37 @@ class runScenario():
                 increment_box = [0,-0.0002,-0.00005,] + [0,0,0]
             
             # Hook state
-            curr_state = self.obstacle.get_cur_state() if i>0 else self.obstaclePos+self.obstacleEul
-            new_state = [curr_state[k]+increment_hook[k] for k in range(len(curr_state))]
-            self.obstacle.set_state(new_state)
+            curr_state_hook = self.obstacle.get_cur_state() if i>0 else self.obstaclePos+self.obstacleEul
+            new_state_hook = [curr_state_hook[k]+increment_hook[k] for k in range(len(curr_state_hook))]
+            self.obstacle.set_state(new_state_hook)
             
             # Box state
-            curr_state = self.box.get_cur_state() if i>0 else box_state
-            new_state = [curr_state[k]+increment_box[k] for k in range(len(curr_state))]
-            self.box.set_state(new_state)
-            
+            curr_state_box = self.box.get_cur_state() if i>0 else box_state
+            new_state_box = [curr_state_box[k]+increment_box[k] for k in range(len(curr_state_box))]
+            self.box.set_state(new_state_box)
+
+            if i % self.downsampleRate == 0:
+                gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
+
+                # Record fish state
+                self.objBasePosSce.append(list(gemPos))
+                self.objBaseQtnSce.append(list(gemQtn))
+                self.objBaseEulSce.append(list(p.getEulerFromQuaternion(list(gemQtn))))
+                self.objJointPosSce.append([])
+
+                # Record hook state
+                self.obsBasePosSce.append(new_state_hook[:3])
+                self.obsBaseEulSce.append(new_state_hook[3:])
+                self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_hook[3:])))
+                self.obsJointPosSce.append([])
+                self.idxSce.append(i)
+
+                # Record box position
+                self.boxBasePosSce.append(new_state_box[:3])
+
+            if i == self.endFrame:
+                p.disconnect()
+                break
             i += 1
     
     def runDynamicFalling(self):
@@ -296,6 +319,7 @@ if __name__ == '__main__':
 
         elif args.scenario in ['HookFishHole']:
             sce.runHookFish()
+            record_dynamics_scene_hook_fish(sce, args)
 
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
@@ -310,6 +334,8 @@ if __name__ == '__main__':
         # set searching bounds and add obstacles
         env.robot.set_search_bounds(sce.basePosBounds)
         env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
+        if args.scenario in ['HookFishHole']:
+            box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
         escapeEnergyCostSce = []
         startEnergySce = [] # start state energy
         startGEnergySce = [] # start G potential energy
@@ -319,9 +345,12 @@ if __name__ == '__main__':
         numMainIter = len(sce.objJointPosSce)
         for i in range(numMainIter):
             # Set obstacle's state
-            if args.scenario in ['GripperClenchesStarfish']:
+            if args.scenario in ['GripperClenchesStarfish',]:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+            if args.scenario in ['HookFishHole']:
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+                p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
 
             # Set object's start and goal states
             objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + sce.objJointPosSce[i]
@@ -368,11 +397,9 @@ if __name__ == '__main__':
                 # Record data in this loop 
                 energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
                 record_data_loop(sce, energyData, folderName, i)
-                # print('@@@Initial state energy: {}, Energy costs of current obstacle and object config: {}'.format(startEnergy,escapeEnergyCost))
 
         # Shut down pybullet (GUI)
         p.disconnect()
-        # del(sce)
         # del(env)
         # time.sleep(300)
 

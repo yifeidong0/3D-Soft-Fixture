@@ -20,6 +20,12 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
         # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
+    if args.object == 'FishHole':
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[.1]*3, pos=[0.5,1.150,3.60], qtn=[0.223,0.0,0.0,0.974])
+        env.robot.set_search_bounds(basePosBounds=[[-3,3], [-1,5], [0,6]])
+        objEul = list(p.getEulerFromQuaternion([0.381828,-0.174,-0.06460,0.90529]))
+        env.reset_start_and_goal(start=[-0.0522,1.4564,2.3247,]+objEul, goal=[0,3,2]+[0,0,0])
     elif args.object == 'Fish':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)

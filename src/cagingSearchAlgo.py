@@ -55,14 +55,14 @@ class RigidObjectCaging():
         else:
             self.goal = goal
 
-        # make sure states are within search bounds
-        jbounds = self.robot.get_joint_bounds()
-        # print('@@@@@@@@@len(jbounds), self.start', len(jbounds), len(self.start))
-        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-            print('The start or goal states violates search boundary conditions!')
-            return False 
+        # # make sure states are within search bounds
+        # jbounds = self.robot.get_joint_bounds()
+        # print('@@@@@@@@@len(jbounds), self.start', jbounds, len(jbounds), len(self.start))
+        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+        #     print('The start or goal states violates search boundary conditions!')
+        #     return False 
         
         return True # bounds valid check passed
 
@@ -93,14 +93,14 @@ class RigidObjectCaging():
                 meshScale=scale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
-            mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
-                fileName=self.paths[self.args.obstacle],
-                rgbaColor=[1, 1, 1, 1],
-                specularColor=[0.4, .4, 0],
-                # visualFramePosition=shift,
-                meshScale=scale
-            )
-            # mesh_visual_shape = -1  # Use the same shape for visualization
+            # mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
+            #     fileName=self.paths[self.args.obstacle],
+            #     rgbaColor=[1, 1, 1, 1],
+            #     specularColor=[0.4, .4, 0],
+            #     # visualFramePosition=shift,
+            #     meshScale=scale
+            # )
+            mesh_visual_shape = -1  # Use the same shape for visualization
             mesh_position = pos  # The position of the mesh
             mesh_orientation = qtn  # The orientation of the mesh
             self.obstacle_id = p.createMultiBody(
@@ -146,7 +146,7 @@ class RigidObjectCaging():
                self.escape_energy_list.append(self.escape_energy_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
-    def energy_biased_search(self, numIter=1, save_escape_path=1):
+    def energy_biased_search(self, numIter=1, save_escape_path=0):
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []

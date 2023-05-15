@@ -86,10 +86,11 @@ class ObjectFromUrdf(ObjectBase):
         self.joint_idx = []
         # self.reset()
 
-        self.set_search_bounds() # TODO: why joint bounds appear when running scenario multiple times
+        # self.set_search_bounds() # TODO: why joint bounds appear when running scenario multiple times
 
     def set_search_bounds(self, vis=1, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
         self.joint_bounds = basePosBounds # CoM pos
+        # print('self.self.joint_bounds', self.joint_bounds)
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
         

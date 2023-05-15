@@ -61,7 +61,6 @@ class PbOMPL():
         self.robot = robot
         self.robot_id = robot.id
         self.obstacles = obstacles
-        print('!!!!!!robot.num_dim', robot.num_dim)
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
         self.use_bisection_search = 0
@@ -186,7 +185,7 @@ class PbOMPL():
             self.planner.params().setParam("samples_per_batch", "5000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
+            # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "AITstar":
@@ -207,7 +206,6 @@ class PbOMPL():
         start = self.robot.get_cur_state()
         s = ob.State(self.space)
         g = ob.State(self.space)
-        print('!!!!!!start', start)
         for i in range(len(start)):
             s[i] = start[i]
             g[i] = goal[i]

@@ -100,6 +100,44 @@ def record_state_data_for_blender(sce, args):
             writer = csv.writer(csvfile)
             writer.writerow(data)
 
+def record_dynamics_scene_hook_fish(sce, args):
+    # get current time
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+    folderName = './results/{}_{}_dynamics'.format(args.scenario, dt_string)
+    os.mkdir(folderName)
+
+    # create csv headers
+    objJointNum = len(sce.objJointPosSce[0])
+    headerObjJoint = []
+    for j in range(objJointNum):
+        headerObjJoint.append('obj_joint_{}_pos'.format(j))
+
+    headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
+               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
+    headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
+               'obs_qtn_x', 'obs_qtn_y', 'obs_qtn_z', 'obs_qtn_w']
+    headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z',]
+    headers = headersObj + headersObs + headersBox
+
+    # write headers to csv
+    with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(i for i in headers)
+
+    # write data to csv
+    for i in range(len(sce.idxSce)):
+        data = flatten_nested_list([
+            [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+            sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
+            sce.boxBasePosSce[i], 
+            ])
+
+        with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(data)
+
+
 def save_escape_path_4blender(args, path: list) -> None:
     '''Save escape paths from planners as csv files for Blender.
     '''

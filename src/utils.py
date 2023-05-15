@@ -35,7 +35,7 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='PRMstar', \
+    parser.add_argument('-p', '--planner', default='RRTstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -108,7 +108,7 @@ def texture_path_list():
 
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
-            'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish']
+            'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
