@@ -93,10 +93,29 @@ class runScenario():
                 self.obstacleScale = [1, 1, 1]
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
                 self.goalCoMPose = [0,0,0.01] + [0]*3
+            case 'HookFishHole':
+                self.object = 'FishHole'
+                # self.objectPos = [.55,-.4,5.4]
+                # self.objectEul = [3.14,0,3.14]
+                # self.obstaclePos = [0, 0, 2]
+                # self.obstacleEul = [1.57, -0.3, 0]
+
+                self.objectPos = [.0,-.4,1.4]
+                self.objectEul = [3.14,3.14,3.14]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = 'Hook'
+                self.obstaclePos = [0.5, -.35, 3]
+                self.obstacleEul = [-.6, 0, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [.1,.1,.1]
+                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+
 
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)
         self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
+        # self.object = ObjectFromUrdf(self.objectId)
 
     def loadObstacle(self):
         obst = self.args.obstacle
@@ -114,6 +133,7 @@ class runScenario():
                 basePosition=self.obstaclePos,
                 baseOrientation=self.obstacleQtn,
             )
+            self.obstacle = ObjectFromUrdf(self.obstacleId)
         elif obst == '3fGripper':
             self.obstacleId = p.loadURDF(fileName=self.paths[self.args.obstacle], 
                                           basePosition=self.obstaclePos, 
@@ -181,6 +201,43 @@ class runScenario():
         # quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
+    def runHookFish(self):
+        '''For the tasks of hooking fish'''
+        i = 0
+
+        # Add a table
+        box_pos = [0,-2.78,1]
+        box_state = box_pos + [0,0,0]
+        colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=[1,2.5,.1])
+        box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBox_id, basePosition=[0,-2.78,1])
+        self.box = ObjectFromUrdf(box_id)
+
+        while (1):
+            # print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            time.sleep(.5/240.)
+            
+            i_thres = 4500
+            if i < i_thres:
+                increment_hook = [0,0.0001,-0.0001,] + [0,0,0]
+                increment_box = [0,0,0,] + [0,0,0]
+            else:
+                increment_hook = [0,0.0001,0.0001,] + [0.0001,0,0]
+                increment_box = [0,-0.0002,-0.00005,] + [0,0,0]
+            
+            # Hook state
+            curr_state = self.obstacle.get_cur_state() if i>0 else self.obstaclePos+self.obstacleEul
+            new_state = [curr_state[k]+increment_hook[k] for k in range(len(curr_state))]
+            self.obstacle.set_state(new_state)
+            
+            # Box state
+            curr_state = self.box.get_cur_state() if i>0 else box_state
+            new_state = [curr_state[k]+increment_box[k] for k in range(len(curr_state))]
+            self.box.set_state(new_state)
+            
+            i += 1
+    
     def runDynamicFalling(self):
         '''For the tasks of articulated fish or ring falling'''
         i = 0        
@@ -189,7 +246,7 @@ class runScenario():
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(4/240.)
+            time.sleep(3/240.)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
@@ -231,11 +288,14 @@ if __name__ == '__main__':
     
         # run a dynamic falling scenario and analyze frame-wise escape energy
         sce = runScenario(args)
-        if args.scenario in ['FishFallsInBowl', 'StarfishSplashBowl', 'HookTrapsRing']:
+        if args.scenario in ['FishFallsInBowl', 'StarfishSplashBowl', 'HookTrapsRing',]:
             sce.runDynamicFalling()
 
             # Record object state space data for Blender
             record_state_data_for_blender(sce, args)
+
+        elif args.scenario in ['HookFishHole']:
+            sce.runHookFish()
 
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()

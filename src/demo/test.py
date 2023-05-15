@@ -25,9 +25,9 @@ from utils import *
 #########################################################################
 
 # # CREATE CONCAVE SHAPES
-# name_in = 'models/2Dsnap-lock/p3.obj'
-# name_out = 'models/2Dsnap-lock/p3-vhacd.obj'
-# create_convex_vhacd(name_in, name_out, resolution=int(1e6))
+name_in = 'models/fish-hole/fish-hole-sided-thick2.obj'
+name_out = 'models/fish-hole/fish-hole-sided-thick2-vhacd.obj'
+create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 #########################################################################

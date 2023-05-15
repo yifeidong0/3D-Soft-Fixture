@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<robot name="fish" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <link name="head">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fish-hole/fish-hole-sided.stl"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://fish-hole/fish-hole-sided-vhacd.obj"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

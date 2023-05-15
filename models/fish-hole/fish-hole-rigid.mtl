@@ -1,0 +1,13 @@
+# Blender 3.5.1 MTL File: 'fish-hook.blend'
+# www.blender.org
+
+newmtl 02___Default.001
+Ns 73.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd /home/yif/Documents/blender-models/fish-hook/fishOBJ/pez 02 difusa.jpg
+map_Bump /home/yif/Documents/blender-models/fish-hook/fishOBJ/pez 02  bump .jpg

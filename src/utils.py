@@ -25,10 +25,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='GripperClenchesStarfish', \
+    parser.add_argument('-c', '--scenario', default='HookFishHole', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishSplashBowl'], \
+                 'StarfishSplashBowl', 'HookFishHole'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -46,17 +46,17 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Band', \
+    parser.add_argument('-j', '--object', default='FishHole', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
-                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', '2Dlock'], \
+                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Radish', \
+    parser.add_argument('-l', '--obstacle', default='Hook', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=200, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -72,8 +72,8 @@ def path_collector():
             # 'Fish': 'models/fine-fish/fine-fish.urdf', 
             # 'Fish': 'models/fine-fish/fine-fish-3parts.urdf', 
             'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
+            'FishHole': 'models/fish-hole/fish-hole-rigid.urdf', 
             # 'Fish': 'models/fish/articulate_fish.xacro', 
-            'FishWithRing': 'models/fish/fishWithRing.xacro', 
             'Starfish': 'models/starfish/starfish2.urdf', 
             # 'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
             # 'Starfish': 'models/starfish-soft/starfish-soft.urdf', 
