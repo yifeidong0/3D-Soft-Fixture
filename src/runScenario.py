@@ -108,7 +108,7 @@ class runScenario():
                 self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
                 self.goalCoMPose = [1.5,0,.01] + [0, 0, 0]
                 self.endFrame = 18000
-                self.downsampleRate = 5000
+                self.downsampleRate = 40
                 self.half_box_size = [1,2.5,.1]
 
 
