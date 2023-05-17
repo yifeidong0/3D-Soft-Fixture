@@ -3,9 +3,9 @@
 <!-- All links coordinates are initially all at origin O. Each of the fish model component is centered at its geometric center in Blender,
  and links are saved separately as stl. -->
   <link name="p1">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="60"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -35,9 +35,9 @@
   </joint>
 
   <link name="p2">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="60"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -66,9 +66,9 @@
   </joint>
 
   <link name="p3">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="70"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -96,9 +96,9 @@
   </joint>
 
   <link name="p4">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="80"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -126,9 +126,9 @@
   </joint>
 
   <link name="p5">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="90"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -156,7 +156,7 @@
   </joint>
 
   <link name="p6">
-    <self_collide>0</self_collide>
+     
     <inertial>
       <mass value="100"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
@@ -186,9 +186,9 @@
   </joint>
 
   <link name="p7">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="120"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -216,9 +216,9 @@
   </joint>
 
   <link name="p8">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="140"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -246,9 +246,9 @@
   </joint>
 
   <link name="p9">
-    <self_collide>0</self_collide>
+     
     <inertial>
-      <mass value="100"/>
+      <mass value="160"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>
@@ -276,9 +276,8 @@
   </joint>
 
   <link name="p10">
-    <self_collide>0</self_collide>
     <inertial>
-      <mass value="100"/>
+      <mass value="200"/>
       <inertia ixx="1.67E-03" ixy="0" ixz="0" iyy="0.02166" iyz="0" izz="0.02166"/>
       <origin xyz="0 0 0." />
     </inertial>

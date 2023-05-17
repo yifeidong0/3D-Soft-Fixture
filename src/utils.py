@@ -25,17 +25,17 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='HookFishHole', \
+    parser.add_argument('-c', '--scenario', default='ShovelFish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishSplashBowl', 'HookFishHole'], \
+                 'StarfishSplashBowl', 'HookFishHole', 'ShovelFish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -46,17 +46,17 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='FishHole', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='Shovel', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
-                 'Maze', '2Dkey', 'SplashBowl', 'Radish'], \
+                 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'Hand'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=3, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -97,6 +97,8 @@ def path_collector():
             '2Dlock': 'models/2Dsnap-lock/snap-lock.urdf',
             '2Dkey': 'models/2Dsnap-lock/p3-vhacd.obj',
             'Radish': 'models/radish/radish.stl',
+            'Hand': 'models/hand/hand-d-vhacd.obj',
+            'Shovel': 'models/shovel/shovel-d-vhacd.obj',
             }
 
 def texture_path_list():
@@ -108,7 +110,8 @@ def texture_path_list():
 
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
-            'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole']
+            'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
+            'Hand', 'Shovel']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -276,6 +279,7 @@ def any_link_pair_collision(body1, links1, body2, links2=None, **kwargs):
 
 def body_collision(body1, body2, max_distance=MAX_DISTANCE):  # 10000
     # p.stepSimulation()
+    # print('GET CLOSEST POINT', body1, body2, len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance)))
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance)) != 0  # getContactPoints`
     # return len(p.getContactPoints(bodyA=body1, bodyB=body2,)) > 20  # getContactPoints`
 

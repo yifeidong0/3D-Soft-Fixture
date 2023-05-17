@@ -39,7 +39,7 @@ if __name__ == '__main__':
         env = ArticulatedObjectCaging(args, objScale)
 
     # set searching bounds and add obstacles
-    env.robot.set_search_bounds(sce.basePosBounds)
+    env.robot.set_search_bounds(basePosBounds=sce.basePosBounds)
     env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
     
     # Run the caging analysis algorithm over downsampled frames we extracted above

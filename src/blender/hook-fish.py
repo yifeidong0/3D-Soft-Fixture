@@ -14,13 +14,9 @@ from scipy.spatial.transform import Rotation as R
 def add_a_keyframe(objects: list, 
                    data: list, 
                    i: int, 
-                #    rotOffset: tuple = (math.radians(-15),0,0), 
-                #    jointPosInBody: np.ndarray = np.array([[0.],[-0.66],[0.39],[1]]),
-                #    transformLastRow: np.ndarray = np.array([[0,0,0,1]])
                    ) -> None:
     '''Add pose information of all moving components in a keyframe. 
         data: 
-            list[x,y,z,r,p,y,joint_angle], containing pose of base link and the joint angle.
         i:
             int, frame ID.
     '''

@@ -90,7 +90,6 @@ class ObjectFromUrdf(ObjectBase):
 
     def set_search_bounds(self, vis=1, basePosBounds=[[-2.5, 2.5], [-2.5, 2.5], [0, 5]]):
         self.joint_bounds = basePosBounds # CoM pos
-        # print('self.self.joint_bounds', self.joint_bounds)
         for i in range(3): # CoM rot
             self.joint_bounds.append([math.radians(-180), math.radians(180)]) # r, p, y
         
@@ -105,6 +104,7 @@ class ObjectFromUrdf(ObjectBase):
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
+        print('@@@@@@@joint_bounds', self.joint_bounds)
         
         # Visualize Workspace boundaries
         if vis:

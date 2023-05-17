@@ -100,7 +100,7 @@ def record_state_data_for_blender(sce, args):
             writer = csv.writer(csvfile)
             writer.writerow(data)
 
-def record_dynamics_scene_hook_fish(sce, args):
+def record_dynamics_scene(sce, args):
     # get current time
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
@@ -117,8 +117,11 @@ def record_dynamics_scene_hook_fish(sce, args):
                'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
     headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
                'obs_qtn_x', 'obs_qtn_y', 'obs_qtn_z', 'obs_qtn_w']
-    headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z',]
-    headers = headersObj + headersObs + headersBox
+    if args.scenario in ['HookFishHole']:
+        headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z',]
+        headers = headersObj + headersObs + headersBox
+    elif args.scenario in ['ShovelFish']:
+        headers = headersObj + headersObs
 
     # write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
@@ -127,11 +130,17 @@ def record_dynamics_scene_hook_fish(sce, args):
 
     # write data to csv
     for i in range(len(sce.idxSce)):
-        data = flatten_nested_list([
-            [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
-            sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
-            sce.boxBasePosSce[i], 
-            ])
+        if args.scenario in ['HookFishHole']:
+            data = flatten_nested_list([
+                [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+                sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
+                sce.boxBasePosSce[i], 
+                ])
+        elif args.scenario in ['ShovelFish']:
+            data = flatten_nested_list([
+                [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+                sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
+                ])
 
         with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)

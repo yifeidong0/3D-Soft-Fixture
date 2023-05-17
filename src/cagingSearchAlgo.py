@@ -66,57 +66,64 @@ class RigidObjectCaging():
         
         return True # bounds valid check passed
 
-    def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None):
-        if self.args.obstacle in ['Box']:
-            # if self.args.object in ['Rope']:
-            self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
-            self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
-            self.add_box([-.5, 0, 1.2], [0.2, .7, .6])
-            self.add_box([0, .5, 1.2], [.7, 0.2, .5])
-            self.add_box([0, -.5, 1.2], [.7, 0.2, .7])
-        
-        elif self.args.obstacle in ['Hole']:
-            self.add_box([1.2, 0, 1.2], [1, 1, .2])
-            self.add_box([-1.2, 0, 1.2], [1, 1, .2])
-            self.add_box([0, 1.2, 1.2], [1, 1, .2])
-            self.add_box([0, -1.2, 1.2], [1, 1, .2])
+    def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None, rigidObstacleName=None):
+        if rigidObstacleName is None:
+            if self.args.obstacle in ['Box']:
+                # if self.args.object in ['Rope']:
+                self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
+                self.add_box([.5, 0, 1.2], [0.2, .7, .4]) # add outer walls
+                self.add_box([-.5, 0, 1.2], [0.2, .7, .6])
+                self.add_box([0, .5, 1.2], [.7, 0.2, .5])
+                self.add_box([0, -.5, 1.2], [.7, 0.2, .7])
+            
+            elif self.args.obstacle in ['Hole']:
+                self.add_box([1.2, 0, 1.2], [1, 1, .2])
+                self.add_box([-1.2, 0, 1.2], [1, 1, .2])
+                self.add_box([0, 1.2, 1.2], [1, 1, .2])
+                self.add_box([0, -1.2, 1.2], [1, 1, .2])
 
-        # elif self.args.obstacle in ['Ring']:
-        #     self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos, qtn, globalScaling=scale[0])
-        #     self.obstacles.append(self.obstacle_id)
+            # elif self.args.obstacle in ['Ring']:
+            #     self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos, qtn, globalScaling=scale[0])
+            #     self.obstacles.append(self.obstacle_id)
 
-        elif self.args.obstacle in self.rigidObjList:
+            elif self.args.obstacle in self.rigidObjList:
+                # Upload the mesh data to PyBullet and create a static object
+                mesh_collision_shape = p.createCollisionShape(
+                    shapeType=p.GEOM_MESH,
+                    fileName=self.paths[self.args.obstacle],
+                    meshScale=scale,
+                    flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+                )
+                mesh_visual_shape = -1  # Use the same shape for visualization
+                self.obstacle_id = p.createMultiBody(
+                    baseCollisionShapeIndex=mesh_collision_shape,
+                    baseVisualShapeIndex=mesh_visual_shape,
+                    basePosition=pos,
+                    baseOrientation=qtn,
+                )
+                self.obstacles.append(self.obstacle_id)
+
+            elif self.args.obstacle in ['3fGripper']:
+                self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
+                                            pos, qtn, globalScaling=scale[0])
+                self.obstacle = obstascle3fGripper(self.obstacle_id)
+                # self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
+                self.obstacles.append(self.obstacle_id)
+        else:
             # Upload the mesh data to PyBullet and create a static object
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
-                fileName=self.paths[self.args.obstacle],
+                fileName=self.paths[rigidObstacleName],
                 meshScale=scale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
-            # mesh_visual_shape = p.createVisualShape(shapeType=p.GEOM_MESH,
-            #     fileName=self.paths[self.args.obstacle],
-            #     rgbaColor=[1, 1, 1, 1],
-            #     specularColor=[0.4, .4, 0],
-            #     # visualFramePosition=shift,
-            #     meshScale=scale
-            # )
-            mesh_visual_shape = -1  # Use the same shape for visualization
-            mesh_position = pos  # The position of the mesh
-            mesh_orientation = qtn  # The orientation of the mesh
-            self.obstacle_id = p.createMultiBody(
+            self.obstacle_id_new = p.createMultiBody(
                 baseCollisionShapeIndex=mesh_collision_shape,
-                baseVisualShapeIndex=mesh_visual_shape,
-                basePosition=mesh_position,
-                baseOrientation=mesh_orientation,
+                baseVisualShapeIndex=-1,
+                basePosition=pos,
+                baseOrientation=qtn,
             )
-            self.obstacles.append(self.obstacle_id)
-
-        elif self.args.obstacle in ['3fGripper']:
-            self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
-                                          pos, qtn, globalScaling=scale[0])
-            self.obstacle = obstascle3fGripper(self.obstacle_id)
-            # self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
-            self.obstacles.append(self.obstacle_id)
+            self.obstacles.append(self.obstacle_id_new)
 
     def add_box(self, box_pos, half_box_size):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)

@@ -69,7 +69,7 @@ class runScenario():
                 self.obstacleEul = [1.57, -0.3, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]]
                 self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
             case 'GripperClenchesStarfish':
                 self.object = 'Starfish'
@@ -81,7 +81,7 @@ class runScenario():
                 self.obstacleEul = [1.57, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = 10.0 # float for loadURDF globalScaling
-                self.basePosBounds=[[-2,2], [-2,2], [-.5,3]] # searching bounds
+                self.basePosBounds=[[-2,2], [-2,2], [-.5,3]]
                 self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
             case 'StarfishSplashBowl':
                 self.object = 'Starfish'
@@ -93,7 +93,7 @@ class runScenario():
                 self.obstacleEul = [0, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [1, 1, 1]
-                self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
+                self.basePosBounds = [[-2,2], [-2,2], [0,3]]
                 self.goalCoMPose = [0,0,0.01] + [0]*3
             case 'HookFishHole':
                 self.object = 'FishHole'
@@ -105,11 +105,31 @@ class runScenario():
                 self.obstacleEul = [-.6, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]]
                 self.goalCoMPose = [1.5,0,.01] + [0, 0, 0]
                 self.endFrame = 18000
                 self.downsampleRate = 40
                 self.half_box_size = [1,2.5,.1]
+            case 'ShovelFish':
+                self.object = 'Fish'
+                self.objectPos = [0,-1.3,1.7]
+                self.objectEul = [3.14,3.14,3.14]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = 'Shovel'
+                self.obstaclePos = [0, 6, 1.75]
+                self.obstacleEul = [-.1, 0, 3.14]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [1]*3
+                self.handScale = [1,1,1]
+                self.handPos = [.5,-1.6,1.8]
+                self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
+                self.basePosBounds=[[-3,3], [-2,2], [-1,3]]
+                self.goalCoMPose = [2,0,.01] + [0, 0, 0]
+                self.endFrame = 40000
+                self.downsampleRate = 100
+                self.boxBasePos = [0,0,1]
+                self.half_box_size = [1,2.5,.1]
+
 
 
     def loadObject(self):
@@ -119,7 +139,7 @@ class runScenario():
 
     def loadObstacle(self):
         obst = self.args.obstacle
-        if obst in ['Bowl', 'Hook', 'SplashBowl']:
+        if obst in ['Bowl', 'Hook', 'SplashBowl', 'Hand', 'Shovel']:
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
@@ -260,7 +280,74 @@ class runScenario():
                 p.disconnect()
                 break
             i += 1
-    
+
+    def runShovelFish(self):
+        '''For the task of shoveling fish with a shovel, a supporting hand and tabletop.'''
+        i = 0
+
+        # Add a table
+        # box_state = self.boxBasePos + [0,0,0]
+        colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
+        box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBox_id, basePosition=self.boxBasePos)
+        self.box = ObjectFromUrdf(box_id)
+        self.boxBasePosSce = []
+
+        # Add a hand
+        mesh_collision_shape = p.createCollisionShape(
+            shapeType=p.GEOM_MESH,
+            fileName=self.paths['Hand'],
+            meshScale=self.handScale,
+            flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+        )
+        self.obstacleId = p.createMultiBody(
+            baseMass=0,
+            baseCollisionShapeIndex=mesh_collision_shape,
+            baseVisualShapeIndex=-1,
+            basePosition=self.handPos,
+            baseOrientation=self.handQtn,
+        )
+
+        # Dynamics rolling on
+        while (1):
+            # print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            # time.sleep(10/240.)
+            
+            i_thres = 24000
+            if i < i_thres:
+                increment_shovel = [0,-0.0001,-0.000,] + [0,0,0]
+            else:
+                increment_shovel = [0,0.0001,0.00015,] + [0.00004,0,0]
+            
+            # Shovel state
+            curr_state_shovel = self.obstacle.get_cur_state() if i>0 else self.obstaclePos+self.obstacleEul
+            new_state_shovel = [curr_state_shovel[k]+increment_shovel[k] for k in range(len(curr_state_shovel))]
+            self.obstacle.set_state(new_state_shovel)
+            
+            if i % self.downsampleRate == 0:
+                jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
+                gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
+
+                # Record fish state
+                self.objBasePosSce.append(list(gemPos))
+                self.objBaseQtnSce.append(list(gemQtn))
+                self.objBaseEulSce.append(list(p.getEulerFromQuaternion(list(gemQtn))))
+                self.objJointPosSce.append(jointPositions)
+
+                # Record shovel state
+                self.obsBasePosSce.append(new_state_shovel[:3])
+                self.obsBaseEulSce.append(new_state_shovel[3:])
+                self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_shovel[3:])))
+                self.obsJointPosSce.append([])
+                self.idxSce.append(i)
+
+            if i == self.endFrame:
+                p.disconnect()
+                break
+            i += 1
+
+
     def runDynamicFalling(self):
         '''For the tasks of articulated fish or ring falling'''
         i = 0        
@@ -319,23 +406,31 @@ if __name__ == '__main__':
 
         elif args.scenario in ['HookFishHole']:
             sce.runHookFish()
-            record_dynamics_scene_hook_fish(sce, args)
+            record_dynamics_scene(sce, args)
+
+        elif args.scenario in ['ShovelFish']:
+            sce.runShovelFish()
+            record_dynamics_scene(sce, args)
 
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
 
-        # create caging environment and items in pybullet
+        # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
             env = RigidObjectCaging(args)
         else:
             objScale = 1
             env = ArticulatedObjectCaging(args, objScale)
 
-        # set searching bounds and add obstacles
-        env.robot.set_search_bounds(sce.basePosBounds)
-        env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale, sce.obsJointPosSce[0])
+        # Set searching bounds and add obstacles
+        env.robot.set_search_bounds(basePosBounds=sce.basePosBounds)
+        env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
         if args.scenario in ['HookFishHole']:
             box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
+        elif args.scenario in ['ShovelFish']:
+            box_id = env.add_box(sce.boxBasePos, sce.half_box_size)
+            env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, rigidObstacleName='Hand')
+        # print('FISH {}, BOX {}, HAND {}, SHOVEL {} IDs'.format(env.robot.id, box_id, env.obstacle_id_new, env.obstacle_id))
         escapeEnergyCostSce = []
         startEnergySce = [] # start state energy
         startGEnergySce = [] # start G potential energy
@@ -344,6 +439,8 @@ if __name__ == '__main__':
         # Run the caging analysis algorithm over downsampled frames we extracted above
         numMainIter = len(sce.objJointPosSce)
         for i in range(numMainIter):
+            if i == 1:
+                continue
             # Set obstacle's state
             if args.scenario in ['GripperClenchesStarfish',]:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
@@ -351,13 +448,16 @@ if __name__ == '__main__':
             if args.scenario in ['HookFishHole']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
                 p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
+            if args.scenario in ['ShovelFish']:
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
 
             # Set object's start and goal states
-            objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + sce.objJointPosSce[i]
+            objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
+            objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos
             objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
-            isValidStartAndGoal = env.reset_start_and_goal(objStartState, objGoalState)
-            if not isValidStartAndGoal: # start or goal state invalid
-                continue
+            env.reset_start_and_goal(objStartState, objGoalState)
+            # if not isValidStartAndGoal: # start or goal state invalid
+            #     continue
 
             # Create OMPL interface
             env.create_ompl_interface()
@@ -397,6 +497,8 @@ if __name__ == '__main__':
                 # Record data in this loop 
                 energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
                 record_data_loop(sce, energyData, folderName, i)
+
+            # sleep(10)
 
         # Shut down pybullet (GUI)
         p.disconnect()

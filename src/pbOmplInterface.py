@@ -129,6 +129,7 @@ class PbOMPL():
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
+                    # print('@@@@ STATE INVALID!')
                     return False
               
         return True

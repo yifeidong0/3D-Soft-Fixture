@@ -18,7 +18,7 @@ if __name__ == '__main__':
     if args.object == 'Ring':
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
-        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
     if args.object == 'FishHole':
         env = RigidObjectCaging(args)
@@ -35,14 +35,14 @@ if __name__ == '__main__':
         objScale = 3
         env = ArticulatedObjectCaging(args, objScale)
         env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
-        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
     elif args.object == 'Starfish':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)
         env.add_obstacles(scale=[1]*3, pos=[0,0,.6], qtn=p.getQuaternionFromEuler([0, 0, 0])) # splash bowl
         # env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # 3fGripper
-        # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
+        # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[0,0,3,0,0,0]+[0]*env.robot.articulate_num, goal=[0,0,.01]+[0,0,1.57]+[0]*env.robot.articulate_num)
     elif args.object == 'Band':
         numCtrlPoint = 6
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
         env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
-        env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
+        env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3]])
     elif args.object == '2Dlock':
         objScale = 1
         basePosBounds = [[-5, 5], [-5, 5]]

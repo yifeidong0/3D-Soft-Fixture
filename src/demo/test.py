@@ -24,10 +24,10 @@ from utils import *
 #########################################################################
 #########################################################################
 
-# # CREATE CONCAVE SHAPES
-name_in = 'models/fish-hole/fish-hole-sided-thick2.obj'
-name_out = 'models/fish-hole/fish-hole-sided-thick2-vhacd.obj'
-create_convex_vhacd(name_in, name_out, resolution=int(1e6))
+# # # CREATE CONCAVE SHAPES
+# name_in = 'models/hand/hand-d.obj'
+# name_out = 'models/hand/hand-d-vhacd.obj'
+# create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 #########################################################################
@@ -509,7 +509,9 @@ if args.object in get_non_articulated_objects():
 elif args.object == 'Fish':
     objScale = 1
     env = ArticulatedObjectCaging(args, objScale)
-    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
+    # env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # shovel
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 1.57, 0])) # hand
+    # env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bowl
 
 elif args.object == 'Band':
     numCtrlPoint = 6
@@ -533,7 +535,6 @@ elif args.object == 'Snaplock':
     objScale = 3
     env = ArticulatedObjectCaging(args, objScale)
     env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-    # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
     env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
 
 elif args.object == 'Jelly':
@@ -545,7 +546,7 @@ elif args.object == 'Jelly':
     goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
     env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
     env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
-    env.robot.set_search_bounds([[-2,2], [-2,2], [0,3]])
+    env.robot.set_search_bounds(basePosBound=[[-2,2], [-2,2], [0,3]])
 
 elif args.object == '2Dlock':
     objScale = 1
@@ -559,7 +560,6 @@ elif args.object == 'Starfish':
     objScale = 1
     env = ArticulatedObjectCaging(args, objScale)
     env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # ring
-    # env.robot.set_search_bounds([[-2,2], [-2,2], [0,3.5]])
     env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0]*env.robot.articulate_num, goal=[0,0,.01]+[0,0,1.57]+[0]*env.robot.articulate_num)
 
 env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
@@ -602,12 +602,13 @@ elif args.object == 'Starfish':
 elif args.object == 'Fish':
     while (1):
         p.stepSimulation()
-        start = [0-0.003*i,0-0.003*i,1.4-0.001*i,0,0,1.57]+[0-0.001*i]*env.robot.articulate_num
+        start = [0,1,1.4-0.003*i,0,0,0]+[0]*env.robot.articulate_num
+        # start = [0-0.003*i,0-0.003*i,1.4-0.001*i,0,0,1.57]+[0-0.001*i]*env.robot.articulate_num
         env.robot.set_state(start)
         print(env.pb_ompl_interface.is_state_valid(start))
         # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
         i += 1
-        sleep(.05)
+        sleep(.01)
 
 elif args.object == 'Rope':
     while (1):
