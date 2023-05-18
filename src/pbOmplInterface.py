@@ -220,8 +220,10 @@ class PbOMPL():
         if self.args.search == 'EnergyBiasedSearch':
             if self.args.object in rigidObjs: # rigid object caging
                 self.potentialObjective = objective.GravityPotentialObjective(self.si, start)
-            elif self.args.object == "Fish":
+            elif self.args.object in ["Fish"]:
                 self.potentialObjective = objective.FishPotentialObjective(self.si, start, self.args)
+            elif self.args.object in ["Starfish"]:
+                self.potentialObjective = objective.StarfishPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Snaplock":
                 self.potentialObjective = objective.SnaplockPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Band":

@@ -1,0 +1,24 @@
+# Blender 3.5.1 MTL File: 'starfish-bowl-hand.blend'
+# www.blender.org
+
+newmtl Hands_Low_defaultMat1.004
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd Hands_Low_defaultMat1_baseColor.jpeg
+map_Bump -bm 1.000000 Hands_Low_defaultMat1_normal.png
+
+newmtl Mia_001085_MinaiBowl_32k.001
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd Mia_001085_MinaiBowl_32k_baseColor.jpeg
+map_Bump -bm 1.000000 Mia_001085_MinaiBowl_32k_normal.png

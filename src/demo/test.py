@@ -25,8 +25,8 @@ from utils import *
 #########################################################################
 
 # # # CREATE CONCAVE SHAPES
-# name_in = 'models/hand/hand-d.obj'
-# name_out = 'models/hand/hand-d-vhacd.obj'
+# name_in = 'models/leftHandAndBowl/leftHandAndBowl.obj'
+# name_out = 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj'
 # create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
@@ -559,7 +559,7 @@ elif args.object == '2Dlock':
 elif args.object == 'Starfish':
     objScale = 1
     env = ArticulatedObjectCaging(args, objScale)
-    env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # ring
+    env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
     env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0]*env.robot.articulate_num, goal=[0,0,.01]+[0,0,1.57]+[0]*env.robot.articulate_num)
 
 env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
@@ -583,18 +583,18 @@ if args.object == 'Snaplock':
 elif args.object == 'Starfish':
     while (1):
         p.stepSimulation()
-        start = [0,0,1.8-0.0*i,0,0,0]+[0,0,0,0,0,0,0,0,-0.01*i,-0.01*i,]
+        start = [0,0,1.8-0.0*i,0,0,0]+[0,0,0,0,0,0,0,0,-0.0*i,-0.0*i,]
         # start = [0,0,1.8-0.0*i,0,0,0]+[0,0,-0.01*i,0,0,]
         # start = [0,0-0.01*i,2,0,0,1.57]+[0-0.01*i]
         env.robot.set_state(start)
-        axiscreator(env.robot.id, linkId = -1)
+        # axiscreator(env.robot.id, linkId = -1)
         # axiscreator(env.robot.id, linkId = 0) # first arm pose is displayed with origin at the joint
         # axiscreator(env.robot.id, linkId = 1)
-        axiscreator(env.robot.id, linkId = 8)
-        axiscreator(env.robot.id, linkId = 9)
+        # axiscreator(env.robot.id, linkId = 8)
+        # axiscreator(env.robot.id, linkId = 9)
         # axiscreator(env.robot.id, linkId = 4)
 
-        # print(env.pb_ompl_interface.is_state_valid(start))
+        print(env.pb_ompl_interface.is_state_valid(start))
         # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
         i += 1
         sleep(.03)

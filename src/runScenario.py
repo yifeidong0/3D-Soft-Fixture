@@ -20,7 +20,7 @@ class runScenario():
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         
-        planeId = p.loadURDF("plane.urdf", [0,0,-1])
+        # planeId = p.loadURDF("plane.urdf", [0,0,-1])
         self.paths = path_collector()
         self.pathsTex = texture_path_list()
         self.args = args
@@ -83,18 +83,6 @@ class runScenario():
                 self.obstacleScale = 10.0 # float for loadURDF globalScaling
                 self.basePosBounds=[[-2,2], [-2,2], [-.5,3]]
                 self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
-            case 'StarfishSplashBowl':
-                self.object = 'Starfish'
-                self.objectPos = [0,0,5]
-                self.objectEul = [0,0,0]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'SplashBowl'
-                self.obstaclePos = [0,0,0.6]
-                self.obstacleEul = [0, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1, 1, 1]
-                self.basePosBounds = [[-2,2], [-2,2], [0,3]]
-                self.goalCoMPose = [0,0,0.01] + [0]*3
             case 'HookFishHole':
                 self.object = 'FishHole'
                 self.objectPos = [.0,-.4,1.4]
@@ -129,7 +117,24 @@ class runScenario():
                 self.downsampleRate = 100
                 self.boxBasePos = [0,0,1]
                 self.half_box_size = [1,2.5,.1]
-
+            case 'StarfishBowl':
+                self.object = 'Starfish'
+                self.objectPos = [0,1.5,3.5]
+                self.objectEul = [0,0,0]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = 'LeftHandAndBowl'
+                self.obstaclePos = [0,0,1]
+                self.obstacleEul = [-.3, 0, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [1, 1, 1]
+                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+                self.goalCoMPose = [0,1,0.01] + [0]*3
+                self.endFrame = 6000
+                self.downsampleRate = 12
+                self.boxBasePos = [0,1.5,3]
+                self.boxBaseEul = [0,0,0]
+                self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
+                self.half_box_size = [1,1,.05]
 
 
     def loadObject(self):
@@ -139,7 +144,7 @@ class runScenario():
 
     def loadObstacle(self):
         obst = self.args.obstacle
-        if obst in ['Bowl', 'Hook', 'SplashBowl', 'Hand', 'Shovel']:
+        if obst in ['Bowl', 'Hook', 'SplashBowl', 'Hand', 'Shovel', 'LeftHandAndBowl']:
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
@@ -172,6 +177,45 @@ class runScenario():
         joint_torques = [state[3] for state in joint_states]
         
         return joint_positions, joint_velocities, joint_torques
+
+    def runDynamicFalling(self):
+        '''For the tasks of articulated fish or ring falling'''
+        i = 0        
+        # time.sleep(1)
+        while (1):
+            # print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            time.sleep(3/240.)
+
+            if i % self.downsampleRate == 0:
+                jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
+                gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
+
+                # Calculate G potential energy
+                # state = list(gemPos) + list(p.getEulerFromQuaternion(gemQtn)) + list(jointPositions)
+                # gravityEnergy = getGravityEnergy(state, self.args, self.paths)
+
+                # record objects' DoF
+                self.objBasePosSce.append(list(gemPos))
+                self.objBaseQtnSce.append(list(gemQtn))
+                self.objJointPosSce.append(jointPositions)
+                self.idxSce.append(i)
+
+            if i == self.endFrame:
+                p.disconnect()
+                break
+            i += 1
+
+        # record obstacles' DoF
+        sceLen = len(self.objBasePosSce)
+        self.obsBasePosSce = [self.obstaclePos for i in range(sceLen)]
+        self.obsBaseQtnSce = [self.obstacleQtn for i in range(sceLen)]
+        self.obsBaseEulSce = [self.obstacleEul for i in range(sceLen)]
+        self.obsJointPosSce = [[] for i in range(sceLen)]
+
+        # quaternion to euler
+        self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
     def runClenchFist(self):
         '''For the task of gripper clenching starfish'''
@@ -347,47 +391,78 @@ class runScenario():
                 break
             i += 1
 
+    def runStarfishBowl(self):
+        '''For the task of catching a starfish with a bowl.'''
+        i = 0
 
-    def runDynamicFalling(self):
-        '''For the tasks of articulated fish or ring falling'''
-        i = 0        
-        # time.sleep(1)
+        # Add a right hand that initially holds the starfish and sheds
+        box_state = self.boxBasePos + self.boxBaseEul
+        colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
+        box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBox_id, 
+                                   basePosition=self.boxBasePos, baseOrientation=self.boxBaseQtn)
+        self.box = ObjectFromUrdf(box_id)
+        self.boxBasePosSce = []
+        self.boxBaseEulSce = []
+        self.boxBaseQtnSce = []
+
+        # Change dynamics of objects
+        p.changeDynamics(box_id, -1, lateralFriction=0.8, spinningFriction=0, rollingFriction=0,)
+        p.changeDynamics(self.obstacleId, -1, lateralFriction=0.28, spinningFriction=0, rollingFriction=0,)
+
+        # Dynamics rolling on
         while (1):
             # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            time.sleep(3/240.)
+            time.sleep(.2/240.)
+            
+            i_thres = [1000,4000]
+            if i < i_thres[0]: # right hand sheds
+                increment_bowl = [0,-0.000,-0.000,] + [0,0,0]
+                increment_box = [0,-0.0,-0.0,] + [0.0008,0,0]
+            elif i < i_thres[1]: # bowl left-ward rotate
+                increment_bowl = [0,-0.0001,-0.,] + [0.0004,0,0]
+                increment_box = [0,0.001,0] + [0,0,0]
+            else: # bowl right-ward rotate
+                increment_bowl = [0,0,-0.,] + [-0.0005,0,0]
+                increment_box = [0,0.0,0] + [0,0,0]
+            
+            # Bowl state
+            curr_state_bowl = self.obstacle.get_cur_state() if i>0 else self.obstaclePos+self.obstacleEul
+            new_state_bowl = [curr_state_bowl[k]+ increment_bowl[k] for k in range(len(curr_state_bowl))]
+            self.obstacle.set_state(new_state_bowl)
+
+            # Box / right hand state
+            curr_state_box = self.box.get_cur_state() if i>0 else box_state
+            new_state_box = [curr_state_box[k]+increment_box[k] for k in range(len(curr_state_box))]
+            self.box.set_state(new_state_box)
 
             if i % self.downsampleRate == 0:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
-                # Calculate G potential energy
-                # state = list(gemPos) + list(p.getEulerFromQuaternion(gemQtn)) + list(jointPositions)
-                # gravityEnergy = getGravityEnergy(state, self.args, self.paths)
-                # print('@@@gravityEnergy', gravityEnergy)
-
-                # record objects' DoF
+                # Record starfish state
                 self.objBasePosSce.append(list(gemPos))
                 self.objBaseQtnSce.append(list(gemQtn))
+                self.objBaseEulSce.append(list(p.getEulerFromQuaternion(list(gemQtn))))
                 self.objJointPosSce.append(jointPositions)
+
+                # Record bowl state
+                self.obsBasePosSce.append(new_state_bowl[:3])
+                self.obsBaseEulSce.append(new_state_bowl[3:])
+                self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_bowl[3:])))
+                self.obsJointPosSce.append([])
                 self.idxSce.append(i)
-                # print('!!!!!',gemPos, gemQtn, jointPositions)
+
+                # Record box position
+                self.boxBasePosSce.append(new_state_box[:3])
+                self.boxBaseEulSce.append(new_state_box[3:])
+                self.boxBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_box[3:])))
 
             if i == self.endFrame:
                 p.disconnect()
                 break
             i += 1
-
-        # record obstacles' DoF
-        sceLen = len(self.objBasePosSce)
-        self.obsBasePosSce = [self.obstaclePos for i in range(sceLen)]
-        self.obsBaseQtnSce = [self.obstacleQtn for i in range(sceLen)]
-        self.obsBaseEulSce = [self.obstacleEul for i in range(sceLen)]
-        self.obsJointPosSce = [[] for i in range(sceLen)]
-
-        # quaternion to euler
-        self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
 
 if __name__ == '__main__':
@@ -398,7 +473,7 @@ if __name__ == '__main__':
     
         # run a dynamic falling scenario and analyze frame-wise escape energy
         sce = runScenario(args)
-        if args.scenario in ['FishFallsInBowl', 'StarfishSplashBowl', 'HookTrapsRing',]:
+        if args.scenario in ['FishFallsInBowl', 'HookTrapsRing',]:
             sce.runDynamicFalling()
 
             # Record object state space data for Blender
@@ -407,11 +482,12 @@ if __name__ == '__main__':
         elif args.scenario in ['HookFishHole']:
             sce.runHookFish()
             record_dynamics_scene(sce, args)
-
         elif args.scenario in ['ShovelFish']:
             sce.runShovelFish()
             record_dynamics_scene(sce, args)
-
+        elif args.scenario in ['StarfishBowl']:
+            sce.runStarfishBowl()
+            record_dynamics_scene(sce, args)
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
 
@@ -430,6 +506,9 @@ if __name__ == '__main__':
         elif args.scenario in ['ShovelFish']:
             box_id = env.add_box(sce.boxBasePos, sce.half_box_size)
             env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, rigidObstacleName='Hand')
+        elif args.scenario in ['StarfishBowl']:
+            box_id = env.add_box(sce.boxBasePos, sce.half_box_size, sce.boxBaseQtn)
+
         # print('FISH {}, BOX {}, HAND {}, SHOVEL {} IDs'.format(env.robot.id, box_id, env.obstacle_id_new, env.obstacle_id))
         escapeEnergyCostSce = []
         startEnergySce = [] # start state energy
@@ -450,6 +529,9 @@ if __name__ == '__main__':
                 p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
             if args.scenario in ['ShovelFish']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+            if args.scenario in ['StarfishBowl']:
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+                p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], sce.boxBaseQtnSce[i])
 
             # Set object's start and goal states
             objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
@@ -475,11 +557,14 @@ if __name__ == '__main__':
                 # env.visualize_energy_biased_search()
 
                 # Record start and escape energy
-                if isArticulatedObj:
+                if args.object in ['Fish']:
                     startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
                     startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
                     startEnergy = startGEnergy + startEEnergy
-                else: # non-articulated objects' z_world
+                elif args.object in ['Starfish']:
+                    startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
+                    startEEnergy, startEnergy = 0, startGEnergy
+                else:
                     # startEnergy = env.state_energy_escape_path_iter[0][0] if isSolved else np.inf
                     startGEnergy, startEEnergy = None, None
                     startEnergy = objStartState[2]
@@ -502,8 +587,6 @@ if __name__ == '__main__':
 
         # Shut down pybullet (GUI)
         p.disconnect()
-        # del(env)
-        # time.sleep(300)
 
         # # Plot
         # energyData = (startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce)

@@ -125,9 +125,9 @@ class RigidObjectCaging():
             )
             self.obstacles.append(self.obstacle_id_new)
 
-    def add_box(self, box_pos, half_box_size):
+    def add_box(self, box_pos, half_box_size, box_qtn=list(p.getQuaternionFromEuler([0,0,0]))):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)
-        box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBoxId, basePosition=box_pos)
+        box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBoxId, basePosition=box_pos, baseOrientation=box_qtn)
 
         self.obstacles.append(box_id)
         return box_id

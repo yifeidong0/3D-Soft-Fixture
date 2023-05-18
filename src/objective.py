@@ -274,6 +274,7 @@ class FishPotentialObjective(ob.OptimizationObjective):
         linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
+        print('@@@@@@@linkZsInWorld', linkZsInWorld)
         
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
@@ -305,6 +306,80 @@ class FishPotentialObjective(ob.OptimizationObjective):
         else:
             return ob.Cost(max(cost1.value(), cost2.value()))
 
+
+class StarfishPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, args):
+        super(StarfishPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.args_ = args
+
+        # parameters of articulated object
+        self.incrementalCost = 0
+        self.numStateSpace = len(start)
+        self.comDof = 6
+        self.numJoints = self.numStateSpace - self.comDof
+        self.numLinks = self.numJoints + 1
+        self.numArms = 5
+        self.g = 9.81
+        # TODO:
+        self.masses = [.3,.1,.1,.1,.1,.1]
+        self.o = np.array([1.])
+        self.path = path_collector()
+        self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
+        
+        # calculated energy of initial pose
+        self.energyStart = self.stateEnergy(self.start_)
+
+    def getGravityEnergy(self, state):
+        # extract positions of links
+        jointAngles = state[self.comDof:] # rad
+        linkPosesInBase = self.chain.forward_kinematics(jointAngles) # dictionary
+
+        # get object's base transform
+        basePositionInWorld = state[0:3]
+        baseEulInWorld = state[3:self.comDof] # euler
+        baseQuatInWorld = p.getQuaternionFromEuler(baseEulInWorld)
+        r = R.from_quat(baseQuatInWorld) # BUG: quat to euler translation causes mistakes!
+        mat = r.as_matrix() # 3*3
+        thirdRow = (mat[2,:].reshape((1,3)), np.array(basePositionInWorld[2]).reshape((1,1)))
+        baseTInWorld = np.hstack(thirdRow) # 1*4. 3rd row of Transform matrix
+
+        # get link heights in World frame
+        linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
+        linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
+        linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights, 11 links
+        armZsInWorld = [2*(linkZsInWorld[2*i+1]-linkZsInWorld[0])+linkZsInWorld[0] for i in range(self.numArms)]
+        # print('@@@@@@armZsInWorld', armZsInWorld, linkZsInWorld[0])
+
+        # get links' gravitational potential energy
+        linkEnergies = [armZsInWorld[i] * self.masses[i+1] for i in range(self.numArms)] # mh of starfish arms
+        linkEnergies.append(linkZsInWorld[0]*self.masses[0]) # mh of starfish centrum
+        energyGravity = self.g * sum(linkEnergies) # sigma(g * m_i * z_i)
+        
+        return energyGravity
+      
+    def stateEnergy(self, state):
+        # energyElastic = self.getElasticEnergy(state)
+        energyGravity = self.getGravityEnergy(state)
+        # energySum = energyElastic + energyGravity
+        return energyGravity
+    
+    def motionCost(self, state1, state2):
+        state1 = [state1[i] for i in range(self.numStateSpace)]
+        state2 = [state2[i] for i in range(self.numStateSpace)]
+
+        if self.incrementalCost:
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
+        
+    def combineCosts(self, cost1, cost2):
+        # return ob.Cost(max(cost1.value(), cost2.value()))
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
 
 class SnaplockPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):

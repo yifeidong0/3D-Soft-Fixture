@@ -117,11 +117,15 @@ def record_dynamics_scene(sce, args):
                'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
     headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
                'obs_qtn_x', 'obs_qtn_y', 'obs_qtn_z', 'obs_qtn_w']
+    
     if args.scenario in ['HookFishHole']:
         headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z',]
         headers = headersObj + headersObs + headersBox
     elif args.scenario in ['ShovelFish']:
         headers = headersObj + headersObs
+    elif args.scenario in ['StarfishBowl']:
+        headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z', 'box_eul_x', 'box_eul_y', 'box_eul_z',]
+        headers = headersObj + headersObs + headersBox
 
     # write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
@@ -140,6 +144,12 @@ def record_dynamics_scene(sce, args):
             data = flatten_nested_list([
                 [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
                 sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
+                ])
+        elif args.scenario in ['StarfishBowl']:
+            data = flatten_nested_list([
+                [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+                sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
+                sce.boxBasePosSce[i], sce.boxBaseEulSce[i]               
                 ])
 
         with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:

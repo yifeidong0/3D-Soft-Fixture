@@ -25,10 +25,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='ShovelFish', \
+    parser.add_argument('-c', '--scenario', default='StarfishBowl', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishSplashBowl', 'HookFishHole', 'ShovelFish'], \
+                 'StarfishBowl', 'HookFishHole', 'ShovelFish'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -46,17 +46,17 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Starfish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Shovel', \
+    parser.add_argument('-l', '--obstacle', default='LeftHandAndBowl', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'Hand'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=3, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=15, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -69,14 +69,16 @@ def argument_parser():
 
 def path_collector():
     return {
+            # 'Fish': 'models/fish/articulate_fish.xacro', 
             # 'Fish': 'models/fine-fish/fine-fish.urdf', 
             # 'Fish': 'models/fine-fish/fine-fish-3parts.urdf', 
             'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
             'FishHole': 'models/fish-hole/fish-hole-rigid.urdf', 
-            # 'Fish': 'models/fish/articulate_fish.xacro', 
-            'Starfish': 'models/starfish/starfish2.urdf', 
-            # 'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
+
+            # 'Starfish': 'models/starfish/starfish2.urdf', 
             # 'Starfish': 'models/starfish-soft/starfish-soft.urdf', 
+            'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
+
             # 'Ring': 'models/fish/ring2_vhacd.OBJ', 
             'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
@@ -84,9 +86,10 @@ def path_collector():
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
-            'Bowl': 'models/bowl/bowl_cut_polygon.stl', 
-            'SplashBowl': 'models/splash-bowl/splash-bowl.stl', 
             # 'Bowl': 'models/bowl/small_bowl.stl', 
+            # 'Bowl': 'models/bowl/bowl_cut_polygon.stl', 
+            'Bowl': 'models/bowl/bowl_ceramics.stl', 
+            'SplashBowl': 'models/splash-bowl/splash-bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
             'Bucket': 'models/bucket/bucket-cutPoly.stl',
@@ -99,6 +102,7 @@ def path_collector():
             'Radish': 'models/radish/radish.stl',
             'Hand': 'models/hand/hand-d-vhacd.obj',
             'Shovel': 'models/shovel/shovel-d-vhacd.obj',
+            'LeftHandAndBowl': 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj',
             }
 
 def texture_path_list():
@@ -109,9 +113,9 @@ def texture_path_list():
             }
 
 def get_non_articulated_objects():
-    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Starfish', 'Bust', 'Hourglass', \
+    return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
-            'Hand', 'Shovel']
+            'Hand', 'Shovel', 'LeftHandAndBowl']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
