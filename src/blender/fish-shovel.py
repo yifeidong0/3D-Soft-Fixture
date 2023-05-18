@@ -84,15 +84,6 @@ def add_keyframes(dataFolderPath: str, objNames: list[str]) -> None:
     fishArmature, shovel = [bpy.data.objects[objNames[i]] for i in range(len(objNames))]
     shovel.rotation_mode = 'QUATERNION'
 
-    # # Get a reference to the armature object
-    # armature = bpy.data.objects[armatureName]
-    
-    # # Set the transform orientation to global
-    # bpy.context.scene.transform_orientation_slots[0].type = 'GLOBAL'
-    
-    # # Enter pose mode for the armature
-    # bpy.context.view_layer.objects.active = armature
-
     with open('{}/data.csv'.format(dataFolderPath), 'r') as csvfile:
         csvreader = csv.reader(csvfile)
         i = 1

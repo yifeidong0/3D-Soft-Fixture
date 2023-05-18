@@ -129,8 +129,8 @@ class runScenario():
                 self.obstacleScale = [1, 1, 1]
                 self.basePosBounds = [[-2,2], [-2,2], [0,4]]
                 self.goalCoMPose = [0,1,0.01] + [0]*3
-                self.endFrame = 6000
-                self.downsampleRate = 12
+                self.endFrame = 3400
+                self.downsampleRate = 7
                 self.boxBasePos = [0,1.5,3]
                 self.boxBaseEul = [0,0,0]
                 self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
@@ -416,15 +416,15 @@ class runScenario():
             p.setGravity(0, 0, self.gravity)
             time.sleep(.2/240.)
             
-            i_thres = [1000,4000]
+            i_thres = [1000,2200]
             if i < i_thres[0]: # right hand sheds
-                increment_bowl = [0,-0.000,-0.000,] + [0,0,0]
+                increment_bowl = [0,0,0,] + [0,0,0]
                 increment_box = [0,-0.0,-0.0,] + [0.0008,0,0]
             elif i < i_thres[1]: # bowl left-ward rotate
-                increment_bowl = [0,-0.0001,-0.,] + [0.0004,0,0]
-                increment_box = [0,0.001,0] + [0,0,0]
+                increment_bowl = [0,-0.0001,-0.,] + [0.0012,0,0]
+                increment_box = [0,0.001,0] + [0.0005,0,0]
             else: # bowl right-ward rotate
-                increment_bowl = [0,0,-0.,] + [-0.0005,0,0]
+                increment_bowl = [0,0,-0.,] + [-0.0012,0,0]
                 increment_box = [0,0.0,0] + [0,0,0]
             
             # Bowl state
