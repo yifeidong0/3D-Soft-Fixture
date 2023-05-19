@@ -135,7 +135,23 @@ class runScenario():
                 self.boxBaseEul = [0,0,0]
                 self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
                 self.half_box_size = [1,1,.05]
-
+            case 'BimanualRubic':
+                self.object = 'Rubic'
+                self.objectPos = [0,0,2]
+                self.objectEul = [0,0,0]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = '3fGripper'
+                self.obstaclePos = [0,0,1]
+                self.obstacleEul = [1.57, 0, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstaclePos1 = [0,0,4]
+                self.obstacleEul1 = [-1.57, 0, 1.57,]
+                self.obstacleQtn1 = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [10.0,]*3
+                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+                self.goalCoMPose = [0,1,0.01] + [0]*3
+                self.endFrame = 4000
+                self.downsampleRate = 400
 
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)
@@ -144,7 +160,7 @@ class runScenario():
 
     def loadObstacle(self):
         obst = self.args.obstacle
-        if obst in ['Bowl', 'Hook', 'SplashBowl', 'Hand', 'Shovel', 'LeftHandAndBowl']:
+        if obst in ['Bowl', 'Hook', 'SplashBowl', 'LeftHand', 'Shovel', 'LeftHandAndBowl']:
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
@@ -163,7 +179,7 @@ class runScenario():
             self.obstacleId = p.loadURDF(fileName=self.paths[self.args.obstacle], 
                                           basePosition=self.obstaclePos, 
                                           baseOrientation=self.obstacleQtn, 
-                                          globalScaling=self.obstacleScale
+                                          globalScaling=self.obstacleScale[0]
                                           )
             self.obstacle = obstascle3fGripper(self.obstacleId)
 
@@ -339,7 +355,7 @@ class runScenario():
         # Add a hand
         mesh_collision_shape = p.createCollisionShape(
             shapeType=p.GEOM_MESH,
-            fileName=self.paths['Hand'],
+            fileName=self.paths['LeftHand'],
             meshScale=self.handScale,
             flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
         )
@@ -464,6 +480,95 @@ class runScenario():
                 break
             i += 1
 
+    def runBimanualRubic(self):
+        '''For the task of 2 grippers clenching rubic cube.'''
+        self.obstaclePose = self.obstaclePos + self.obstacleEul
+        self.obstaclePose1 = self.obstaclePos1 + self.obstacleEul1
+        self.obsBasePosSce1 = []
+        self.obsBaseQtnSce1 = []
+        self.obsBaseEulSce1 = []
+        self.obsJointPosSce1 = []
+
+        # Add right hand
+        self.obstacleId1 = p.loadURDF(fileName=self.paths[self.args.obstacle], 
+                                    basePosition=self.obstaclePos1, 
+                                    baseOrientation=self.obstacleQtn1, 
+                                    globalScaling=self.obstacleScale[0]
+                                    )
+        self.obstacle1 = obstascle3fGripper(self.obstacleId1)
+
+        # Set initial joint states - left hand
+        jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
+        self.numJoints = len(jointPositions)
+        # obstacleJointPos = [jointPositions[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
+        obstacleState = self.obstaclePose + jointPositions
+        self.obstacle.set_state(obstacleState)
+        
+        # Set initial joint states - right hand
+        jointPositions1,_,_ = self.getJointStates(self.obstacleId1)
+        # obstacleJointPos1 = [jointPositions1[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions1[i] for i in range(len(jointPositions1))]
+        obstacleState1 = self.obstaclePose1 + jointPositions1
+        self.obstacle1.set_state(obstacleState1)
+        
+        # start simulation
+        i = 0
+        while (1):
+            # print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            time.sleep(.5/240.)
+
+            i_thres = [1000,2000]
+            if i < i_thres[0]:
+                increment_left = [0,0,0,] + [0,0,0] + self.numJoints*[0]
+                increment_right = [0,0,-0.001,] + [0.0,0,0] + self.numJoints*[0]
+            elif i < i_thres[1]:
+                alpha = (i-i_thres[0]) / (i_thres[1]-i_thres[0]) * 1.57
+                increment_left = [0,-1.57e-3*np.cos(alpha),1.57e-3*np.sin(alpha),] + [-1.57e-3,0,0] + self.numJoints*[0]
+                increment_right = [0,1.57e-3*np.cos(alpha),-1.57e-3*np.sin(alpha),] + [0,1.57e-3,0] + [0,]*8 + [0,0.0001,0,0]
+            else:
+                increment_left = [0,-0.000,0.000,] + [-0.000,0,0] + self.numJoints*[0]
+                increment_right = [0,0.000,-0.000,] + [0,0.000,0] + [0,-0.00055,0,0] + [0,-0.00055,0,0] + [0,0.000,0,0]
+    
+            # Get obstacle joint positions - left hand
+            curr_state_left = self.obstacle.get_cur_state() if i>0 else obstacleState
+            new_state_left = [curr_state_left[k]+increment_left[k] for k in range(len(curr_state_left))]
+            self.obstacle.set_state(new_state_left)
+
+            # Get obstacle joint positions - right hand
+            curr_state_right = self.obstacle1.get_cur_state() if i>0 else obstacleState1
+            new_state_right = [curr_state_right[k]+increment_right[k] for k in range(len(curr_state_right))]
+            self.obstacle1.set_state(new_state_right)
+
+            # print(len(p.getClosestPoints(bodyA=self.objectId, bodyB=self.obstacleId, distance=-0.025)))
+
+            if i % self.downsampleRate == 0:
+                # Record obstacle state - left hand
+                self.obsJointPosSce.append(new_state_left[6:])
+                self.obsBasePosSce.append(new_state_left[:3])
+                self.obsBaseEulSce.append(new_state_left[3:6])
+                self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_left[3:6])))
+
+                # Record obstacle state - right hand
+                self.obsJointPosSce1.append(new_state_right[6:])
+                self.obsBasePosSce1.append(new_state_right[:3])
+                self.obsBaseEulSce1.append(new_state_right[3:6])
+                self.obsBaseQtnSce1.append(list(p.getQuaternionFromEuler(new_state_right[3:6])))
+
+                # Record rubic cube pose
+                gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
+                self.objBasePosSce.append(list(gemPos))
+                self.objBaseQtnSce.append(list(gemQtn))
+                self.objJointPosSce.append([])
+                self.idxSce.append(i)
+            
+            if i == self.endFrame:
+                p.disconnect()
+                break
+            i += 1
+
+        # quaternion to euler
+        self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
 if __name__ == '__main__':
     for n in range(1):
@@ -488,6 +593,9 @@ if __name__ == '__main__':
         elif args.scenario in ['StarfishBowl']:
             sce.runStarfishBowl()
             record_dynamics_scene(sce, args)
+        elif args.scenario in ['BimanualRubic']:
+            sce.runBimanualRubic()
+            record_dynamics_scene(sce, args)
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
 
@@ -505,9 +613,11 @@ if __name__ == '__main__':
             box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
         elif args.scenario in ['ShovelFish']:
             box_id = env.add_box(sce.boxBasePos, sce.half_box_size)
-            env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, rigidObstacleName='Hand')
+            env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, obstacleName='LeftHand')
         elif args.scenario in ['StarfishBowl']:
             box_id = env.add_box(sce.boxBasePos, sce.half_box_size, sce.boxBaseQtn)
+        elif args.scenario in ['BimanualRubic']:
+            env.add_obstacles(sce.obsBasePosSce1[0], sce.obsBaseQtnSce1[0], sce.obstacleScale, obstacleName='3fGripper')
 
         # print('FISH {}, BOX {}, HAND {}, SHOVEL {} IDs'.format(env.robot.id, box_id, env.obstacle_id_new, env.obstacle_id))
         escapeEnergyCostSce = []
@@ -520,6 +630,7 @@ if __name__ == '__main__':
         for i in range(numMainIter):
             if i == 1:
                 continue
+
             # Set obstacle's state
             if args.scenario in ['GripperClenchesStarfish',]:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
@@ -532,7 +643,12 @@ if __name__ == '__main__':
             if args.scenario in ['StarfishBowl']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
                 p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], sce.boxBaseQtnSce[i])
-
+            if args.scenario in ['BimanualRubic']:
+                env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i]) # left hand
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+                env.obstacle1._set_joint_positions(env.obstacle1.joint_idx, sce.obsJointPosSce1[i]) # right hand
+                p.resetBasePositionAndOrientation(env.obstacle_id1, sce.obsBasePosSce1[i], sce.obsBaseQtnSce1[i])
+    
             # Set object's start and goal states
             objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
             objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos

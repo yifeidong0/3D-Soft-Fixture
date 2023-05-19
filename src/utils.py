@@ -25,10 +25,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='StarfishBowl', \
+    parser.add_argument('-c', '--scenario', default='BimanualRubic', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishBowl', 'HookFishHole', 'ShovelFish'], \
+                 'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -46,17 +46,19 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Starfish', \
+    parser.add_argument('-j', '--object', default='Rubic', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
-                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock'], \
+                 'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
+                 'Rubic', ], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='LeftHandAndBowl', \
+    parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
-                 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'Hand'], \
+                 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
+                 'ShadowHand'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=15, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=28, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -83,6 +85,7 @@ def path_collector():
             'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated.urdf',
+            'ShadowHand': 'models/sr_description/hand/xacro/hand_c.urdf.xacro',
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
@@ -100,9 +103,10 @@ def path_collector():
             '2Dlock': 'models/2Dsnap-lock/snap-lock.urdf',
             '2Dkey': 'models/2Dsnap-lock/p3-vhacd.obj',
             'Radish': 'models/radish/radish.stl',
-            'Hand': 'models/hand/hand-d-vhacd.obj',
+            'LeftHand': 'models/hand/hand-d-vhacd.obj',
             'Shovel': 'models/shovel/shovel-d-vhacd.obj',
             'LeftHandAndBowl': 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj',
+            'Rubic': 'models/rubic-cube/rubic.urdf',
             }
 
 def texture_path_list():
@@ -115,7 +119,7 @@ def texture_path_list():
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
-            'Hand', 'Shovel', 'LeftHandAndBowl']
+            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red

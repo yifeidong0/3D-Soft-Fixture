@@ -126,6 +126,13 @@ def record_dynamics_scene(sce, args):
     elif args.scenario in ['StarfishBowl']:
         headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z', 'box_eul_x', 'box_eul_y', 'box_eul_z',]
         headers = headersObj + headersObs + headersBox
+    elif args.scenario in ['BimanualRubic']:
+        obsJointNum = sce.numJoints
+        headerObsJoint = []
+        for j in range(obsJointNum):
+            headerObsJoint.append('obs_joint_{}_pos'.format(j))
+
+        headers = headersObj + (headersObs+headerObsJoint)*2
 
     # write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
@@ -151,6 +158,11 @@ def record_dynamics_scene(sce, args):
                 sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
                 sce.boxBasePosSce[i], sce.boxBaseEulSce[i]               
                 ])
+        elif args.scenario in ['BimanualRubic']:
+            data = flatten_nested_list([
+                [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i], sce.objJointPosSce[i], 
+                 sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], sce.obsJointPosSce[i],
+                 sce.obsBasePosSce1[i], sce.obsBaseQtnSce1[i], sce.obsJointPosSce1[i], ])
 
         with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)

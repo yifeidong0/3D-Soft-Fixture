@@ -1,0 +1,25 @@
+<robot name="my_robot">
+
+  <link name="tail">
+    <inertial>
+      <mass value="0.01" />
+      <origin xyz="0 0 0." />
+      <inertia ixx="50.0" ixy="0.0" ixz="0.0"
+        iyy="50.0" iyz="0.0"
+        izz="50.0" />
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0."/>
+      <geometry>
+        <box size="0.835 0.835 0.835" /> 
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.835 0.835 0.835" />
+      </geometry>
+    </collision>
+  </link>
+
+</robot>

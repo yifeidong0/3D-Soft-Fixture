@@ -489,22 +489,13 @@ from utils import *
 from cagingSearchAlgo import *
 from pbOmplInterface import *
 
-# p.connect(p.GUI)
-# # p.setGravity(0, 0, -9.8)
-# p.setTimeStep(1./240.)
-# p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-# p.setRealTimeSimulation(0)
-# # id2 = p.loadURDF("sphere_1cm.urdf",[0,0,1], globalScaling=150)
-# id2 = p.loadURDF("plane.urdf",[0,0,1], globalScaling=1)
 
 args, parser = argument_parser()
-# basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
 
 # create caging environment and items in pybullet
 if args.object in get_non_articulated_objects():
     env = RigidObjectCaging(args)
-    env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
+    env.add_obstacles(scale=[10]*3, pos=[3,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
 
 elif args.object == 'Fish':
     objScale = 1
@@ -576,6 +567,21 @@ if args.object == 'Snaplock':
         axiscreator(env.robot.id, linkId = 0) # first joint pose is displayed
 
         print(env.pb_ompl_interface.is_state_valid(start))
+        # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
+        i += 1
+        sleep(.03)
+
+elif args.object in get_non_articulated_objects():
+    while (1):
+        i=60
+        p.stepSimulation()
+        start = [0,0,1.8-0.01*i,0,0,1.57]
+        # start = [0,0-0.01*i,2,0,0,1.57]+[0-0.01*i]
+        env.robot.set_state(start)
+        # axiscreator(env.robot.id, linkId = -1)
+        # axiscreator(env.robot.id, linkId = 0) # first joint pose is displayed
+
+        # print(env.pb_ompl_interface.is_state_valid(start))
         # goal = [0.5,.5,.1,0,i*np.pi/60,0] + [0,0]*numCtrlPoint
         i += 1
         sleep(.03)

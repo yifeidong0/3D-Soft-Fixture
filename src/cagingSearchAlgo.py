@@ -66,8 +66,8 @@ class RigidObjectCaging():
         
         return True # bounds valid check passed
 
-    def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None, rigidObstacleName=None):
-        if rigidObstacleName is None:
+    def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None, obstacleName=None):
+        if obstacleName is None:
             if self.args.obstacle in ['Box']:
                 # if self.args.object in ['Rope']:
                 self.add_box([0, 0, .7], [.7, .7, 0.2]) # add bottom
@@ -103,17 +103,17 @@ class RigidObjectCaging():
                 )
                 self.obstacles.append(self.obstacle_id)
 
-            elif self.args.obstacle in ['3fGripper']:
+            elif self.args.obstacle in ['3fGripper', 'ShadowHand']:
                 self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
                                             pos, qtn, globalScaling=scale[0])
                 self.obstacle = obstascle3fGripper(self.obstacle_id)
                 # self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
                 self.obstacles.append(self.obstacle_id)
-        else:
+        elif obstacleName in self.rigidObjList:
             # Upload the mesh data to PyBullet and create a static object
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
-                fileName=self.paths[rigidObstacleName],
+                fileName=self.paths[obstacleName],
                 meshScale=scale,
                 flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
             )
@@ -124,6 +124,11 @@ class RigidObjectCaging():
                 baseOrientation=qtn,
             )
             self.obstacles.append(self.obstacle_id_new)
+        elif obstacleName in ['3fGripper']:
+            self.obstacle_id1 = p.loadURDF(self.paths[self.args.obstacle], 
+                                        pos, qtn, globalScaling=scale[0])
+            self.obstacle1 = obstascle3fGripper(self.obstacle_id1)
+            self.obstacles.append(self.obstacle_id1)
 
     def add_box(self, box_pos, half_box_size, box_qtn=list(p.getQuaternionFromEuler([0,0,0]))):
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)

@@ -299,3 +299,4 @@ class obstascle3fGripper(ObjectFromUrdf):
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
+        print('@@@@@@@@@self.joint_bounds', self.joint_bounds)
