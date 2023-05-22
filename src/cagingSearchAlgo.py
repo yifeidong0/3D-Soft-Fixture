@@ -413,6 +413,7 @@ class RopeCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
+        # NODE COLLISION TEST
         for i in range(self.numCtrlPoint+2): # number of nodes
            self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.01)) # '1cm': diameter
         self.robot = objectRope(self.object_id, self.numCtrlPoint, self.linkLen)
@@ -429,6 +430,40 @@ class RopeCaging(RigidObjectCaging):
         if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
             print('The start or goal states violates search boundary conditions!')
             return False 
+        
+        return True # bounds valid check passed
+
+
+class LoopChainCaging(RigidObjectCaging):
+    def __init__(self, args, numCtrlPoint, linkLen, start, goal):
+        self.args = args
+        self.numCtrlPoint = numCtrlPoint
+        self.start = start
+        self.goal = goal
+        self.linkLen = linkLen
+        self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
+
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)
+        p.setTimeStep(1./240.)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+        self.load_object()
+        self.reset_start_and_goal(start, goal)
+
+    def load_object(self):
+        """Load object for caging."""
+        self.paths = path_collector()
+        self.object_id = []
+        self.robot = objectLoopChain(self.object_id, self.numCtrlPoint, self.linkLen)
+
+    def reset_start_and_goal(self, start=None, goal=None):
+        self.start = start
+        self.goal = goal
         
         return True # bounds valid check passed
 

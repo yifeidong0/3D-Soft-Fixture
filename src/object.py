@@ -268,10 +268,47 @@ class objectRope(ObjectFromUrdf):
             visualizeWorkSpaceBound(basePosBounds)
     
     def set_state(self, state):
+        # NODE COLLISION TEST
         self.nodesPositions, _ = ropeForwardKinematics(state, self.linkLen)
         for i in range(len(self.id)):
             p.resetBasePositionAndOrientation(self.id[i], self.nodesPositions[i], self.zeroQuaternion)
 
+        self.state = state
+
+
+class objectLoopChain(ObjectFromUrdf):
+    '''
+    A rope composed of base (6 DoF) and several control points (3n DoF).
+    '''
+    def __init__(self, id, numCtrlPoint, linkLen) -> None:
+        self.id = id # a list of spheres' IDs
+        self.numCtrlPoint = numCtrlPoint
+        self.numLink = numCtrlPoint + 3
+        self.linkLen = linkLen
+        self.baseDof = 6
+        self.ctrlPointDof = 2
+        self.joint_idx = []
+        self.num_dim = self.baseDof + self.ctrlPointDof*self.numCtrlPoint + 1 # 6+2n
+        self.nodesPositions = None
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
+        # self.set_search_bounds()
+
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+        self.joint_bounds = basePosBounds # base pos
+        for i in range(3): # 3 base rotation euler
+            self.joint_bounds.append([math.radians(-180), math.radians(180)])
+        # lbound, ubound = 360 / (self.numLink+1), 360 / (self.numLink-1) 
+        bound = 360/(self.numCtrlPoint+3)+15
+        for i in range(self.ctrlPointDof*self.numCtrlPoint): # 2n joint rot
+            self.joint_bounds.append([math.radians(-bound), math.radians(bound)])
+        self.joint_bounds.append([math.radians(-180), math.radians(180)]) # last element that guarantees loop closure
+
+        # Visualize Workspace boundaries
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
+    
+    def set_state(self, state):
         self.state = state
 
 
@@ -299,4 +336,4 @@ class obstascle3fGripper(ObjectFromUrdf):
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
-        print('@@@@@@@@@self.joint_bounds', self.joint_bounds)
+        # print('@@@@@@@@@self.joint_bounds', self.joint_bounds)

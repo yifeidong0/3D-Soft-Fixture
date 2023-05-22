@@ -71,6 +71,44 @@ class RopePotentialObjective(ob.OptimizationObjective):
             return ob.Cost(max(cost1.value(), cost2.value()))
 
 
+class ChainPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, linkLen):
+        super(ChainPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.linkLen_ = linkLen
+
+        self.incrementalCost = 0
+        self.numStateSpace_ = len(start)
+        self.baseDof_ = 6
+        self.ctrlPointDof_ = 2
+        self.numCtrlPoint_ = int((self.numStateSpace_-self.baseDof_-1) / self.ctrlPointDof_)
+        self.handBagMass_ = 1
+        self.g_ = 9.81
+        self.bagHalfDiag = .5
+
+        self.startStateEnergy = self.stateEnergy(self.start_)
+
+    def stateEnergy(self, state):
+        energyGravity = self.handBagMass_ * self.g_ * (state[2]-self.bagHalfDiag)
+        return energyGravity
+    
+    def motionCost(self, state1, state2):
+        # RealVectorStateInternal to list
+        state2 = [state2[i] for i in range(self.numStateSpace_)]
+        if self.incrementalCost:
+            state1 = [state1[i] for i in range(self.numStateSpace_)]
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+
+    def combineCosts(self, cost1, cost2):
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
+
+
 class ElasticBandPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):
         super(ElasticBandPotentialObjective, self).__init__(si)
@@ -274,7 +312,6 @@ class FishPotentialObjective(ob.OptimizationObjective):
         linkPosesInBase = list(linkPosesInBase.values()) # list of kinpy.Transforms
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights
-        print('@@@@@@@linkZsInWorld', linkZsInWorld)
         
         # get links' gravitational potential energy
         linkEnergies = [linkZsInWorld[i] * self.masses[i] for i in range(self.numLinks)]
@@ -350,7 +387,6 @@ class StarfishPotentialObjective(ob.OptimizationObjective):
         linkPositionsInBase = [np.array(np.concatenate((i.pos,self.o))).reshape((4,1)) for i in linkPosesInBase]
         linkZsInWorld = [float(baseTInWorld @ j) for j in linkPositionsInBase] # list of links' heights, 11 links
         armZsInWorld = [2*(linkZsInWorld[2*i+1]-linkZsInWorld[0])+linkZsInWorld[0] for i in range(self.numArms)]
-        # print('@@@@@@armZsInWorld', armZsInWorld, linkZsInWorld[0])
 
         # get links' gravitational potential energy
         linkEnergies = [armZsInWorld[i] * self.masses[i+1] for i in range(self.numArms)] # mh of starfish arms
@@ -380,6 +416,7 @@ class StarfishPotentialObjective(ob.OptimizationObjective):
             return ob.Cost(cost1.value() + cost2.value())
         else:
             return ob.Cost(max(cost1.value(), cost2.value()))
+
 
 class SnaplockPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):

@@ -53,12 +53,20 @@ if __name__ == '__main__':
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     elif args.object == 'Rope':
-        numCtrlPoint = 6
-        linkLen = 0.2
-        start = [0,0,.7,1.57,0,0] + [0,0]*numCtrlPoint
-        goal = [0,0,.1,0,0,0] + [0,0]*numCtrlPoint
+        numCtrlPoint = 4
+        linkLen = 0.3
+        start = [0,0,.7,1.57,0,0] + [math.radians(360/(numCtrlPoint+1)),0]*numCtrlPoint
+        goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+1)),0]*numCtrlPoint
         env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bucket
+    elif args.object == 'LoopChain':
+        numCtrlPoint = 4 # numCtrlPoint+3 links
+        linkLen = 0.7
+        start = [-.5,0.3,1.,1.,0,1.57] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
+        goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
+        env = LoopChainCaging(args, numCtrlPoint, linkLen, start, goal)
+        env.robot.set_search_bounds(vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 3]])
+        env.add_obstacles(scale=[10]*3, pos=[0,-1,2.5], qtn=p.getQuaternionFromEuler([0, -1.57, 0])) # 3fGripper
     elif args.object == 'Jelly':
         numCtrlPoint = 4
         l = 1

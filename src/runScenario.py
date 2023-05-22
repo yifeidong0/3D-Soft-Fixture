@@ -151,7 +151,7 @@ class runScenario():
                 self.basePosBounds = [[-2,2], [-2,2], [0,4]]
                 self.goalCoMPose = [0,1,0.01] + [0]*3
                 self.endFrame = 4000
-                self.downsampleRate = 400
+                self.downsampleRate = 10
 
     def loadObject(self):
         # p.changeDynamics(bowl, -1, mass=0)

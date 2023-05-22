@@ -10,6 +10,7 @@ from itertools import product, combinations, count
 import argparse
 import math
 import numpy as np
+from numpy import linalg as LA
 import time
 from itertools import product
 
@@ -46,19 +47,19 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Rubic', \
+    parser.add_argument('-j', '--object', default='LoopChain', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
-                 'Rubic', ], \
+                 'Rubic', 'LoopChain'], \
         help='(Optional) Specify the object to cage.')
 
     parser.add_argument('-l', '--obstacle', default='3fGripper', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
-                 'ShadowHand'], \
+                 'ShadowHand', 'Bucket'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=28, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=8, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -406,6 +407,14 @@ def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,
     # is_collision = False
     nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
 
+    # # For loop chain, last node roughly coincides with the first
+    # coincideTolerance=0.2
+    # node0 = np.asarray(nodePositionsInWorld[0])
+    # node1 = np.asarray(nodePositionsInWorld[-1])
+    # if LA.norm(node1-node0) > coincideTolerance:
+    #     notALoop = True
+    #     return notALoop
+
     # Construct start and end positions of rays
     rayFromPositions = nodePositionsInWorld[:-1]
     rayToPositions = nodePositionsInWorld[1:]
@@ -424,14 +433,56 @@ def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,
             else: # in collision
                 p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
 
-    # for i in range(len(results)):
-    #     hitObjectUid = results[i][0]
-    #     if (hitObjectUid < 0): # collision free
-    #         p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.07) if visRays else None
-    #     else: # collision
-    #         # hitPosition = results[i][3]
-    #         p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.07) if visRays else None
-    #         is_collision = True
+    return collisionExists
+
+def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    '''
+    Description:
+        check if the lines connecting any two adjacent control points along a chain loop penetrate obstacles.
+        Pybullet Raycast method applied here.
+    Input: 
+        state: list of planner state vector, length is 6+2*numCtrlPoint+1
+    '''
+    # Run rope forward kinematics and retrive nodes
+    nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
+
+    # For loop chain, last node roughly coincides with the first
+    node0 = np.asarray(nodePositionsInWorld[0])
+    node_2 = np.asarray(nodePositionsInWorld[-1]) # node[-2]
+    normal_vector = node_2-node0
+    if LA.norm(normal_vector) > 2*linkLen: # not possible forming a loop
+        notALoop = True
+        return notALoop
+    
+    # Find the position of the last node (node[-1]) in the chain
+    mid = (node0 + node_2) / 2
+    radius = np.sqrt(linkLen**2 - LA.norm(((node0-node_2)/2)**2))
+    node_1 = points_on_circle(radius, mid, normal_vector, state[-1]) # list[3]
+
+    # Make sure the base node is the lowest
+    rayFromPositions = nodePositionsInWorld + [node_1]
+    nodesZs = [rayFromPositions[i][2] for i in range(len(rayFromPositions))]
+    baseNodeHeightBool = [nodesZs[0] <= z for z in nodesZs[1:]]
+    if baseNodeHeightBool.count(False) > 0:
+        baseNodeNotLowest = True
+        return baseNodeNotLowest
+    
+    # Construct start and end positions of rays
+    rayToPositions = nodePositionsInWorld[1:] + [node_1, nodePositionsInWorld[0]]
+    results = p.rayTestBatch(rayFromPositions, rayToPositions)
+
+    # Check if any ray hits obstacles
+    hitObjectUids = [results[i][0] for i in range(len(results))]
+    idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
+    collisionExists = (idMask.count(True) > 0)
+
+    # Visualize the rope after running the planner
+    if visRays:
+        for i,idNonNegative in enumerate(idMask):
+            if (not idNonNegative): # collision free
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1)
+            else: # in collision
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
 
     return collisionExists
 
@@ -584,4 +635,31 @@ def getGravityEnergy(state, args, path):
     energyGravity = g * sum(linkEnergies) # sigma(g * m_i * z_i)
     
     return energyGravity
+
+
+'''Given a point on a plane, find a goal on the circle centered at the point with a given radius.
+'''
+def points_on_circle(radius, center, normal_vector, theta):
+    # Normalize the normal vector
+    normal_vector = np.array(normal_vector).astype(float)
+    normal_vector /= np.linalg.norm(normal_vector)
+
+    # Generate an orthogonal vector to the normal vector
+    v1 = np.cross(normal_vector, [1, 0, 0])
+    if np.linalg.norm(v1) == 0:
+        v1 = np.cross(normal_vector, [0, 1, 0])
+
+    # Calculate another orthogonal vector to the normal vector and v1
+    v2 = np.cross(normal_vector, v1)
+
+    # Normalize v1 and v2
+    v1 /= np.linalg.norm(v1)
+    v2 /= np.linalg.norm(v2)
+
+    # Generate points on the circle
+    x = center[0] + radius * (v1[0] * np.cos(theta) + v2[0] * np.sin(theta))
+    y = center[1] + radius * (v1[1] * np.cos(theta) + v2[1] * np.sin(theta))
+    z = center[2] + radius * (v1[2] * np.cos(theta) + v2[2] * np.sin(theta))
+
+    return [x,y,z]
       

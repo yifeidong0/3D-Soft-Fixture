@@ -111,33 +111,37 @@ class PbOMPL():
             
         # Scenarios with a rope
         elif self.args.object in ["Rope"]:
+            # NODE COLLISION TEST
             # Check if nodes of rope in collision
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
-                    # print('nodes of rope in collision')
                     return False
-            
             for i in range(len(self.robot.id)):
                 p.resetBasePositionAndOrientation(self.robot.id[i], self.nodeAwayPos, self.robot.zeroQuaternion)
     
             # Check if links between nodes in collision
             if utils.rope_collision_raycast(stateList, self.robot.linkLen):
-                # print('links between nodes in collision')
+                return False
+            
+        # Scenarios with a loop chain
+        elif self.args.object in ["LoopChain"]:
+            # Check if links between nodes in collision
+            if utils.chain_collision_raycast(stateList, self.robot.linkLen):
                 return False
         
         # Other scenarios with URDF collision bodies
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
-                    # print('@@@@ STATE INVALID!')
                     return False
-              
+
         return True
 
     def setup_collision_detection(self, self_collisions = False, allow_collision_links=[]):
-        if self.args.object in ["Band", "Rope"]:
+        if self.args.object in ["Rope"]:
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
+            # print('@@@@@@@self.rope', self.robot.id, ) # ID: 0,...,numNode-1
         else:
             self.check_link_pairs = utils.get_self_link_pairs(self.robot.id, self.robot.joint_idx) if self_collisions else []
             # moving_links = frozenset(
@@ -232,6 +236,8 @@ class PbOMPL():
                 self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
+            elif self.args.object == "LoopChain":
+                self.potentialObjective = objective.ChainPotentialObjective(self.si, start, self.robot.linkLen)
             elif self.args.object == "2Dlock":
                 self.potentialObjective = objective.SnapLock2DPotentialObjective(self.si, start, self.args)
             self.pdef.setOptimizationObjective(self.potentialObjective)
@@ -322,6 +328,8 @@ class PbOMPL():
                     utils.band_collision_raycast(q, visRays=1)
                 elif self.args.object == 'Rope':
                     utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
+                elif self.args.object == 'LoopChain':
+                    utils.chain_collision_raycast(q, self.robot.linkLen, visRays=1)
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)
             p.stepSimulation()
