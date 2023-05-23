@@ -434,7 +434,7 @@ class RopeCaging(RigidObjectCaging):
         return True # bounds valid check passed
 
 
-class LoopChainCaging(RigidObjectCaging):
+class ChainCaging(RigidObjectCaging):
     def __init__(self, args, numCtrlPoint, linkLen, start, goal):
         self.args = args
         self.numCtrlPoint = numCtrlPoint
@@ -459,7 +459,7 @@ class LoopChainCaging(RigidObjectCaging):
         """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        self.robot = objectLoopChain(self.object_id, self.numCtrlPoint, self.linkLen)
+        self.robot = objectChain(self.object_id, self.numCtrlPoint, self.linkLen)
 
     def reset_start_and_goal(self, start=None, goal=None):
         self.start = start

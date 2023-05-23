@@ -46,43 +46,43 @@ class runScenario():
 
     def initializeParams(self):
         match self.args.scenario:
-            case 'FishFallsInBowl':
-                self.object = 'Fish'
-                self.objectPos = [.7,-.9,3.8]
-                # self.objectEul = [0,0.,0.]
-                self.objectEul = [0,0.5,0.8]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'Bowl'
-                self.obstaclePos = [-0., 0., 0]
-                self.obstacleEul = [0, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1, 1, 1]
-                self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
-                self.goalCoMPose = [0,0,0.01] + [0]*3
-            case 'HookTrapsRing':
-                self.object = 'Ring'
-                self.objectPos = [1.3,-.1,3.4]
-                self.objectQtn = [0,1,0,1]
-                self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
-                self.obstacle = 'Hook'
-                self.obstaclePos = [0, 0, 2]
-                self.obstacleEul = [1.57, -0.3, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]]
-                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
-            case 'GripperClenchesStarfish':
-                self.object = 'Starfish'
-                self.objectPos = [.1,.1,2.3]
-                self.objectEul = [-1.57, -2.57, -0.5]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
-                self.obstacle = '3fGripper'
-                self.obstaclePos = [0, 0, 1]
-                self.obstacleEul = [1.57, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = 10.0 # float for loadURDF globalScaling
-                self.basePosBounds=[[-2,2], [-2,2], [-.5,3]]
-                self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
+            # case 'FishFallsInBowl':
+            #     self.object = 'Fish'
+            #     self.objectPos = [.7,-.9,3.8]
+            #     # self.objectEul = [0,0.,0.]
+            #     self.objectEul = [0,0.5,0.8]
+            #     self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+            #     self.obstacle = 'Bowl'
+            #     self.obstaclePos = [-0., 0., 0]
+            #     self.obstacleEul = [0, 0, 0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = [1, 1, 1]
+            #     self.basePosBounds = [[-2,2], [-2,2], [0,3]] # searching bounds
+            #     self.goalCoMPose = [0,0,0.01] + [0]*3
+            # case 'HookTrapsRing':
+            #     self.object = 'Ring'
+            #     self.objectPos = [1.3,-.1,3.4]
+            #     self.objectQtn = [0,1,0,1]
+            #     self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+            #     self.obstacle = 'Hook'
+            #     self.obstaclePos = [0, 0, 2]
+            #     self.obstacleEul = [1.57, -0.3, 0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = [.1,.1,.1]
+            #     self.basePosBounds=[[-2,2], [-2,2], [0,3.5]]
+            #     self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+            # case 'GripperClenchesStarfish':
+            #     self.object = 'Starfish'
+            #     self.objectPos = [.1,.1,2.3]
+            #     self.objectEul = [-1.57, -2.57, -0.5]
+            #     self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
+            #     self.obstacle = '3fGripper'
+            #     self.obstaclePos = [0, 0, 1]
+            #     self.obstacleEul = [1.57, 0, 0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = 10.0 # float for loadURDF globalScaling
+            #     self.basePosBounds=[[-2,2], [-2,2], [-.5,3]]
+            #     self.goalCoMPose = [0,0,-0.4] + [1.57, 0, 0]
             case 'HookFishHole':
                 self.object = 'FishHole'
                 self.objectPos = [.0,-.4,1.4]
@@ -152,11 +152,31 @@ class runScenario():
                 self.goalCoMPose = [0,1,0.01] + [0]*3
                 self.endFrame = 4000
                 self.downsampleRate = 10
+            case 'HandbagGripper':
+                self.object = 'Chain'
+                self.numCtrlPoint = 4
+                self.linkLen = 0.8
+                self.objectPos = [-.5,0.3,.85]
+                self.objectEul = [1,0,1.57]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
+                self.objectJointPos = [math.radians(360/(self.numCtrlPoint+3)-1),0]*self.numCtrlPoint + [0]
+                self.objectStart = self.objectPos + self.objectEul + self.objectJointPos
+                self.objectGoal = [0,0,.1,] + [0,1.57,0] + self.objectJointPos
+                self.obstacle = '3fGripper'
+                self.obstaclePos = [0,-.5,2.2]
+                self.obstacleEul = [-1.57, -2, 1.57]
+                # self.obstaclePos = [0,-1,2.5]
+                # self.obstacleEul = [0, -1.57, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [10.0,]*3
+                self.basePosBounds = [[-2,2], [-2,2], [0,3]]
+                self.goalCoMPose = [0,0,.1,] + [0,1.57,0] ###
+                self.endFrame = 150
+                self.downsampleRate = 30
 
     def loadObject(self):
-        # p.changeDynamics(bowl, -1, mass=0)
-        self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
-        # self.object = ObjectFromUrdf(self.objectId)
+        if self.args.object not in ['Chain']:
+            self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
 
     def loadObstacle(self):
         obst = self.args.obstacle
@@ -280,6 +300,57 @@ class runScenario():
 
         # quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
+
+    def runHandbagGripper(self):
+        '''For the task of a gripper grabbing a handbag.'''
+        self.obstaclePose = self.obstaclePos + self.obstacleEul
+
+        # Set initial joint states - hand
+        jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
+        self.numJoints = len(jointPositions)
+        # obstacleJointPos = [jointPositions[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
+        obstacleState = self.obstaclePose + jointPositions
+        self.obstacle.set_state(obstacleState)
+
+        # start simulation
+        i = 0
+        while (1):
+            print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            # time.sleep(.5/240.)
+
+            i_thres = [1400,4000]
+            if i < i_thres[0]:
+                increment_obs = [0,0,0,] + [0,0,0.] + [0,0.005,0,0]*3 # + [0]*4
+            elif i < i_thres[1]:
+                increment_obs = [0,0,0,] + [0,0,0] + self.numJoints*[0]
+    
+            # Get obstacle joint positions - hand
+            curr_state_obs = self.obstacle.get_cur_state() if i>0 else obstacleState
+            new_state_left = [curr_state_obs[k]+increment_obs[k] for k in range(len(curr_state_obs))]
+            self.obstacle.set_state(new_state_left)
+
+            print('STATE IS INVALID',  chain_collision_raycast(self.objectStart, self.linkLen, visRays=1))
+
+            if i % self.downsampleRate == 0:
+                # Record obstacle state - hand
+                self.obsJointPosSce.append(new_state_left[6:])
+                self.obsBasePosSce.append(new_state_left[:3])
+                self.obsBaseEulSce.append(new_state_left[3:6])
+                self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_left[3:6])))
+
+                # Record empty object state
+                self.objBasePosSce.append(self.objectPos)
+                self.objBaseQtnSce.append(self.objectQtn)
+                self.objBaseEulSce.append(self.objectEul)
+                self.objJointPosSce.append(self.objectJointPos)
+                self.idxSce.append(i)
+            
+            if i == self.endFrame:
+                p.disconnect()
+                break
+            i += 1
 
     def runHookFish(self):
         '''For the tasks of hooking fish'''
@@ -520,19 +591,19 @@ class runScenario():
 
             i_thres = [1000,2000]
             if i < i_thres[0]:
-                increment_left = [0,0,0,] + [0,0,0] + self.numJoints*[0]
+                increment_obs = [0,0,0,] + [0,0,0] + self.numJoints*[0]
                 increment_right = [0,0,-0.001,] + [0.0,0,0] + self.numJoints*[0]
             elif i < i_thres[1]:
                 alpha = (i-i_thres[0]) / (i_thres[1]-i_thres[0]) * 1.57
-                increment_left = [0,-1.57e-3*np.cos(alpha),1.57e-3*np.sin(alpha),] + [-1.57e-3,0,0] + self.numJoints*[0]
+                increment_obs = [0,-1.57e-3*np.cos(alpha),1.57e-3*np.sin(alpha),] + [-1.57e-3,0,0] + self.numJoints*[0]
                 increment_right = [0,1.57e-3*np.cos(alpha),-1.57e-3*np.sin(alpha),] + [0,1.57e-3,0] + [0,]*8 + [0,0.0001,0,0]
             else:
-                increment_left = [0,-0.000,0.000,] + [-0.000,0,0] + self.numJoints*[0]
+                increment_obs = [0,-0.000,0.000,] + [-0.000,0,0] + self.numJoints*[0]
                 increment_right = [0,0.000,-0.000,] + [0,0.000,0] + [0,-0.00055,0,0] + [0,-0.00055,0,0] + [0,0.000,0,0]
     
             # Get obstacle joint positions - left hand
             curr_state_left = self.obstacle.get_cur_state() if i>0 else obstacleState
-            new_state_left = [curr_state_left[k]+increment_left[k] for k in range(len(curr_state_left))]
+            new_state_left = [curr_state_left[k]+increment_obs[k] for k in range(len(curr_state_left))]
             self.obstacle.set_state(new_state_left)
 
             # Get obstacle joint positions - right hand
@@ -570,6 +641,7 @@ class runScenario():
         # quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
+
 if __name__ == '__main__':
     for n in range(1):
         args, parser = argument_parser()
@@ -580,10 +652,7 @@ if __name__ == '__main__':
         sce = runScenario(args)
         if args.scenario in ['FishFallsInBowl', 'HookTrapsRing',]:
             sce.runDynamicFalling()
-
-            # Record object state space data for Blender
             record_state_data_for_blender(sce, args)
-
         elif args.scenario in ['HookFishHole']:
             sce.runHookFish()
             record_dynamics_scene(sce, args)
@@ -598,10 +667,14 @@ if __name__ == '__main__':
             record_dynamics_scene(sce, args)
         elif args.scenario in ['GripperClenchesStarfish']:
             sce.runClenchFist()
+        elif args.scenario in ['HandbagGripper']:
+            sce.runHandbagGripper()
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
             env = RigidObjectCaging(args)
+        elif args.object in ['Chain']:
+            env = ChainCaging(args, sce.numCtrlPoint, sce.linkLen, sce.objectStart, sce.objectGoal)
         else:
             objScale = 1
             env = ArticulatedObjectCaging(args, objScale)
@@ -609,6 +682,7 @@ if __name__ == '__main__':
         # Set searching bounds and add obstacles
         env.robot.set_search_bounds(basePosBounds=sce.basePosBounds)
         env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
+        # Add extra obstacles
         if args.scenario in ['HookFishHole']:
             box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
         elif args.scenario in ['ShovelFish']:
@@ -648,11 +722,17 @@ if __name__ == '__main__':
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
                 env.obstacle1._set_joint_positions(env.obstacle1.joint_idx, sce.obsJointPosSce1[i]) # right hand
                 p.resetBasePositionAndOrientation(env.obstacle_id1, sce.obsBasePosSce1[i], sce.obsBaseQtnSce1[i])
-    
+            if args.scenario in ['HandbagGripper']:
+                env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+
             # Set object's start and goal states
             objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
             objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos
-            objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
+            if args.object in ['Chain']:
+                objGoalState = sce.objectGoal
+            else:
+                objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
             env.reset_start_and_goal(objStartState, objGoalState)
             # if not isValidStartAndGoal: # start or goal state invalid
             #     continue

@@ -26,10 +26,10 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='BimanualRubic', \
+    parser.add_argument('-c', '--scenario', default='HandbagGripper', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic'], \
+                 'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
@@ -47,10 +47,10 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='LoopChain', \
+    parser.add_argument('-j', '--object', default='Chain', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
-                 'Rubic', 'LoopChain'], \
+                 'Rubic', 'Chain'], \
         help='(Optional) Specify the object to cage.')
 
     parser.add_argument('-l', '--obstacle', default='3fGripper', \
@@ -466,7 +466,7 @@ def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0
     if baseNodeHeightBool.count(False) > 0:
         baseNodeNotLowest = True
         return baseNodeNotLowest
-    
+
     # Construct start and end positions of rays
     rayToPositions = nodePositionsInWorld[1:] + [node_1, nodePositionsInWorld[0]]
     results = p.rayTestBatch(rayFromPositions, rayToPositions)
@@ -477,13 +477,15 @@ def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0
     collisionExists = (idMask.count(True) > 0)
 
     # Visualize the rope after running the planner
+    # 0.116sec runtime...
     if visRays:
         for i,idNonNegative in enumerate(idMask):
             if (not idNonNegative): # collision free
                 p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1)
             else: # in collision
                 p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
-
+    # t4 = time.time()
+    # print(t4-t3)
     return collisionExists
 
 def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):

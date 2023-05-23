@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 500
+INTERPOLATE_NUM = 20
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -124,7 +124,7 @@ class PbOMPL():
                 return False
             
         # Scenarios with a loop chain
-        elif self.args.object in ["LoopChain"]:
+        elif self.args.object in ["Chain"]:
             # Check if links between nodes in collision
             if utils.chain_collision_raycast(stateList, self.robot.linkLen):
                 return False
@@ -236,7 +236,7 @@ class PbOMPL():
                 self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
-            elif self.args.object == "LoopChain":
+            elif self.args.object == "Chain":
                 self.potentialObjective = objective.ChainPotentialObjective(self.si, start, self.robot.linkLen)
             elif self.args.object == "2Dlock":
                 self.potentialObjective = objective.SnapLock2DPotentialObjective(self.si, start, self.args)
@@ -328,7 +328,7 @@ class PbOMPL():
                     utils.band_collision_raycast(q, visRays=1)
                 elif self.args.object == 'Rope':
                     utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
-                elif self.args.object == 'LoopChain':
+                elif self.args.object == 'Chain':
                     utils.chain_collision_raycast(q, self.robot.linkLen, visRays=1)
                 elif self.args.object == 'Jelly':
                     utils.jelly_collision_raycast(q, visRays=1)

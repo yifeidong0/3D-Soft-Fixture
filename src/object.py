@@ -126,6 +126,7 @@ class ObjectFromUrdf(ObjectBase):
         # r = R.from_euler('zyx', eulerRot, degrees=False)
         # quat = r.as_quat()
         quat = p.getQuaternionFromEuler(eulerRot)
+        print(quat)
         p.resetBasePositionAndOrientation(self.id, pos, quat)
         self._set_joint_positions(self.joint_idx, state[6:])
 
@@ -276,7 +277,7 @@ class objectRope(ObjectFromUrdf):
         self.state = state
 
 
-class objectLoopChain(ObjectFromUrdf):
+class objectChain(ObjectFromUrdf):
     '''
     A rope composed of base (6 DoF) and several control points (3n DoF).
     '''

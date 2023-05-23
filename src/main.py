@@ -59,12 +59,12 @@ if __name__ == '__main__':
         goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+1)),0]*numCtrlPoint
         env = RopeCaging(args, numCtrlPoint, linkLen, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,.5], qtn=p.getQuaternionFromEuler([0, 0, 0])) # bucket
-    elif args.object == 'LoopChain':
+    elif args.object == 'Chain':
         numCtrlPoint = 4 # numCtrlPoint+3 links
         linkLen = 0.7
         start = [-.5,0.3,1.,1.,0,1.57] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
         goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
-        env = LoopChainCaging(args, numCtrlPoint, linkLen, start, goal)
+        env = ChainCaging(args, numCtrlPoint, linkLen, start, goal)
         env.robot.set_search_bounds(vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 3]])
         env.add_obstacles(scale=[10]*3, pos=[0,-1,2.5], qtn=p.getQuaternionFromEuler([0, -1.57, 0])) # 3fGripper
     elif args.object == 'Jelly':
@@ -86,6 +86,7 @@ if __name__ == '__main__':
 
     # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
     env.create_ompl_interface()
+    print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
     
     # Choose from different searching methods
     if args.search == 'BisectionSearch':
