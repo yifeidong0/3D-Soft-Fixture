@@ -161,7 +161,8 @@ class runScenario():
                 self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
                 self.objectJointPos = [math.radians(360/(self.numCtrlPoint+3)-1),0]*self.numCtrlPoint + [0]
                 self.objectStart = self.objectPos + self.objectEul + self.objectJointPos
-                self.objectGoal = [0,0,.1,] + [0,1.57,0] + self.objectJointPos
+                self.goalCoMPose = [0,0,.1,] + [0,1.57,0]
+                self.objectGoal = self.goalCoMPose + self.objectJointPos
                 self.obstacle = '3fGripper'
                 self.obstaclePos = [0,-.5,2.2]
                 self.obstacleEul = [-1.57, -2, 1.57]
@@ -170,9 +171,8 @@ class runScenario():
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [10.0,]*3
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]]
-                self.goalCoMPose = [0,0,.1,] + [0,1.57,0] ###
-                self.endFrame = 150
-                self.downsampleRate = 30
+                self.endFrame = 330
+                self.downsampleRate = 1
 
     def loadObject(self):
         if self.args.object not in ['Chain']:
@@ -314,37 +314,47 @@ class runScenario():
 
         # start simulation
         i = 0
+        new_state_chain = self.objectStart
         while (1):
             print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            # time.sleep(.5/240.)
+            # time.sleep(20/240.)
 
-            i_thres = [1400,4000]
+            i_thres = [150,400]
             if i < i_thres[0]:
                 increment_obs = [0,0,0,] + [0,0,0.] + [0,0.005,0,0]*3 # + [0]*4
+                increment_chain = [0,0,-0,] + [0,0,0] + [0]*len(self.objectStart[6:])
             elif i < i_thres[1]:
-                increment_obs = [0,0,0,] + [0,0,0] + self.numJoints*[0]
+                increment_obs = [0,0,0,] + [0,0.01,0] + self.numJoints*[0]
+                increment_chain = [0,-0.0025,-0.008,] + [0,0,0] + [0]*len(self.objectStart[6:])
     
             # Get obstacle joint positions - hand
             curr_state_obs = self.obstacle.get_cur_state() if i>0 else obstacleState
             new_state_left = [curr_state_obs[k]+increment_obs[k] for k in range(len(curr_state_obs))]
             self.obstacle.set_state(new_state_left)
 
-            print('STATE IS INVALID',  chain_collision_raycast(self.objectStart, self.linkLen, visRays=1))
+            # Get new chain state
+            new_state_chain = [new_state_chain[k]+increment_chain[k] for k in range(len(self.objectStart))]
 
+            # Validate collision status
+            # if i < i_thres[0]:
+            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=0))
+            # else:
+            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=0))
+                
             if i % self.downsampleRate == 0:
                 # Record obstacle state - hand
-                self.obsJointPosSce.append(new_state_left[6:])
                 self.obsBasePosSce.append(new_state_left[:3])
                 self.obsBaseEulSce.append(new_state_left[3:6])
                 self.obsBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_left[3:6])))
+                self.obsJointPosSce.append(new_state_left[6:])
 
-                # Record empty object state
-                self.objBasePosSce.append(self.objectPos)
-                self.objBaseQtnSce.append(self.objectQtn)
-                self.objBaseEulSce.append(self.objectEul)
-                self.objJointPosSce.append(self.objectJointPos)
+                # Record object state
+                self.objBasePosSce.append(new_state_chain[:3])
+                self.objBaseEulSce.append(new_state_chain[3:6])
+                self.objBaseQtnSce.append(list(p.getQuaternionFromEuler(new_state_chain[3:6])))
+                self.objJointPosSce.append(new_state_chain[6:])
                 self.idxSce.append(i)
             
             if i == self.endFrame:

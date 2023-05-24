@@ -65,8 +65,8 @@ if __name__ == '__main__':
         start = [-.5,0.3,1.,1.,0,1.57] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
         goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
         env = ChainCaging(args, numCtrlPoint, linkLen, start, goal)
-        env.robot.set_search_bounds(vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 3]])
-        env.add_obstacles(scale=[10]*3, pos=[0,-1,2.5], qtn=p.getQuaternionFromEuler([0, -1.57, 0])) # 3fGripper
+        env.robot.set_search_bounds(vis=1, basePosBounds=[[-2,2], [-2,2], [0, 3]])
+        env.add_obstacles(scale=[10]*3, pos=[0,-.5,2.2], qtn=p.getQuaternionFromEuler([-1.57, -2, 1.57])) # 3fGripper
     elif args.object == 'Jelly':
         numCtrlPoint = 4
         l = 1

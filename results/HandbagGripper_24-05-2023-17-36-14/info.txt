@@ -1,14 +1,19 @@
 *****Search goalCoMPose: [0, 0, 0.1, 0, 1.57, 0]
 *****Search basePosBounds: [[-2, 2], [-2, 2], [0, 3], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-3.141592653589793, 3.141592653589793]]
-*****args: Namespace(scenario='HandbagGripper', search='EnergyBiasedSearch', planner='BITstar', objective='GravityAndElasticPotential', object='Chain', obstacle='3fGripper', runtime=8, visualization=1)
-*****BIT params: delay_rewiring_to_first_solution = 0
-drop_unconnected_samples_on_prune = 0
-find_approximate_solutions = 0
-prune_threshold_as_fractional_cost_change = 0.05
-rewire_factor = 1.1
-samples_per_batch = 5000
-stop_on_each_solution_improvement = 0
-use_graph_pruning = 1
-use_just_in_time_sampling = 0
+*****args: Namespace(scenario='HandbagGripper', search='EnergyBiasedSearch', planner='RRTstar', objective='GravityAndElasticPotential', object='Chain', obstacle='3fGripper', runtime=8, visualization=1)
+*****BIT params: delay_collision_checking = 1
+focus_search = 0
+goal_bias = 0.05
+informed_sampling = 0
+new_state_rejection = 0
+number_sampling_attempts = 100
+ordered_sampling = 0
+ordering_batch_size = 1
+prune_threshold = 0.05
+pruned_measure = 0
+range = 0.1
+rewire_factor = 0.1
+sample_rejection = 0
+tree_pruning = 0
+use_admissible_heuristic = 1
 use_k_nearest = 1
-use_strict_queue_ordering = 1
