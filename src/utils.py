@@ -59,7 +59,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=8, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=100, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -435,14 +435,9 @@ def rope_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,
 
     return collisionExists
 
-def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
-    '''
-    Description:
-        check if the lines connecting any two adjacent control points along a chain loop penetrate obstacles.
-        Pybullet Raycast method applied here.
-    Input: 
-        state: list of planner state vector, length is 6+2*numCtrlPoint+1
-    '''
+def get_chain_node_pos(state, linkLen):
+    notALoop = False
+
     # Run rope forward kinematics and retrive nodes
     nodePositionsInWorld, _ = ropeForwardKinematics(state, linkLen) # no. of zs - numCtrlPoint_+2
 
@@ -452,15 +447,31 @@ def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0
     normal_vector = node_2-node0
     if LA.norm(normal_vector) > 2*linkLen: # not possible forming a loop
         notALoop = True
-        return notALoop
+        return notALoop, None
     
     # Find the position of the last node (node[-1]) in the chain
     mid = (node0 + node_2) / 2
     radius = np.sqrt(linkLen**2 - LA.norm(((node0-node_2)/2)**2))
     node_1 = points_on_circle(radius, mid, normal_vector, state[-1]) # list[3]
 
+    return notALoop, nodePositionsInWorld + [node_1]
+
+def chain_collision_raycast(state, linkLen, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    '''
+    Description:
+        check if the lines connecting any two adjacent control points along a chain loop penetrate obstacles.
+        Pybullet Raycast method applied here.
+    Input: 
+        state: list of planner state vector, length is 6+2*numCtrlPoint+1
+    '''
+    # Get every node's position by the help of the rope model
+    notALoop, rayFromPositions = get_chain_node_pos(state, linkLen)
+    if notALoop:
+        return True
+    nodePositionsInWorld = rayFromPositions[:-1]
+    node_1 = rayFromPositions[-1]
+
     # Make sure the base node is the lowest
-    rayFromPositions = nodePositionsInWorld + [node_1]
     nodesZs = [rayFromPositions[i][2] for i in range(len(rayFromPositions))]
     baseNodeHeightBool = [nodesZs[0] <= z for z in nodesZs[1:]]
     if baseNodeHeightBool.count(False) > 0:

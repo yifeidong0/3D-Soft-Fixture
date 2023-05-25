@@ -24,7 +24,7 @@ from scipy.spatial.transform import Rotation as R
 import math
 import objective
 
-INTERPOLATE_NUM = 20
+INTERPOLATE_NUM = 200
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -312,26 +312,27 @@ class PbOMPL():
                       path is collision free, this is somewhat acceptable.
         '''
         for q in path:
-            if dynamics:
-                # TODO: try tune gravity
-                kp = 10
-                target_pos = q[:3]
+            # if dynamics:
+            #     # TODO: try tune gravity
+            #     kp = 10
+            #     target_pos = q[:3]
 
-                current_pos, _ = p.getBasePositionAndOrientation(self.robot_id)
-                grav = kp * (np.array(target_pos)-np.array(current_pos))
-                # p.setGravity(grav[0], grav[1], grav[2])
-            else:
-                self.robot.set_state(q)
+            #     current_pos, _ = p.getBasePositionAndOrientation(self.robot_id)
+            #     grav = kp * (np.array(target_pos)-np.array(current_pos))
+            #     # p.setGravity(grav[0], grav[1], grav[2])
 
-                # Visualize linear objects using Bullet user debug lines
-                if self.args.object == 'Band':
-                    utils.band_collision_raycast(q, visRays=1)
-                elif self.args.object == 'Rope':
-                    utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
-                elif self.args.object == 'Chain':
-                    utils.chain_collision_raycast(q, self.robot.linkLen, visRays=1)
-                elif self.args.object == 'Jelly':
-                    utils.jelly_collision_raycast(q, visRays=1)
+            self.robot.set_state(q)
+
+            # Visualize linear objects using Bullet user debug lines
+            if self.args.object == 'Band':
+                utils.band_collision_raycast(q, visRays=1)
+            elif self.args.object == 'Rope':
+                utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
+            elif self.args.object == 'Chain':
+                utils.chain_collision_raycast(q, self.robot.linkLen, visRays=0)
+            elif self.args.object == 'Jelly':
+                utils.jelly_collision_raycast(q, visRays=1)
+
             p.stepSimulation()
             time.sleep(7/240)
 

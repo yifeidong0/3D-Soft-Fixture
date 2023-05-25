@@ -131,8 +131,19 @@ def record_dynamics_scene(sce, args):
         headerObsJoint = []
         for j in range(obsJointNum):
             headerObsJoint.append('obs_joint_{}_pos'.format(j))
-
         headers = headersObj + (headersObs+headerObsJoint)*2
+    elif args.scenario in ['HandbagGripper']:
+        headersObj = []
+        numChainNode = sce.numCtrlPoint + 3
+        for j in range(numChainNode):
+            for k in range(3):
+               headersObj.append('chain_node_{}_pos_{}'.format(j,k))
+
+        obsJointNum = sce.numJoints
+        headerObsJoint = []
+        for j in range(obsJointNum):
+            headerObsJoint.append('obs_joint_{}_pos'.format(j))
+        headers = headersObj + (headersObs+headerObsJoint)
 
     # write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
@@ -161,8 +172,14 @@ def record_dynamics_scene(sce, args):
         elif args.scenario in ['BimanualRubic']:
             data = flatten_nested_list([
                 [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i], sce.objJointPosSce[i], 
-                 sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], sce.obsJointPosSce[i],
-                 sce.obsBasePosSce1[i], sce.obsBaseQtnSce1[i], sce.obsJointPosSce1[i], ])
+                sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], sce.obsJointPosSce[i],
+                sce.obsBasePosSce1[i], sce.obsBaseQtnSce1[i], sce.obsJointPosSce1[i], ])
+        elif args.scenario in ['HandbagGripper']:
+            chainState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + sce.objJointPosSce[i]
+            _, chainNodePos = get_chain_node_pos(chainState, sce.linkLen)
+            data = flatten_nested_list([
+                 flatten_nested_list(chainNodePos),
+                 sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], sce.obsJointPosSce[i],])
 
         with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)

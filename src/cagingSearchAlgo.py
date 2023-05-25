@@ -158,7 +158,7 @@ class RigidObjectCaging():
                self.escape_energy_list.append(self.escape_energy_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
-    def energy_biased_search(self, numIter=1, save_escape_path=0):
+    def energy_biased_search(self, numIter=1, save_escape_path=1):
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []
@@ -172,7 +172,11 @@ class RigidObjectCaging():
             
             # Save escape path to csv
             if save_escape_path:
-                save_escape_path_4blender(self.args, path)
+                if self.args.object in ['Chain']:
+                    chainNodePath = self.get_chain_node_pos_path(path)
+                    save_escape_path_4blender(self.args, chainNodePath)
+                else:
+                    save_escape_path_4blender(self.args, path)
 
             # Record data
             self.sol_path_energy_list.append(sol_path_energy)      
@@ -467,6 +471,13 @@ class ChainCaging(RigidObjectCaging):
         
         return True # bounds valid check passed
 
+    def get_chain_node_pos_path(self, path):
+        chainNodePath = []
+        for state in path:
+            _, chainNodePos = get_chain_node_pos(state, self.linkLen)
+            chainNodePath.append(flatten_nested_list(chainNodePos))
+
+        return chainNodePath
 
 class ElasticJellyCaging(RigidObjectCaging):
     def __init__(self, args, numCtrlPoint, start, goal):
