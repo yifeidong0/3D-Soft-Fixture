@@ -64,7 +64,7 @@ class PbOMPL():
         self.space = PbStateSpace(robot.num_dim)
         self.set_obstacles()
         self.use_bisection_search = 0
-
+        # self.balancedObjRatio = 0.01
         # spheres of control/node points are moved away to avoid collision while ray-casting
         self.nodeAwayPos = [10]*3
 
@@ -190,12 +190,14 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            self.planner.params().setParam("samples_per_batch", "5000") # fish, starfish, hook
+            self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
+        elif planner_name == "InformedRRTstar":
+            self.planner = og.InformedRRTstar(self.si)
         elif planner_name == "AITstar":
             self.planner = og.AITstar(self.si)
         elif planner_name == "SORRTstar":

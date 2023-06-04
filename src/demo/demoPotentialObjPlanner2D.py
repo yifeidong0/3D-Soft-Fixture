@@ -23,8 +23,8 @@ import ompl
 # Hyperparameters
 rads = [[.1, .2], [.1, .7], [.1, .6]]
 centers = [[.2, 0], [.5, .8], [.85, .25]]
-useGoalSpace = 0
-balancedObjRatio = .1
+useGoalSpace = 1
+balancedObjRatio = .01
 useIncrementalCost = 1
 
 class ValidityChecker(ob.StateValidityChecker):
@@ -232,7 +232,7 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
         bounds.setLow(0, .8)
         bounds.setHigh(0, 1.)
         bounds.setLow(1, .0)
-        bounds.setHigh(1, .01)
+        bounds.setHigh(1, .1)
         # s.setBounds(0.6, 0.7)
         s.setBounds(bounds)
         goal_space.setSpace(s)
@@ -292,11 +292,11 @@ if __name__ == "__main__":
     # Add a filename argument
     parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-p', '--planner', default='InformedRRTstar', \
+    parser.add_argument('-p', '--planner', default='RRTstar', \
         choices=['LBTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
-    parser.add_argument('-o', '--objective', default='PathPotential', \
+    parser.add_argument('-o', '--objective', default='WeightedLengthAndPotential', \
         choices=['PathPotential', 'PathLength', 'ThresholdPathLength', \
         'WeightedLengthAndPotential'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')

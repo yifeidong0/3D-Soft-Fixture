@@ -146,9 +146,9 @@ class runScenario():
                 self.obstacleEul = [0,0,0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [1.0,]*3
-                self.basePosBounds = [[0.55,1], [-.5,.3], [-.5,.5]]
+                self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
                 self.startFrame = 137
-                self.endFrame = 154
+                self.endFrame = 163
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -541,7 +541,6 @@ class runScenario():
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
     def readMaskEar(self, folderName):
-        p.disconnect()
         self.frameID = []
         self.objectStateSce = []
         headers = ['frameID', 
@@ -574,7 +573,10 @@ class runScenario():
                     bandVerticesState = []
                     for h in headers[4:22]:
                         bandVerticesState.append(float(row[h]))
+                    mask_band_collision_raycast(bandVerticesState, self.bandFixedV0, self.bandFixedV1, visRays=1, lifeTime=.1)
+                    sleep(.1)
                     self.objectStateSce.append(bandVerticesState)
+        p.disconnect()
 
 
 if __name__ == '__main__':

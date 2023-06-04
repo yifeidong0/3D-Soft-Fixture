@@ -28,7 +28,8 @@ def argument_parser():
 
     # Add a filename argument
     # MaskEar - MaskBand, Ear
-    # 
+    # BimanualRubic - Rubic, 3fGripper
+    # HookTrapsRing - Ring, Hook
     parser.add_argument('-c', '--scenario', default='MaskEar', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
@@ -330,7 +331,7 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
     return collisionExists
 
 def mask_band_collision_raycast(state, bandFixedV0, bandFixedV1,
-                                rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+                                rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0, lifeTime=.1):
     # Construct start and end positions of rays
     numCtrlPoint = int(len(state)/3)
     rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
@@ -348,9 +349,9 @@ def mask_band_collision_raycast(state, bandFixedV0, bandFixedV1,
     if visRays:
         for i,idNonNegative in enumerate(idMask):
             if (not idNonNegative): # collision free
-                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1)
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=lifeTime)
             else: # in collision
-                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=lifeTime)
 
     return collisionExists
 
