@@ -136,14 +136,27 @@ class runScenario():
                 self.basePosBounds = [[-2,2], [-2,2], [0,3]]
                 self.endFrame = 347
                 self.downsampleRate = 1
+            case 'MaskEar':
+                self.object = 'MaskBand'
+                self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
+                self.objectStart = [0,0,0] * self.numCtrlPoint
+                self.objectGoal = [] # [0,0,.5] * self.numCtrlPoint
+                self.obstacle = 'Ear'
+                self.obstaclePos = [0,0,0]
+                self.obstacleEul = [0,0,0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [1.0,]*3
+                self.basePosBounds = [[0.55,1], [-.5,.3], [-.5,.5]]
+                self.startFrame = 137
+                self.endFrame = 154
 
     def loadObject(self):
-        if self.args.object not in ['Chain']:
+        if self.args.object not in ['Chain', 'MaskBand']:
             self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
 
     def loadObstacle(self):
         obst = self.args.obstacle
-        if obst in ['Bowl', 'Hook', 'SplashBowl', 'LeftHand', 'Shovel', 'LeftHandAndBowl']:
+        if obst in ['Bowl', 'Hook', 'SplashBowl', 'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Ear']:
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[self.args.obstacle],
@@ -527,6 +540,42 @@ class runScenario():
         # quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
+    def readMaskEar(self, folderName):
+        p.disconnect()
+        self.frameID = []
+        self.objectStateSce = []
+        headers = ['frameID', 
+                'vertex005fixed-x', 'vertex005fixed-y', 'vertex005fixed-z', 
+                'vertex140-x', 'vertex140-y', 'vertex140-z', 
+                'vertex145-x', 'vertex145-y', 'vertex145-z', 
+                'vertex150-x', 'vertex150-y', 'vertex150-z', 
+                'vertex160-x', 'vertex160-y', 'vertex160-z', 
+                'vertex170-x', 'vertex170-y', 'vertex170-z', 
+                'vertex180-x', 'vertex180-y', 'vertex180-z', 
+                'vertex190fixed-x', 'vertex190fixed-y', 'vertex190fixed-z',]
+        
+        with open('{}/data.csv'.format(folderName), 'r') as csvfile:
+            csvreader = csv.DictReader(csvfile)
+            for i, row in enumerate(csvreader):
+                # fixed vertices positions of the mask band
+                if i == 0:
+                    self.bandFixedV0, self.bandFixedV1 = [], []
+                    for h in headers[1:4]:
+                        self.bandFixedV0.append(float(row[h]))
+                    for h in headers[4:22]:
+                        self.objectGoal.append(float(row[h]))
+                    for h in headers[-3:]:
+                        self.bandFixedV1.append(float(row[h]))
+
+                # record a section of band states over frames
+                id = int(row['frameID'])
+                if id >= self.startFrame and id <= self.endFrame:
+                    self.frameID.append(id)
+                    bandVerticesState = []
+                    for h in headers[4:22]:
+                        bandVerticesState.append(float(row[h]))
+                    self.objectStateSce.append(bandVerticesState)
+
 
 if __name__ == '__main__':
     for n in range(1):
@@ -551,19 +600,28 @@ if __name__ == '__main__':
         elif args.scenario in ['HandbagGripper']:
             sce.runHandbagGripper()
             record_dynamics_scene(sce, args)
+        elif args.scenario in ['MaskEar']:
+            folderName = 'results/4blender/mask-head'
+            sce.readMaskEar(folderName)
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
             env = RigidObjectCaging(args)
         elif args.object in ['Chain']:
             env = ChainCaging(args, sce.numCtrlPoint, sce.linkLen, sce.objectStart, sce.objectGoal)
+        elif args.object in ['MaskBand']:
+            env = MaskBandCaging(args, sce.numCtrlPoint, sce.objectStart, sce.objectGoal)
         else:
             objScale = 1
             env = ArticulatedObjectCaging(args, objScale)
 
         # Set searching bounds and add obstacles
         env.robot.set_search_bounds(basePosBounds=sce.basePosBounds)
-        env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
+        if args.scenario in ['MaskEar']:
+            env.add_obstacles(sce.obstaclePos, sce.obstacleQtn, sce.obstacleScale)
+        else:
+            env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
+
         # Add extra obstacles
         if args.scenario in ['HookFishHole']:
             box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
@@ -582,7 +640,7 @@ if __name__ == '__main__':
         startEEnergySce = [] # start E potential energy
         
         # Run the caging analysis algorithm over downsampled frames we extracted above
-        numMainIter = len(sce.objJointPosSce)
+        numMainIter = len(sce.objectStateSce) if args.scenario in ['MaskEar'] else len(sce.objJointPosSce)
         for i in range(numMainIter):
             if i == 1:
                 continue
@@ -607,11 +665,18 @@ if __name__ == '__main__':
             if args.scenario in ['HandbagGripper']:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
+            if args.scenario in ['MaskEar']:
+                p.resetBasePositionAndOrientation(env.obstacle_id, sce.obstaclePos, sce.obstacleQtn)
 
             # Set object's start and goal states
-            objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
-            objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos
+            if args.scenario in ['MaskEar']:
+                objStartState = sce.objectStateSce[i]
+            else:
+                objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
+                objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos
             if args.object in ['Chain']:
+                objGoalState = sce.objectGoal
+            elif args.object in ['MaskBand']:
                 objGoalState = sce.objectGoal
             else:
                 objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
@@ -621,6 +686,8 @@ if __name__ == '__main__':
 
             # Create OMPL interface
             env.create_ompl_interface()
+            if args.scenario in ['MaskEar']:
+                env.pb_ompl_interface.record_fixed_vertex_pos(sce.bandFixedV0, sce.bandFixedV1)
 
             # Choose a searching method
             if args.search == 'BisectionSearch':
@@ -631,7 +698,8 @@ if __name__ == '__main__':
 
             elif args.search == 'EnergyBiasedSearch':
                 numInnerIter = 1
-                isSolved = env.energy_biased_search(numInnerIter)
+                save_escape_path = 0
+                isSolved = env.energy_biased_search(numInnerIter, save_escape_path)
                 # env.visualize_energy_biased_search()
 
                 # Record start and escape energy
@@ -642,6 +710,9 @@ if __name__ == '__main__':
                 elif args.object in ['Starfish']:
                     startGEnergy = env.pb_ompl_interface.potentialObjective.getGravityEnergy(objStartState)
                     startEEnergy, startEnergy = 0, startGEnergy
+                elif args.object in ['Band', 'MaskBand']:
+                    startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
+                    startGEnergy, startEnergy = 0, startEEnergy
                 else:
                     # startEnergy = env.state_energy_escape_path_iter[0][0] if isSolved else np.inf
                     startGEnergy, startEEnergy = None, None
@@ -659,7 +730,7 @@ if __name__ == '__main__':
                 
                 # Record data in this loop 
                 energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
-                record_data_loop(sce, energyData, folderName, i)
+                record_data_loop(sce, args, energyData, folderName, i)
 
             # sleep(10)
 

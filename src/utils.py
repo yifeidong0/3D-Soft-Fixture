@@ -13,6 +13,7 @@ import numpy as np
 from numpy import linalg as LA
 import time
 from itertools import product
+import copy
 
 BASE_LINK = -1
 MAX_DISTANCE = -0.025
@@ -26,17 +27,20 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    parser.add_argument('-c', '--scenario', default='HandbagGripper', \
+    # MaskEar - MaskBand, Ear
+    # 
+    parser.add_argument('-c', '--scenario', default='MaskEar', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
-                 'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper'], \
+                 'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
+                 'MaskEar'], \
         help='(Optional) Specify the scenario of demo, defaults to FishFallsInBowl if not given.')
 
     parser.add_argument('-s', '--search', default='EnergyBiasedSearch', \
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -47,19 +51,19 @@ def argument_parser():
         'PotentialAndPathLength'], \
         help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Chain', \
-        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'Rope', 'Humanoid', 'Donut', \
+    parser.add_argument('-j', '--object', default='MaskBand', \
+        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
+    parser.add_argument('-l', '--obstacle', default='Ear', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
-                 'ShadowHand', 'Bucket'], \
+                 'ShadowHand', 'Bucket', 'Ear'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=100, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
@@ -108,6 +112,7 @@ def path_collector():
             'Shovel': 'models/shovel/shovel-d-vhacd.obj',
             'LeftHandAndBowl': 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj',
             'Rubic': 'models/rubic-cube/rubic.urdf',
+            'Ear': 'models/ear/ear.stl',
             }
 
 def texture_path_list():
@@ -120,7 +125,7 @@ def texture_path_list():
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
-            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic']
+            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
@@ -321,6 +326,31 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
             else: # in collision
                 p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
     #     p.removeAllUserDebugItems()
+
+    return collisionExists
+
+def mask_band_collision_raycast(state, bandFixedV0, bandFixedV1,
+                                rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+    # Construct start and end positions of rays
+    numCtrlPoint = int(len(state)/3)
+    rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
+    rayToPositions = copy.copy(rayFromPositions)
+    rayFromPositions.insert(0, bandFixedV0)
+    rayToPositions.append(bandFixedV1)
+    results = p.rayTestBatch(rayFromPositions, rayToPositions)
+
+    # Check if any ray hits obstacles
+    hitObjectUids = [results[i][0] for i in range(len(results))]
+    idMask = [hitObjectUids[i]>=0 for i in range(len(hitObjectUids))]
+    collisionExists = (idMask.count(True) > 0)
+
+    # Visualize the band after running the planner
+    if visRays:
+        for i,idNonNegative in enumerate(idMask):
+            if (not idNonNegative): # collision free
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayMissColor, lineWidth=5, lifeTime=.1)
+            else: # in collision
+                p.addUserDebugLine(rayFromPositions[i], rayToPositions[i], rayHitColor, lineWidth=5, lifeTime=.1)
 
     return collisionExists
 

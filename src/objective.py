@@ -115,7 +115,7 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.args_ = args
-        self.incrementalCost = 1
+        self.incrementalCost = 0
 
         # parameters of articulated object
         self.numStateSpace = len(start)
@@ -162,6 +162,67 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
         else:
             return ob.Cost(max(cost1.value(), cost2.value()))
     
+
+class MaskBandPotentialObjective(ob.OptimizationObjective):
+    def __init__(self, si, start, args, bandFixedV0, bandFixedV1):
+        super(MaskBandPotentialObjective, self).__init__(si)
+        self.si_ = si
+        self.start_ = start
+        self.args_ = args
+        self.bandFixedV0 = bandFixedV0
+        self.bandFixedV1 = bandFixedV1
+        self.incrementalCost = 1
+
+        # parameters of articulated object
+        self.numStateSpace = len(start)
+        self.numCtrlPoint = int(self.numStateSpace/3) # 6
+        self.stiffnesss = [1.6] * (self.numCtrlPoint+1)
+        
+        # length (data id): (90), 140, 145, 150, 160, 170, 180, (232)
+        # 10 (data id) - 0.1m
+        self.springneutralLen = [.5, .05, .05, .1, .1, .1, .52] # list(7)
+        
+        # calculated energy of initial pose
+        self.energyStart = self.stateEnergy(self.start_)
+
+    def getElasticEnergy(self, state):
+        # Retrieve control point positions
+        ctrlPointPos = []
+        for i in range(self.numCtrlPoint):
+            ctrlPointPos.append(np.asarray(state[3*i:3*i+3]))
+        ctrlPointPos.insert(0, self.bandFixedV0)
+        ctrlPointPos.append(self.bandFixedV1)
+
+        # Retrieve displacement of control points
+        springDisplaces = []
+        for i in range(1, self.numCtrlPoint+2):
+            springDisp = max(np.linalg.norm(ctrlPointPos[i]-ctrlPointPos[i-1])-self.springneutralLen[i-1], 0.0)
+            springDisplaces.append(springDisp)
+
+        # Get elastic potential energy
+        jointEnergies = [self.stiffnesss[i] * springDisplaces[i]**2 for i in range(self.numCtrlPoint)]
+        energyElastic = 0.5 * sum(jointEnergies) # sigma(.5 * k_i * q_i^2)
+
+        return energyElastic
+
+    def stateEnergy(self, state):
+        return self.getElasticEnergy(state)
+    
+    def motionCost(self, state1, state2):
+        state2 = [state2[i] for i in range(self.numStateSpace)]
+        # return ob.Cost(energyState2 - self.energyStart)
+        if self.incrementalCost:
+            state1 = [state1[i] for i in range(self.numStateSpace)]
+            return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
+        else:
+            return ob.Cost(self.stateEnergy(state2) - self.energyStart)
+
+    def combineCosts(self, cost1, cost2):
+        if self.incrementalCost:
+            return ob.Cost(cost1.value() + cost2.value())
+        else:
+            return ob.Cost(max(cost1.value(), cost2.value()))
+        
 
 class ElasticJellyPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start, args):

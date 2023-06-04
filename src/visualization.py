@@ -22,21 +22,31 @@ def record_data_init(sce, args, env):
     os.mkdir(folderName)
 
     # create csv headers
-    objJointNum = len(sce.objJointPosSce[0])
-    obsJointNum = len(sce.obsJointPosSce[0])
-    headerObjJoint = []
-    headerObsJoint = []
-    for j in range(objJointNum):
-        headerObjJoint.append('obj_joint_{}_pos'.format(j))
-    for s in range(obsJointNum):
-        headerObsJoint.append('obs_joint_{}_pos'.format(s))
-
-    headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
-               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
-    headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
-               'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObsJoint
     headersOther = ['start_energy', 'start_gravity_energy', 'start_elastic_energy', 'escape_energy_cost']
-    headers = headersObj + headersObs + headersOther
+    if args.scenario in ['MaskEar']:
+        headerObj = ['frameID',]
+        for j in range(sce.numCtrlPoint):
+            headerObj.append('obj_joint_{}_pos_x'.format(j))
+            headerObj.append('obj_joint_{}_pos_y'.format(j))
+            headerObj.append('obj_joint_{}_pos_z'.format(j))
+        headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
+                        'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w']
+        headers = headerObj + headersObs + headersOther
+    else:
+        objJointNum = len(sce.objJointPosSce[0])
+        obsJointNum = len(sce.obsJointPosSce[0])
+        headerObjJoint = []
+        headerObsJoint = []
+        for j in range(objJointNum):
+            headerObjJoint.append('obj_joint_{}_pos'.format(j))
+        for s in range(obsJointNum):
+            headerObsJoint.append('obs_joint_{}_pos'.format(s))
+
+        headersObj = ['index', 'obj_pos_x', 'obj_pos_y', 'obj_pos_z', 
+                'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObjJoint
+        headersObs = ['obs_pos_x', 'obs_pos_y', 'obs_pos_z', 
+                'obj_qtn_x', 'obj_qtn_y', 'obj_qtn_z', 'obj_qtn_w'] + headerObsJoint
+        headers = headersObj + headersObs + headersOther
 
     # write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
@@ -46,29 +56,36 @@ def record_data_init(sce, args, env):
 
     # save other info to txt
     with open('{}/info.txt'.format(folderName), "w") as text_file:
-        text_file.write("*****Search goalCoMPose: {}\n".format(sce.goalCoMPose))
+        if args.scenario in ['MaskEar']:
+            text_file.write("*****Search objectGoal: {}\n".format(sce.objectGoal))
+        else:
+            text_file.write("*****Search goalCoMPose: {}\n".format(sce.goalCoMPose))
         text_file.write("*****Search basePosBounds: {}\n".format(sce.basePosBounds))
         text_file.write("*****args: {}\n".format(args))
-        text_file.write("*****BIT params: {}".format(env.pb_ompl_interface.planner.params()))
+        text_file.write("*****planner params: {}".format(env.pb_ompl_interface.planner.params()))
         if args.object == 'Fish':
             text_file.write("*****Fish links' mass: {}\n".format(env.pb_ompl_interface.potentialObjective.masses))
             text_file.write("*****Fish joints' stiffness: {}\n".format(env.pb_ompl_interface.potentialObjective.stiffnesss))
 
     return folderName
 
-def record_data_loop(sce, energyData, folderName, i):
-    data = flatten_nested_list([
-        [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
-        sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i],
-        sce.obsJointPosSce[i], energyData
-        ])
-
+def record_data_loop(sce, args, energyData, folderName, i):
+    if args.scenario in ['MaskEar']:
+        data = flatten_nested_list([
+            [sce.frameID[i]], sce.objectStateSce[i], sce.obstaclePos, sce.obstacleQtn, energyData
+            ])
+    else:
+        data = flatten_nested_list([
+            [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
+            sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i],
+            sce.obsJointPosSce[i], energyData
+            ])
+        
     with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(data)
 
 def record_state_data_for_blender(sce, args):
-    # get current time
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
     folderName = './results/{}_{}_4blender'.format(args.scenario, dt_string)

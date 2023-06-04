@@ -42,10 +42,14 @@ def reset_gripper():
             bone.rotation_quaternion = (1,0,0,0)
 
 
-def add_a_keyframe_chain(points, pointPositions: list, i: int, numCtrlPnt=7) -> None:
+def add_a_keyframe_chain(points, bag, pointPositions: list, i: int, numCtrlPnt=7) -> None:
     '''pointPositions: 
-            list[x1,y1,z1,...,xn,yn,zn], positions of band control points.
+            list[x1,y1,z1,...,xn,yn,zn], positions of chain control points.
     '''
+    # Set cube state
+    bag.location = tuple(pointPositions[:3])
+    bag.keyframe_insert(data_path="location", frame=i)
+
     for k,point in enumerate(points):
         point.co = tuple(pointPositions[3*k:3*k+3])
         point.keyframe_insert(data_path="co", frame=i)
@@ -68,10 +72,11 @@ def add_a_keyframe_chain(points, pointPositions: list, i: int, numCtrlPnt=7) -> 
         point.keyframe_insert(data_path="handle_right_type", frame=i)
 
 
-def add_keyframes_chain(dataFolderPath: str, curveName: str, numCtrlPnt: int=7) -> None:
+def add_keyframes_chain(dataFolderPath: str, curveName: str, bagName: str, numCtrlPnt: int=7) -> None:
     # Get a reference to the curve object
     obj = bpy.data.objects[curveName]
-    bpy.context.view_layer.objects.active = obj
+    bag = bpy.data.objects[bagName]
+    # bpy.context.view_layer.objects.active = obj
     curve = obj.data
     points = curve.splines[0].bezier_points
 
@@ -83,7 +88,7 @@ def add_keyframes_chain(dataFolderPath: str, curveName: str, numCtrlPnt: int=7) 
                 i += 1
                 continue
             pointPositions = [float(d) for d in row]
-            add_a_keyframe_chain(points, pointPositions, i, numCtrlPnt)
+            add_a_keyframe_chain(points, bag, pointPositions, i, numCtrlPnt)
             i += 1
 
 
@@ -138,16 +143,16 @@ def add_keyframes_gripper(dataFolderPath, numCtrlPnt):
 
 '''Main loop'''
 curveName = 'BezierCircle'
+bagName = 'bbag'
 numCtrlPnt = 7
 reset_gripper()
 
 # data file for escape path
-dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/HandbagGripper_24-05-2023-19-32-33_escape_path_4blender'
+dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/HandbagGripper_24-05-2023-19-39-39_escape_path_4blender'
 
 # data file for dynamic scenario
 dataFolderPath1 = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/HandbagGripper_25-05-2023-10-15-48_dynamics'
 
-add_keyframes_chain(dataFolderPath1, curveName, numCtrlPnt)
+add_keyframes_chain(dataFolderPath1, curveName, bagName, numCtrlPnt)
 
-add_keyframes_chain(dataFolderPath1, curveName, numCtrlPnt)
 add_keyframes_gripper(dataFolderPath1, numCtrlPnt)

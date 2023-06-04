@@ -216,6 +216,29 @@ class objectElasticBand(ObjectFromUrdf):
         #     p.resetBasePositionAndOrientation(self.id[i], self.state[3*i:3*i+3], self.zeroQuaternion)
 
 
+class objectMaskBand(ObjectFromUrdf):
+    '''
+    An open-loop elastic band composed of several control points.
+    '''
+    def __init__(self, id, numCtrlPoint) -> None:
+        self.id = id # a list
+        self.numCtrlPoint = numCtrlPoint
+        self.comDof = 3
+        self.joint_idx = []
+        self.num_dim = self.comDof * self.numCtrlPoint
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
+        # self.set_search_bounds()
+
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+        self.joint_bounds = self.numCtrlPoint * basePosBounds
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
+
+    def set_state(self, state):
+        self.state = state
+
+
 class objectElasticJelly(ObjectFromUrdf):
     '''
     An elastic jelly composed of several (4) control points as a volumetric deformable primitive.

@@ -53,7 +53,7 @@ def add_a_cube_keyframe(cube, data, numFrame):
     position = data[1:4]
     quaternion_xyzw = data[4:8]
     
-    # Set bone rotation
+    # Set cube state
     cube.location = tuple(position)
     cube.rotation_mode = 'QUATERNION'
     xyzw = tuple(quaternion_xyzw)

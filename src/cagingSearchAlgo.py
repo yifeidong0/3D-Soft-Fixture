@@ -392,6 +392,50 @@ class ElasticBandCaging(RigidObjectCaging):
         return True # bounds valid check passed
 
 
+class MaskBandCaging(RigidObjectCaging):
+    def __init__(self, args, numCtrlPoint, start, goal):
+        self.args = args
+        self.obstacles = []
+        self.rigidObjList = get_non_articulated_objects()
+
+        if args.visualization:
+            vis = p.GUI
+        else:
+            vis = p.DIRECT
+        p.connect(vis)
+        p.setTimeStep(1./240.)
+        p.setAdditionalSearchPath(pybullet_data.getDataPath())
+
+        self.numCtrlPoint = numCtrlPoint
+        self.start = start
+        self.goal = goal
+        self.load_object()
+        self.reset_start_and_goal(start, goal)
+
+    def load_object(self):
+        """Load object for caging."""
+        self.paths = path_collector()
+        self.object_id = []
+        # for i in range(self.numCtrlPoint):
+        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
+
+        self.robot = objectMaskBand(self.object_id, self.numCtrlPoint)
+
+    def reset_start_and_goal(self, start=None, goal=None):
+        # Set start and goal nodes of searching algorithms
+        self.start = [0,0,0]*self.numCtrlPoint if start is None else start
+        self.goal = [0,0,0.5]*self.numCtrlPoint if goal is None else goal
+
+        # # make sure states are within search bounds
+        # jbounds = self.robot.get_joint_bounds()
+        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+        #     print('The start or goal states violates search boundary conditions!')
+        #     return False 
+        
+        return True # bounds valid check passed
+
 class RopeCaging(RigidObjectCaging):
     def __init__(self, args, numCtrlPoint, linkLen, start, goal):
         self.args = args

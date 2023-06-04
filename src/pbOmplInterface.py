@@ -101,17 +101,17 @@ class PbOMPL():
         # Scenarios with a band (control points collision check not necessary)
         if self.args.object in ["Band"]:
             if utils.band_collision_raycast(stateList):
-                # print('links between nodes in collision')
                 return False
 
-        # Scenarios with an elastic jelly
+        elif self.args.object in ["MaskBand"]:
+            if utils.mask_band_collision_raycast(stateList, self.bandFixedV0, self.bandFixedV1):
+                return False
+
         elif self.args.object in ["Jelly"]:
             if utils.jelly_collision_raycast(stateList, checkCoPlane=1):
                 return False
             
-        # Scenarios with a rope
         elif self.args.object in ["Rope"]:
-            # NODE COLLISION TEST
             # Check if nodes of rope in collision
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
@@ -123,7 +123,6 @@ class PbOMPL():
             if utils.rope_collision_raycast(stateList, self.robot.linkLen):
                 return False
             
-        # Scenarios with a loop chain
         elif self.args.object in ["Chain"]:
             # Check if links between nodes in collision
             if utils.chain_collision_raycast(stateList, self.robot.linkLen):
@@ -136,6 +135,10 @@ class PbOMPL():
                     return False
 
         return True
+
+    def record_fixed_vertex_pos(self, bandFixedV0, bandFixedV1):
+        self.bandFixedV0 = bandFixedV0
+        self.bandFixedV1 = bandFixedV1
 
     def setup_collision_detection(self, self_collisions = False, allow_collision_links=[]):
         if self.args.object in ["Rope"]:
@@ -232,6 +235,8 @@ class PbOMPL():
                 self.potentialObjective = objective.SnaplockPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Band":
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
+            elif self.args.object == "MaskBand":
+                self.potentialObjective = objective.MaskBandPotentialObjective(self.si, start, self.args, self.bandFixedV0, self.bandFixedV1)
             elif self.args.object == "Jelly":
                 self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
@@ -326,10 +331,12 @@ class PbOMPL():
             # Visualize linear objects using Bullet user debug lines
             if self.args.object == 'Band':
                 utils.band_collision_raycast(q, visRays=1)
+            if self.args.object == 'MaskBand':
+                utils.mask_band_collision_raycast(q, self.bandFixedV0, self.bandFixedV1, visRays=1)
             elif self.args.object == 'Rope':
                 utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
             elif self.args.object == 'Chain':
-                utils.chain_collision_raycast(q, self.robot.linkLen, visRays=0)
+                utils.chain_collision_raycast(q, self.robot.linkLen, visRays=1)
             elif self.args.object == 'Jelly':
                 utils.jelly_collision_raycast(q, visRays=1)
 
