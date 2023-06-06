@@ -44,7 +44,7 @@ class RigidObjectCaging():
         # axiscreator(self.object_id, linkId = 1)
         # sleep(30)
 
-    def reset_start_and_goal(self, start=None, goal=None):
+    def reset_start_and_goal(self, start=None, goal=None,):
         # Set start and goal nodes of searching algorithms
         if start is None:
             self.start = [0,0,2.6,1.57,0,0] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]

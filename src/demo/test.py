@@ -24,9 +24,9 @@ from utils import *
 #########################################################################
 #########################################################################
 
-# # # CREATE CONCAVE SHAPES
-# name_in = 'models/leftHandAndBowl/leftHandAndBowl.obj'
-# name_out = 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj'
+# # # # CREATE CONCAVE SHAPES
+# name_in = 'models/fish/ring2_dec.obj'
+# name_out = 'models/fish/ring2_dec_vhacd.obj'
 # create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################

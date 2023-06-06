@@ -20,3 +20,23 @@
   </link>
 
 </robot>
+
+<!-- <?xml version="1.0"?>
+<robot name="donut">
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://fish/ring2_dec_vhacd.obj" scale="1 1 1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://fish/ring2_dec_vhacd.obj" scale="1 1 1" />
+      </geometry>
+    </collision>
+  </link>
+
+</robot> -->
+
+

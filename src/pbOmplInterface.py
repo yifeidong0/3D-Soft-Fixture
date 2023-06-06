@@ -61,15 +61,24 @@ class PbOMPL():
         self.robot = robot
         self.robot_id = robot.id
         self.obstacles = obstacles
-        self.space = PbStateSpace(robot.num_dim)
+        self.state_dim = robot.num_dim
+        self.space = PbStateSpace(self.state_dim)
         self.set_obstacles()
         self.use_bisection_search = 0
+        
+        if self.args.planner in ["BITstar"]:
+            self.useGoalSpace = 0 # not applicable
+        else:
+            self.useGoalSpace = 1
         # self.balancedObjRatio = 0.01
         # spheres of control/node points are moved away to avoid collision while ray-casting
         self.nodeAwayPos = [10]*3
 
         # self.reset_robot_state_bound()
   
+    def set_goal_space_bounds(self, goalSpaceBounds):
+        self.goalSpaceBounds = goalSpaceBounds
+
     def set_obstacles(self):
         # self.obstacles = obstacles
 
@@ -222,7 +231,24 @@ class PbOMPL():
 
         # Setup problem formulation
         self.pdef = ob.ProblemDefinition(self.si)
-        self.pdef.setStartAndGoalStates(s, g)
+
+        # Set the start and goal states
+        if self.useGoalSpace:
+            # GoalSpace works with RRT*/PRM*/InformedRRT*, not with BIT*
+            goal_space = ob.GoalSpace(self.si)
+            ss = ob.RealVectorStateSpace(self.state_dim)
+            bounds = ob.RealVectorBounds(self.state_dim)
+            for d in range(self.state_dim):
+                bounds.setLow(d, self.goalSpaceBounds[d][0])
+                bounds.setHigh(d, self.goalSpaceBounds[d][1])
+            ss.setBounds(bounds)
+            goal_space.setSpace(ss)
+
+            # set start and goal
+            self.pdef.addStartState(s)
+            self.pdef.setGoal(goal_space)
+        else:
+            self.pdef.setStartAndGoalStates(s, g)
      
         # Set customized optimization objective
         rigidObjs = utils.get_non_articulated_objects()
@@ -292,9 +318,15 @@ class PbOMPL():
                 # sol_final_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
 
             # make sure goal is reached
-            diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
-            if sum(abs(i) for i in diff) < reached_thres:
-                res = True
+            if self.args.planner in ['BITstar']:
+                diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
+                if sum(abs(i) for i in diff) < reached_thres:
+                    res = True
+            else:
+                isInsideBounds = [sol_path_list[-1][i]>self.goalSpaceBounds[i][0] and sol_path_list[-1][i]<self.goalSpaceBounds[i][1] for i in range(self.state_dim)]
+                print('!!!!!!isInsideBounds', isInsideBounds)
+                if isInsideBounds.count(False) == 0:
+                    res = True
         else:
             print("No solution found")
 
@@ -318,6 +350,7 @@ class PbOMPL():
                       meaning that the simulator will simply reset robot's state WITHOUT any dynamics simulation. Since the
                       path is collision free, this is somewhat acceptable.
         '''
+        print('executing!!!!!!')
         for q in path:
             # if dynamics:
             #     # TODO: try tune gravity

@@ -16,10 +16,13 @@ if __name__ == '__main__':
     #     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
     if args.object == 'Ring':
+        start = [0.5798,0.0094,1.391,0,0,0]
+        goal = [1.5,0,1.5]+[1.57,1.57,0]
+        goalSpaceBounds = [[1.4,2], [-.7,.7], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.01, .01]]*2
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
-        # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
-        env.reset_start_and_goal(start=[.3,-.1,2.3,0,0,0], goal=[0,0,.01]+[1.57,0,0])
+        env.robot.set_search_bounds(basePosBounds=[[-.3,2], [-.7,.7], [1.3,2.8]])
+        env.reset_start_and_goal(start=start, goal=goal)
     if args.object == 'FishHole':
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0.5,1.150,3.60], qtn=[0.223,0.0,0.0,0.974])
@@ -86,13 +89,14 @@ if __name__ == '__main__':
 
     # env.pb_ompl_interface = PbOMPL(env.robot, args, env.obstacles)
     env.create_ompl_interface()
+    env.pb_ompl_interface.set_goal_space_bounds(goalSpaceBounds)
     print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
     
     # Choose from different searching methods
     if args.search == 'BisectionSearch':
         # useGreedySearch = False # True: bisection search; False: Conservative search
         # env.bound_shrink_search(useGreedySearch)
-        env.energy_bisection_search(maxTimeTaken=40)
+        env.energy_bisection_search(maxTimeTaken=40, useBisectionSearch=1)
         env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':
