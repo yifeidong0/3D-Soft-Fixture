@@ -12,6 +12,7 @@ from utils import *
 # import pybullet_data
 # import time
 from scipy import interpolate
+import tikzplotlib
 
 def record_data_init(sce, args, env):
     # get current time
@@ -350,23 +351,24 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
     # Escape energy plots
     plot_escape_energy(ax, energyDataAnalysis, minDataLen,isArticulatedObject, axvline)
 
-'''Plot escape cost from multiple csv files with std shading'''
-if __name__ == '__main__':
-    args, parser = argument_parser()
-    rigidObjectList = get_non_articulated_objects()
-    isArticulatedObj = False if args.object in rigidObjectList else True
-    
-    folderList = []
-    path = './results/'
-    os.chdir(path)
-    for file_name in glob.glob("HookTrapsRing*"):
-        folderList.append(file_name)
 
-    _, ax = plt.subplots()
-    plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
-    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
-    # plt.show()
-    plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+# '''Plot escape cost from multiple csv files with std shading'''
+# if __name__ == '__main__':
+#     args, parser = argument_parser()
+#     rigidObjectList = get_non_articulated_objects()
+#     isArticulatedObj = False if args.object in rigidObjectList else True
+    
+#     folderList = []
+#     path = './results/'
+#     os.chdir(path)
+#     for file_name in glob.glob("HookTrapsRing*"):
+#         folderList.append(file_name)
+
+#     _, ax = plt.subplots()
+#     plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
+#     plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
+#     # plt.show()
+#     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################
@@ -398,7 +400,7 @@ def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIt
 
 from matplotlib.ticker import FormatStrFormatter
 
-def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, maxTimeB=480, maxTimeE=180):
+def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy, maxTimeB=480, maxTimeE=180):
     # Color codes
     cls = get_colors()
     noIter = len(timeTickListE)
@@ -444,6 +446,7 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     # Plot lines parallel to x axis
     ax.axhline(y=escapeEnergyBmean[-1], color=cls[0], linestyle = '--')
     ax.axhline(y=escapeEnergyEmean[-1], color=cls[3], linestyle = '--')
+    ax.axhline(y=groundTruthEscapeEnergy, color=cls[1], linestyle = '--', label='Ground truth')
 
     # Settings for plot
     ax.set_xlabel('Time / sec',fontsize=16)
@@ -454,7 +457,7 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     # plt.show()
     plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=200)
 
-def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
+def plot_acurracy_test(CostBSFrames, SaveFolderName, groundTruthZ, startKeyFrame=18):
     '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
     '''
     cls = get_colors()
@@ -467,7 +470,7 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
         
     # Get folders of the same task
     args, parser = argument_parser()
-    path = './results/'
+    path = './results/ICRA2023WS'
     os.chdir(path)
     folderList = []
     for folderName in glob.glob(args.scenario + "*"):
@@ -481,7 +484,17 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
         energyData, _ = get_results_from_csv(folder)
         row = energyData[3][startKeyFrame:startKeyFrame+noFrame]
         escapeCostEM[i,:] = np.asarray(row)
-    os.chdir('./../')
+
+        # Get initial energy over frames
+        initEnergy = []
+        groundTruthEscapeEnergy = []
+        with open('{}/data.csv'.format(folder), 'r') as csvfile:
+            csvreader = csv.DictReader(csvfile)
+            for row in csvreader:
+                initEnergy.append(float(row['obj_pos_z']))
+                groundTruthEscapeEnergy.append(max(0.0, groundTruthZ-float(row['obj_pos_z'])))
+
+    os.chdir('./../../')
 
     # Retrieve indices of keyframes
     id = np.asarray(list(range(startKeyFrame, startKeyFrame+noFrame)))
@@ -500,6 +513,7 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
     # ax.set_ylim(0.4, 1.0)
     ax.plot(id, escapeCostBSmean, '-', color=cls[0], linewidth=2, label='Baseline: bisectional search') # (8 min run time for each keyframe)
     ax.plot(id, escapeCostEMmean, '-', color=cls[3], linewidth=2, label='BIT*-based search') # (2 min run time for each keyframe)
+    ax.plot(id, groundTruthEscapeEnergy[:-1], '-', color=cls[1], linewidth=2, label='Ground truth')
 
     # Plot std shade
     ax.fill_between(id, escapeCostBSmean-escapeCostBSstd, escapeCostBSmean+escapeCostBSstd, alpha=0.3, color=cls[0])
@@ -517,25 +531,28 @@ def plot_acurracy_test(CostBSFrames, SaveFolderName, startKeyFrame=18):
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
-# if __name__ == '__main__':
-#     # Insert initial escape energy cost
-#     cInit = 3.5 - 1.9201135113652428
+if __name__ == '__main__':
+    # Insert initial escape energy cost
+    initZ = 1.9201135113652428
+    groundTruthZ = 2.35
+    cInit = 3.5 - initZ
 
-#     # Read from csv
-#     folderName = './results/Benchmarking/'
-#     folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
-#     folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
-#     timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
-#     timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
-#     # print(timeTickListB)
-#     # print(escapeEnergyListB)
+    # Read from csv
+    folderName = './results/Benchmarking/'
+    folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
+    folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
+    timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
+    timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
+    # print(timeTickListB)
+    # print(escapeEnergyListB)
 
-#     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
-#     plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName)
+    # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
+    groundTruthEscapeEnergy = groundTruthZ - initZ
+    plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy)
 
-#     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
-#     startKeyFrame = 0
-#     folderNameB = './results/Benchmarking/25-03-2023-23-17-34_BoundShrink'
-#     _, CostBSFrames = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=0)
-#     # print('@@@@finalCostBSFrames', finalCostBSFrames)
-#     plot_acurracy_test(CostBSFrames, folderName, startKeyFrame)
+    # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
+    startKeyFrame = 0
+    folderNameB = './results/Benchmarking/25-03-2023-23-17-34_BoundShrink'
+    _, CostBSFrames = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=0)
+    # print('@@@@finalCostBSFrames', finalCostBSFrames)
+    plot_acurracy_test(CostBSFrames, folderName, groundTruthZ, startKeyFrame,)

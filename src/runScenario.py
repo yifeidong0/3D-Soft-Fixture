@@ -149,6 +149,18 @@ class runScenario():
                 self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
                 self.startFrame = 137
                 self.endFrame = 163
+            case 'HookTrapsRing':
+                self.object = 'Ring'
+                self.objectPos = [1.3,-.1,3.4]
+                self.objectQtn = [0,1,0,1]
+                self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+                self.obstacle = 'Hook'
+                self.obstaclePos = [0, 0, 2]
+                self.obstacleEul = [1.57, -0.3, 0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [.1,.1,.1]
+                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -578,6 +590,46 @@ class runScenario():
                     self.objectStateSce.append(bandVerticesState)
         p.disconnect()
 
+    def runDynamicFalling(self):
+        '''For the tasks of articulated fish or ring falling'''
+        i = 0        
+        # time.sleep(1)
+        while (1):
+            # print(i)
+            p.stepSimulation()
+            p.setGravity(0, 0, self.gravity)
+            time.sleep(1/240.)
+
+            if i % self.downsampleRate == 0:
+                jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
+                gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
+
+                # Calculate G potential energy
+                # state = list(gemPos) + list(p.getEulerFromQuaternion(gemQtn)) + list(jointPositions)
+                # gravityEnergy = getGravityEnergy(state, self.args, self.paths)
+                # print('@@@gravityEnergy', gravityEnergy)
+
+                # record objects' DoF
+                self.objBasePosSce.append(list(gemPos))
+                self.objBaseQtnSce.append(list(gemQtn))
+                self.objJointPosSce.append(jointPositions)
+                self.idxSce.append(i)
+
+            if i == self.endFrame:
+                p.disconnect()
+                break
+            i += 1
+
+        # record obstacles' DoF
+        sceLen = len(self.objBasePosSce)
+        self.obsBasePosSce = [self.obstaclePos for i in range(sceLen)]
+        self.obsBaseQtnSce = [self.obstacleQtn for i in range(sceLen)]
+        self.obsBaseEulSce = [self.obstacleEul for i in range(sceLen)]
+        self.obsJointPosSce = [[] for i in range(sceLen)]
+
+        # quaternion to euler
+        self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
+
 
 if __name__ == '__main__':
     for n in range(1):
@@ -605,6 +657,8 @@ if __name__ == '__main__':
         elif args.scenario in ['MaskEar']:
             folderName = 'results/4blender/mask-head'
             sce.readMaskEar(folderName)
+        elif args.scenario in ['HookTrapsRing']:
+            sce.runDynamicFalling()
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
