@@ -18,10 +18,10 @@ if __name__ == '__main__':
     if args.object == 'Ring':
         start = [0.5798,0.0094,1.391,0,0,0]
         goal = [1.5,0,1.5]+[1.57,1.57,0]
-        goalSpaceBounds = [[1.4,2], [-.7,.7], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.01, .01]]*2
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[.1]*3, pos=[0,0,2], qtn=p.getQuaternionFromEuler([1.57, -0.3, 0]))
-        env.robot.set_search_bounds(basePosBounds=[[-.3,2], [-.7,.7], [1.3,2.8]])
+        env.robot.set_search_bounds(basePosBounds=[[-.3,2], [-.5,.5], [1.3,2.8]])
         env.reset_start_and_goal(start=start, goal=goal)
     if args.object == 'FishHole':
         env = RigidObjectCaging(args)

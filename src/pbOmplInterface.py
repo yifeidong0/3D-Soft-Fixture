@@ -324,7 +324,6 @@ class PbOMPL():
                     res = True
             else:
                 isInsideBounds = [sol_path_list[-1][i]>self.goalSpaceBounds[i][0] and sol_path_list[-1][i]<self.goalSpaceBounds[i][1] for i in range(self.state_dim)]
-                print('!!!!!!isInsideBounds', isInsideBounds)
                 if isInsideBounds.count(False) == 0:
                     res = True
         else:

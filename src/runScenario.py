@@ -26,7 +26,6 @@ class runScenario():
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 1
-        self.endFrame = 4000
 
         # load object and obstacle
         self.initializeParams()
@@ -159,8 +158,12 @@ class runScenario():
                 self.obstacleEul = [1.57, -0.3, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]] # searching bounds
+                self.basePosBounds=[[-.3,2], [-.5,.5], [1.3,2.8]] # searching bounds
+                self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
                 self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+                self.startFrame = 280
+                self.endFrame = 520
+                self.downsampleRate = 8
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -600,7 +603,7 @@ class runScenario():
             p.setGravity(0, 0, self.gravity)
             time.sleep(1/240.)
 
-            if i % self.downsampleRate == 0:
+            if i % self.downsampleRate == 0 and i > self.startFrame:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
@@ -659,6 +662,7 @@ if __name__ == '__main__':
             sce.readMaskEar(folderName)
         elif args.scenario in ['HookTrapsRing']:
             sce.runDynamicFalling()
+            record_dynamics_scene(sce, args)
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
@@ -742,14 +746,16 @@ if __name__ == '__main__':
 
             # Create OMPL interface
             env.create_ompl_interface()
+            env.pb_ompl_interface.set_goal_space_bounds(sce.goalSpaceBounds)
             if args.scenario in ['MaskEar']:
                 env.pb_ompl_interface.record_fixed_vertex_pos(sce.bandFixedV0, sce.bandFixedV1)
 
             # Choose a searching method
             if args.search == 'BisectionSearch':
                 useBisecSearch = True # True: bisection search; False: Conservative search
-                env.bound_shrink_search(useBisecSearch)
-                escape_energy, z_thres = env.visualize_bisection_search(useBisecSearch) # visualize
+                maxT = 30
+                env.energy_bisection_search(useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
+                escape_energy, z_thres = env.visualize_bisection_search() # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
             elif args.search == 'EnergyBiasedSearch':

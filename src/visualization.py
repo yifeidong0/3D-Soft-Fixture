@@ -139,7 +139,7 @@ def record_dynamics_scene(sce, args):
     if args.scenario in ['HookFishHole']:
         headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z',]
         headers = headersObj + headersObs + headersBox
-    elif args.scenario in ['ShovelFish']:
+    elif args.scenario in ['ShovelFish', 'HookTrapsRing']: # rigid object scenarios
         headers = headersObj + headersObs
     elif args.scenario in ['StarfishBowl']:
         headersBox = ['box_pos_x', 'box_pos_y', 'box_pos_z', 'box_eul_x', 'box_eul_y', 'box_eul_z',]
@@ -176,7 +176,7 @@ def record_dynamics_scene(sce, args):
                 sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
                 sce.boxBasePosSce[i], 
                 ])
-        elif args.scenario in ['ShovelFish']:
+        elif args.scenario in ['ShovelFish', 'HookTrapsRing']:
             data = flatten_nested_list([
                 [sce.idxSce[i]], sce.objBasePosSce[i], sce.objBaseQtnSce[i],
                 sce.objJointPosSce[i], sce.obsBasePosSce[i], sce.obsBaseQtnSce[i], 
