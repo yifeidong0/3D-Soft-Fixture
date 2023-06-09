@@ -158,8 +158,8 @@ class runScenario():
                 self.obstacleEul = [1.57, -0.3, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-.3,2], [-.5,.5], [1.3,2.8]] # searching bounds
-                self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+                self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.8]] # searching bounds
+                self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
                 self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
                 self.startFrame = 280
                 self.endFrame = 520
@@ -702,8 +702,8 @@ if __name__ == '__main__':
         # Run the caging analysis algorithm over downsampled frames we extracted above
         numMainIter = len(sce.objectStateSce) if args.scenario in ['MaskEar'] else len(sce.objJointPosSce)
         for i in range(numMainIter):
-            if i == 1:
-                continue
+            # if i == 1:
+            #     continue
 
             # Set obstacle's state
             if args.scenario in ['GripperClenchesStarfish',]:
@@ -754,9 +754,21 @@ if __name__ == '__main__':
             if args.search == 'BisectionSearch':
                 useBisecSearch = True # True: bisection search; False: Conservative search
                 maxT = 30
-                env.energy_bisection_search(useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
-                escape_energy, z_thres = env.visualize_bisection_search() # visualize
+                numIter = 5
+                env.energy_bisection_search(numIter=numIter, useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
+                # env.visualize_bisection_search() # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
+
+                # Create new folder
+                createFolder = 1 if i == 0 else 0
+                if createFolder:
+                    now = datetime.now()
+                    dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
+                    folderName = './results/ICRA2024/{}'.format(dt_string)
+                    os.mkdir(folderName)
+
+                # Record data to the folder
+                record_data_benchmark_bound_shrink(env.escape_energy_list_runs, env.time_taken_list_runs, i, folderName)
 
             elif args.search == 'EnergyBiasedSearch':
                 numInnerIter = 1
