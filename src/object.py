@@ -205,15 +205,34 @@ class objectElasticBand(ObjectFromUrdf):
 
     def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
         self.joint_bounds = self.numCtrlPoint * basePosBounds
-        
-        # Visualize Workspace boundaries
         if vis:
             visualizeWorkSpaceBound(basePosBounds)
 
     def set_state(self, state):
         self.state = state
-        # for i in range(len(self.id)):
-        #     p.resetBasePositionAndOrientation(self.id[i], self.state[3*i:3*i+3], self.zeroQuaternion)
+
+
+class objectBandHorizon(ObjectFromUrdf):
+    '''
+    An elastic band composed of several control points and all points horizontally aligned.
+    '''
+    def __init__(self, id, numCtrlPoint) -> None:
+        self.id = id # a list
+        self.numCtrlPoint = numCtrlPoint
+        self.comDof = 2
+        self.joint_idx = []
+        self.num_dim = self.comDof * self.numCtrlPoint + 1
+        self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
+
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
+        self.joint_bounds = self.numCtrlPoint * basePosBounds[:2]
+        self.joint_bounds.append(basePosBounds[-1])
+        print('self.joint_bounds', self.joint_bounds)
+        if vis:
+            visualizeWorkSpaceBound(basePosBounds)
+
+    def set_state(self, state):
+        self.state = state
 
 
 class objectMaskBand(ObjectFromUrdf):

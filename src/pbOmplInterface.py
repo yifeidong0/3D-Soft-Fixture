@@ -108,8 +108,8 @@ class PbOMPL():
             
         # Check collision against environment
         # Scenarios with a band (control points collision check not necessary)
-        if self.args.object in ["Band"]:
-            if utils.band_collision_raycast(stateList):
+        if self.args.object in ["Band", "BandHorizon"]:
+            if utils.band_collision_raycast(stateList, obj=self.args.object):
                 return False
 
         elif self.args.object in ["MaskBand"]:
@@ -153,7 +153,6 @@ class PbOMPL():
         if self.args.object in ["Rope"]:
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
-            # print('@@@@@@@self.rope', self.robot.id, ) # ID: 0,...,numNode-1
         else:
             self.check_link_pairs = utils.get_self_link_pairs(self.robot.id, self.robot.joint_idx) if self_collisions else []
             # moving_links = frozenset(
@@ -261,7 +260,7 @@ class PbOMPL():
                 self.potentialObjective = objective.StarfishPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Snaplock":
                 self.potentialObjective = objective.SnaplockPotentialObjective(self.si, start, self.args)
-            elif self.args.object == "Band":
+            elif self.args.object in ["Band", "BandHorizon"]:
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
             elif self.args.object == "MaskBand":
                 self.potentialObjective = objective.MaskBandPotentialObjective(self.si, start, self.args, self.bandFixedV0, self.bandFixedV1)
@@ -350,23 +349,15 @@ class PbOMPL():
                       meaning that the simulator will simply reset robot's state WITHOUT any dynamics simulation. Since the
                       path is collision free, this is somewhat acceptable.
         '''
-        print('executing!!!!!!')
         for q in path:
-            # if dynamics:
-            #     # TODO: try tune gravity
-            #     kp = 10
-            #     target_pos = q[:3]
-
-            #     current_pos, _ = p.getBasePositionAndOrientation(self.robot_id)
-            #     grav = kp * (np.array(target_pos)-np.array(current_pos))
-            #     # p.setGravity(grav[0], grav[1], grav[2])
-
             self.robot.set_state(q)
 
             # Visualize linear objects using Bullet user debug lines
             if self.args.object == 'Band':
                 utils.band_collision_raycast(q, visRays=1)
-            if self.args.object == 'MaskBand':
+            elif self.args.object == 'BandHorizon':
+                utils.band_collision_raycast(q, visRays=1, obj='BandHorizon')
+            elif self.args.object == 'MaskBand':
                 utils.mask_band_collision_raycast(q, self.bandFixedV0, self.bandFixedV1, visRays=1)
             elif self.args.object == 'Rope':
                 utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)

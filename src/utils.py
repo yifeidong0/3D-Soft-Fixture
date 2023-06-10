@@ -45,29 +45,23 @@ def argument_parser():
         choices=['BFMTstar', 'BITstar', 'FMTstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
-    
-    # deprecated already
-    # parser.add_argument('-o', '--objective', default='GravityAndElasticPotential', \
-    #     choices=['ElasticPotential', 'GravityPotential', 'GravityAndElasticPotential', \
-    #     'PotentialAndPathLength'], \
-    #     help='(Optional) Specify the optimization objective, defaults to PathLength if not given.')
 
-    parser.add_argument('-j', '--object', default='Ring', \
-        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
+    parser.add_argument('-j', '--object', default='BandHorizon', \
+        choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Hook', \
+    parser.add_argument('-l', '--obstacle', default='Hourglass', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
                  'ShadowHand', 'Bucket', 'Ear'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=20, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=10, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
 
     # Parse the arguments
@@ -102,7 +96,7 @@ def path_collector():
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
             'Bucket': 'models/bucket/bucket-cutPoly.stl',
-            'Hourglass': 'models/hourglass/hourglass-cutPoly.stl',
+            'Hourglass': 'models/hourglass/half-hourglass.stl',
             # 'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
             'Maze': 'models/maze/maze_cutpoly.stl',
@@ -143,14 +137,20 @@ def create_convex_vhacd(name_in, name_out, resolution=int(1e5)):
     name_log = "log.txt"
     p.vhacd(name_in, name_out, name_log, resolution=resolution)
 
-def generate_circle_points(n, rad, z):
+def generate_circle_points(n, rad, z, obj='Band'):
     points = []
     angles = list(np.linspace(0, 2*np.pi, n, endpoint=0))
     for i in range(n):
         x = rad * math.cos(angles[i])
         y = rad * math.sin(angles[i])
-        points.append([x,y,z])
+        if obj == 'Band':
+            points.append([x,y,z])
+        if obj == 'BandHorizon':
+            points.append([x,y])
     points = flatten_nested_list(points)
+    if obj == 'BandHorizon':
+        points.append(z)
+    
     return points
 
 def ropeForwardKinematics(state, linkLen, baseDof_=6, ctrlPointDof_=2, TLastRow_=np.array([[0.,0.,0.,1.]])):
@@ -298,7 +298,7 @@ def body_collision(body1, body2, max_distance=MAX_DISTANCE):  # 10000
     return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance)) != 0  # getContactPoints`
     # return len(p.getContactPoints(bodyA=body1, bodyB=body2,)) > 20  # getContactPoints`
 
-def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0):
+def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], visRays=0, obj='Band'):
     '''
     Description:
         check if the lines connecting any two adjacent control points along a band penetrate obstacles.
@@ -307,8 +307,13 @@ def band_collision_raycast(state, rayHitColor=[1,0,0], rayMissColor=[0,1,0], vis
         state: list of planner state vector, length is 3*numCtrlPoint
     '''
     # Construct start and end positions of rays
-    numCtrlPoint = int(len(state)/3)
-    rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
+    if obj == 'Band':
+        numCtrlPoint = int(len(state)/3)
+        rayFromPositions = [state[3*i:3*i+3] for i in range(numCtrlPoint)]
+    if obj == 'BandHorizon':
+        numCtrlPoint = int((len(state)-1)/2)
+        rayFromPositions = [state[2*i:2*i+2] for i in range(numCtrlPoint)]
+        rayFromPositions = [r+[state[-1]] for r in rayFromPositions]
     rayToPositions = rayFromPositions[1:]
     rayToPositions.append(rayFromPositions[0])
     results = p.rayTestBatch(rayFromPositions, rayToPositions)

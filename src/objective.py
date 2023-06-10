@@ -119,7 +119,12 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
 
         # parameters of articulated object
         self.numStateSpace = len(start)
-        self.numCtrlPoint = int(self.numStateSpace/3)
+        if args.object == 'Band':
+            self.numCtrlPoint = int(len(start)/3)
+        if args.object == 'BandHorizon':
+            self.numCtrlPoint = int((len(start)-1)/2)
+        # self.numCtrlPoint = int(self.numStateSpace/3)
+
         self.stiffnesss = [10] * self.numCtrlPoint
         self.springneutralLen = .1
         
@@ -128,9 +133,15 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
 
     def getElasticEnergy(self, state):
         # Retrieve control point positions
-        ctrlPointPos = []
-        for i in range(self.numCtrlPoint):
-            ctrlPointPos.append(np.asarray(state[3*i:3*i+3]))
+        # ctrlPointPos = []
+        # for i in range(self.numCtrlPoint):
+        #     ctrlPointPos.append(np.asarray(state[3*i:3*i+3]))
+
+        if self.args_.object == 'Band':
+            ctrlPointPos = [np.asarray(state[3*i:3*i+3]) for i in range(self.numCtrlPoint)]
+        if self.args_.object == 'BandHorizon':
+            ctrlPointPos = [state[2*i:2*i+2] for i in range(self.numCtrlPoint)]
+            ctrlPointPos = [np.asarray(r+[state[-1]]) for r in ctrlPointPos]
 
         # Retrieve displacement of control points
         springDisplaces = []

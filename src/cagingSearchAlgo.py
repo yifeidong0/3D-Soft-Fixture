@@ -373,21 +373,23 @@ class ElasticBandCaging(RigidObjectCaging):
         self.object_id = []
         # for i in range(self.numCtrlPoint):
         #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
-
-        self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
+        if self.args.object == 'Band': 
+            self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
+        if self.args.object == 'BandHorizon': 
+            self.robot = objectBandHorizon(self.object_id, self.numCtrlPoint)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
         self.start = [0,0,2]*self.numCtrlPoint if start is None else start
         self.goal = [0,0,3]*self.numCtrlPoint if goal is None else goal
 
-        # make sure states are within search bounds
-        jbounds = self.robot.get_joint_bounds()
-        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-            print('The start or goal states violates search boundary conditions!')
-            return False 
+        # # make sure states are within search bounds
+        # jbounds = self.robot.get_joint_bounds()
+        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
+        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
+        #     print('The start or goal states violates search boundary conditions!')
+        #     return False 
         
         return True # bounds valid check passed
 
