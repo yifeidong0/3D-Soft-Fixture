@@ -57,8 +57,8 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
     elif args.object == 'BandHorizon':
         numCtrlPoint = 6
-        goalSpaceBounds = [[-1.5, 1.5], [-1.5, 1.5],]*numCtrlPoint + [[0.86, 1]]
-        start = generate_circle_points(numCtrlPoint, rad=.9, z=.01, obj=args.object) # r1=0.735, r2 = 1.0, h=0.86
+        goalSpaceBounds = [[-1.5, 1.5], [-1.5, 1.5],]*numCtrlPoint + [[0.86, 0.9]]
+        start = generate_circle_points(numCtrlPoint, rad=.9, z=.0, obj=args.object) # r1=0.735, r2 = 1.0, h=0.86
         goal = generate_circle_points(numCtrlPoint, rad=.2, z=.86, obj=args.object)
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     env.create_ompl_interface()
     env.pb_ompl_interface.set_goal_space_bounds(goalSpaceBounds)
-    print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
+    # print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
     
     # Choose from different searching methods
     if args.search == 'BisectionSearch':

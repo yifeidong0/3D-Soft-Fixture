@@ -305,6 +305,7 @@ class ElasticJellyPotentialObjective(ob.OptimizationObjective):
 
 class GravityPotentialObjective(ob.OptimizationObjective):
     def __init__(self, si, start):
+        print('Running GravityPotentialObjective!')
         super(GravityPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
@@ -316,14 +317,13 @@ class GravityPotentialObjective(ob.OptimizationObjective):
         return self.mg * state[2]
     
     def motionCost(self, state1, state2):
-        # return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
         if self.incrementalCost:
             return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
         else:
             return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
+            # return ob.Cost(max(0.0, self.stateEnergy(state2) - self.startStateEnergy))
         
     def combineCosts(self, cost1, cost2):
-        # return ob.Cost(max(cost1.value(), cost2.value()))
         if self.incrementalCost:
             return ob.Cost(cost1.value() + cost2.value())
         else:

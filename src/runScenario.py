@@ -160,10 +160,10 @@ class runScenario():
                 self.obstacleScale = [.1,.1,.1]
                 self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.8]] # searching bounds
                 self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
-                self.goalCoMPose = [0,0,.01] + [1.57, 0, 0]
+                self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
                 self.startFrame = 280
                 self.endFrame = 520
-                self.downsampleRate = 8
+                self.downsampleRate = 30
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -596,9 +596,7 @@ class runScenario():
     def runDynamicFalling(self):
         '''For the tasks of articulated fish or ring falling'''
         i = 0        
-        # time.sleep(1)
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
             time.sleep(1/240.)
@@ -606,11 +604,6 @@ class runScenario():
             if i % self.downsampleRate == 0 and i > self.startFrame:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
-
-                # Calculate G potential energy
-                # state = list(gemPos) + list(p.getEulerFromQuaternion(gemQtn)) + list(jointPositions)
-                # gravityEnergy = getGravityEnergy(state, self.args, self.paths)
-                # print('@@@gravityEnergy', gravityEnergy)
 
                 # record objects' DoF
                 self.objBasePosSce.append(list(gemPos))
@@ -635,7 +628,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(1):
+    for n in range(3):
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
@@ -752,9 +745,9 @@ if __name__ == '__main__':
 
             # Choose a searching method
             if args.search == 'BisectionSearch':
-                useBisecSearch = True # True: bisection search; False: Conservative search
-                maxT = 30
-                numIter = 5
+                useBisecSearch = 1 # True: bisection search; False: Conservative search
+                maxT = 200
+                numIter = 3
                 env.energy_bisection_search(numIter=numIter, useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
                 # env.visualize_bisection_search() # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))

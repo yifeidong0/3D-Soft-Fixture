@@ -184,12 +184,19 @@ class PbOMPL():
             self.planner = og.PRM(self.si)
         elif planner_name == "RRT":
             self.planner = og.RRT(self.si)
+            self.planner.params().setParam("range", "0.05")
         elif planner_name == "RRTConnect":
             self.planner = og.RRTConnect(self.si)
+            self.planner.params().setParam("range", "0.05")
         elif planner_name == "RRTstar":
             self.planner = og.RRTstar(self.si)
-            self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
-            # self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
+            self.planner.params().setParam("range", "0.05") # controls the maximum distance between a new state and its nearest neighbor in the tree
+            self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
+            self.planner.params().setParam("tree_pruning", "1")
+            self.planner.params().setParam("use_k_nearest", "0")
+            self.planner.params().setParam("use_admissible_heuristic", "0") 
+            self.planner.params().setParam("number_sampling_attempts", "1000")
+            self.planner.params().setParam("focus_search", "1")
         elif planner_name == "EST":
             self.planner = og.EST(self.si)
         elif planner_name == "FMT":
@@ -198,7 +205,7 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            # self.planner.params().setParam("samples_per_batch", "2000") # fish, starfish, hook
+            self.planner.params().setParam("samples_per_batch", "2000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
             # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
@@ -206,12 +213,20 @@ class PbOMPL():
             self.planner = og.ABITstar(self.si)
         elif planner_name == "InformedRRTstar":
             self.planner = og.InformedRRTstar(self.si)
+            self.planner.params().setParam("range", "0.05")
+            self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
+            self.planner.params().setParam("number_sampling_attempts", "1000")
         elif planner_name == "AITstar":
             self.planner = og.AITstar(self.si)
         elif planner_name == "SORRTstar":
             self.planner = og.SORRTstar(self.si)
+            self.planner.params().setParam("range", "0.05")
+            self.planner.params().setParam("number_sampling_attempts", "1000")
+            self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
         elif planner_name == "PRMstar":
             self.planner = og.PRMstar(self.si)
+        elif planner_name == "FMTstar":
+            self.planner = og.FMTstar(self.si)
         elif planner_name == "LBTRRT":
             self.planner = og.LBTRRT(self.si)
             self.planner.params().setParam("epsilon", "0.01") # A smaller value for epsilon will result in a denser tree
@@ -310,11 +325,12 @@ class PbOMPL():
             # Get cost of the solution path
             if self.args.search == 'EnergyBiasedSearch':
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
-                if self.args.planner in ['PRMstar', 'LBTRRT']:
+                if self.args.planner in ['PRMstar', 'LBTRRT',]:
                     best_cost = float(self.planner.getBestCost()) # getBestCost returns a str
+                elif self.args.planner in ['RRTConnect', 'RRT']:
+                    best_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
                 else:
                     best_cost = self.planner.bestCost().value() # approximate solution? available for BITstar
-                # sol_final_cost = sol_path_geometric.cost(self.potentialObjective).value() # exact solution?
 
             # make sure goal is reached
             if self.args.planner in ['BITstar']:
