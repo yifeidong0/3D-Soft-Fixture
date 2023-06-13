@@ -25,6 +25,7 @@ if __name__ == '__main__':
         env.reset_start_and_goal(start=start, goal=goal)
     if args.object == 'FishHole':
         env = RigidObjectCaging(args)
+        goalSpaceBounds = [[-1,1], [-.5,3], [1.2,1.3]] + [[math.radians(-180), math.radians(180)]]*3
         env.add_obstacles(scale=[.1]*3, pos=[0.5,1.150,3.60], qtn=[0.223,0.0,0.0,0.974])
         env.robot.set_search_bounds(basePosBounds=[[-3,3], [-1,5], [0,6]])
         objEul = list(p.getEulerFromQuaternion([0.381828,-0.174,-0.06460,0.90529]))

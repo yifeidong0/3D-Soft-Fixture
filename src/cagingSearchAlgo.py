@@ -158,7 +158,7 @@ class RigidObjectCaging():
                self.escape_energy_list.append(self.escape_energy_list[-1])
         return res, path, sol_path_energy, best_cost, time_taken
 
-    def energy_biased_search(self, numIter=1, save_escape_path=1):
+    def energy_biased_search(self, numIter=1, save_escape_path=1, get_cost_from_path=0):
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []
@@ -177,6 +177,11 @@ class RigidObjectCaging():
                     save_escape_path_4blender(self.args, chainNodePath)
                 else:
                     save_escape_path_4blender(self.args, path)
+
+            # Get escape cost from path for rigid objects
+            if get_cost_from_path:
+                z = [s[2] for s in path]
+                self.cost_from_path = max(z) - z[0]
 
             # Record data
             self.sol_path_energy_list.append(sol_path_energy)      

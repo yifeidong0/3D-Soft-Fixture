@@ -55,10 +55,12 @@ class runScenario():
                 self.obstacleEul = [-.6, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-2,2], [-2,2], [0,3.5]]
-                self.goalCoMPose = [1.5,0,.01] + [0, 0, 0]
+                self.basePosBounds=[[-.3,.3], [.5,2.5], [1.8,3]]
+                self.goalCoMPose = [0,2,1.9] + [0, 0, 0]
+                self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[math.radians(-10), math.radians(10)]]*3
+                self.startFrame = 12000
                 self.endFrame = 18000
-                self.downsampleRate = 40
+                self.downsampleRate = 200
                 self.half_box_size = [1,2.5,.1]
             case 'ShovelFish':
                 self.object = 'Fish'
@@ -302,7 +304,7 @@ class runScenario():
             new_state_box = [curr_state_box[k]+increment_box[k] for k in range(len(curr_state_box))]
             self.box.set_state(new_state_box)
 
-            if i % self.downsampleRate == 0:
+            if i>self.startFrame and i%self.downsampleRate == 0:
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
                 # Record fish state
@@ -628,7 +630,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(3):
+    for n in range(4):
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
@@ -676,9 +678,9 @@ if __name__ == '__main__':
             env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
 
         # Add extra obstacles
-        if args.scenario in ['HookFishHole']:
-            box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
-        elif args.scenario in ['ShovelFish']:
+        # if args.scenario in ['HookFishHole']:
+        #     box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
+        if args.scenario in ['ShovelFish']:
             box_id = env.add_box(sce.boxBasePos, sce.half_box_size)
             env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, obstacleName='LeftHand')
         elif args.scenario in ['StarfishBowl']:
@@ -704,7 +706,7 @@ if __name__ == '__main__':
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
             if args.scenario in ['HookFishHole']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
-                p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
+                # p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
             if args.scenario in ['ShovelFish']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
             if args.scenario in ['StarfishBowl']:
@@ -766,7 +768,8 @@ if __name__ == '__main__':
             elif args.search == 'EnergyBiasedSearch':
                 numInnerIter = 1
                 save_escape_path = 0
-                isSolved = env.energy_biased_search(numInnerIter, save_escape_path)
+                get_cost_from_path = 0 # for rigid objects and incremental cost
+                isSolved = env.energy_biased_search(numInnerIter, save_escape_path, get_cost_from_path=get_cost_from_path)
                 # env.visualize_energy_biased_search()
 
                 # Record start and escape energy
@@ -788,7 +791,10 @@ if __name__ == '__main__':
                 startGEnergySce.append(startGEnergy)
                 startEEnergySce.append(startEEnergy)
                 
-                escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
+                if args.object in ['Ring'] and get_cost_from_path:
+                    escapeEnergyCost = env.cost_from_path
+                else:
+                    escapeEnergyCost = min(env.sol_final_costs) if isSolved else np.inf
                 escapeEnergyCostSce.append(escapeEnergyCost) # list(numMainIter*list(numInnerIter))
                 
                 # Create txt, csv for data recording

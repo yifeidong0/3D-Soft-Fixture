@@ -321,7 +321,7 @@ class GravityPotentialObjective(ob.OptimizationObjective):
             return ob.Cost(abs(self.stateEnergy(state2) - self.stateEnergy(state1)))
         else:
             return ob.Cost(self.stateEnergy(state2) - self.startStateEnergy)
-            # return ob.Cost(max(0.0, self.stateEnergy(state2) - self.startStateEnergy))
+            # return ob.Cost(max(0.0, self.stateEnergy(state2) - self.startStateEnergy)) # for PRM*
         
     def combineCosts(self, cost1, cost2):
         if self.incrementalCost:

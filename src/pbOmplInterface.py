@@ -190,13 +190,13 @@ class PbOMPL():
             self.planner.params().setParam("range", "0.05")
         elif planner_name == "RRTstar":
             self.planner = og.RRTstar(self.si)
-            self.planner.params().setParam("range", "0.05") # controls the maximum distance between a new state and its nearest neighbor in the tree
-            self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
-            self.planner.params().setParam("tree_pruning", "1")
-            self.planner.params().setParam("use_k_nearest", "0")
-            self.planner.params().setParam("use_admissible_heuristic", "0") 
-            self.planner.params().setParam("number_sampling_attempts", "1000")
-            self.planner.params().setParam("focus_search", "1")
+            self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
+            # self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
+            # self.planner.params().setParam("tree_pruning", "1")
+            # self.planner.params().setParam("use_k_nearest", "0")
+            # self.planner.params().setParam("use_admissible_heuristic", "0") 
+            # self.planner.params().setParam("number_sampling_attempts", "1000")
+            # self.planner.params().setParam("focus_search", "1")
         elif planner_name == "EST":
             self.planner = og.EST(self.si)
         elif planner_name == "FMT":
@@ -218,6 +218,8 @@ class PbOMPL():
             self.planner.params().setParam("number_sampling_attempts", "1000")
         elif planner_name == "AITstar":
             self.planner = og.AITstar(self.si)
+            # self.planner.params().setParam("rewire_factor", "0.1")
+            self.planner.params().setParam("samples_per_batch", "500") # fish, starfish, hook
         elif planner_name == "SORRTstar":
             self.planner = og.SORRTstar(self.si)
             self.planner.params().setParam("range", "0.05")
@@ -225,8 +227,8 @@ class PbOMPL():
             self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
         elif planner_name == "PRMstar":
             self.planner = og.PRMstar(self.si)
-        elif planner_name == "FMTstar":
-            self.planner = og.FMTstar(self.si)
+        # elif planner_name == "FMTstar":
+        #     self.planner = og.FMTstar(self.si)
         elif planner_name == "LBTRRT":
             self.planner = og.LBTRRT(self.si)
             self.planner.params().setParam("epsilon", "0.01") # A smaller value for epsilon will result in a denser tree
@@ -312,7 +314,10 @@ class PbOMPL():
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
             # solution_path = self.planner.bestPathFromGoalToStart() # TODO: expose the corresponding C++ protected function
             sol_path_geometric = self.pdef.getSolutionPath()
-            sol_path_states_non_interp = sol_path_geometric.getStates()
+            try:
+                sol_path_states_non_interp = sol_path_geometric.getStates()
+            except AttributeError:
+                sol_path_states_non_interp = None
             sol_path_geometric.interpolate(INTERPOLATE_NUM)
             sol_path_states = sol_path_geometric.getStates()
             sol_path_list_non_interp = [self.state_to_list(s) for s in sol_path_states_non_interp]

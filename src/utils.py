@@ -31,7 +31,8 @@ def argument_parser():
     # BimanualRubic - Rubic, 3fGripper
     # HookTrapsRing - Ring, Hook
     # BandHourglass - BandHorizon, Hourglass
-    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
+    # HookFishHole - FishHole, Hook
+    parser.add_argument('-c', '--scenario', default='HookFishHole', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -42,12 +43,12 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'AITstar', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
 
-    parser.add_argument('-j', '--object', default='Ring', \
+    parser.add_argument('-j', '--object', default='FishHole', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain'], \
@@ -59,7 +60,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=200, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=300, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
@@ -124,7 +125,7 @@ def get_non_articulated_objects():
             'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear']
 
 def get_colors():
-    return ['#31a354', '#756bb1', '#2b8cbe', '#f03b20'] # green, purple, blue, red
+    return ['#31a354', '#756bb1', '#2b8cbe', '#f4a63e', '#FF69B4', '#f03b20', ] # green, purple, blue, orange, pink, red, 
 
 def flatten_nested_list(input):
     '''Input in the format of [[1], [2, 3], [4, 5, 6, 7]].

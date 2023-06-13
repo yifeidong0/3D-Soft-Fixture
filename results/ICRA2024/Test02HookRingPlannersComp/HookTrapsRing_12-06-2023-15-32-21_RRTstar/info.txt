@@ -1,0 +1,19 @@
+*****Search goal region: [[1.4, 2], [-0.5, 0.5], [1.3, 2.1], [-3.141592653589793, 3.141592653589793], [-0.2, 0.2], [-0.2, 0.2]]
+*****Search basePosBounds: [[-0.5, 2], [-0.5, 0.5], [1.3, 2.8], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793]]
+*****args: Namespace(scenario='HookTrapsRing', search='EnergyBiasedSearch', planner='RRTstar', object='Ring', obstacle='Hook', runtime=200, visualization=0)
+*****planner params: delay_collision_checking = 1
+focus_search = 0
+goal_bias = 0.05
+informed_sampling = 0
+new_state_rejection = 0
+number_sampling_attempts = 1000
+ordered_sampling = 0
+ordering_batch_size = 1
+prune_threshold = 0.05
+pruned_measure = 0
+range = 0.1
+rewire_factor = 0.1
+sample_rejection = 0
+tree_pruning = 1
+use_admissible_heuristic = 0
+use_k_nearest = 0

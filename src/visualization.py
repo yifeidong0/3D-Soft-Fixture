@@ -522,9 +522,9 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     # ax.set_yscale('log')
     # ax.set_ylim(0.4, 1.0)
     ax.plot(id, escapeCostBimean, '-', color=cls[0], linewidth=2, label='Binary search') # (8 min run time for each keyframe)
-    ax.plot(id, escapeCostInmean, '-', color=cls[2], linewidth=2, label='Incremental search') # (8 min run time for each keyframe)
-    ax.plot(id, escapeCostEMmean, '-', color=cls[3], linewidth=2, label='BIT* search') # (2 min run time for each keyframe)
-    ax.plot(id, groundTruthEscapeEnergy, '-', color=cls[1], linewidth=2, label='Measured reference')
+    ax.plot(id, escapeCostInmean, '-', color=cls[1], linewidth=2, label='Incremental search') # (8 min run time for each keyframe)
+    ax.plot(id, escapeCostEMmean, '-', color=cls[2], linewidth=2, label='BIT* search') # (2 min run time for each keyframe)
+    ax.plot(id, groundTruthEscapeEnergy, '-', color=cls[-1], linewidth=2, label='Measured reference')
 
     # Plot std shade
     ax.fill_between(id, escapeCostBimean-escapeCostBistd, escapeCostBimean+escapeCostBistd, alpha=0.3, color=cls[0])
@@ -558,13 +558,13 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     
     _, ax = plt.subplots()
     ax.plot(id, escapeCostBiErrMean, '-', color=cls[0], linewidth=2, label='Binary search') # (8 min run time for each keyframe)
-    ax.plot(id, escapeCostInErrMean, '-', color=cls[2], linewidth=2, label='Incremental search') # (8 min run time for each keyframe)
-    ax.plot(id, escapeCostEMErrMean, '-', color=cls[3], linewidth=2, label='BIT* search') # (2 min run time for each keyframe)
+    ax.plot(id, escapeCostInErrMean, '-', color=cls[1], linewidth=2, label='Incremental search') # (8 min run time for each keyframe)
+    ax.plot(id, escapeCostEMErrMean, '-', color=cls[2], linewidth=2, label='BIT* search') # (2 min run time for each keyframe)
 
     # Plot std shade
     ax.fill_between(id, escapeCostBiErrMean-escapeCostBiErrStd, escapeCostBiErrMean+escapeCostBiErrStd, alpha=0.3, color=cls[0])
-    ax.fill_between(id, escapeCostInErrMean-escapeCostInErrStd, escapeCostInErrMean+escapeCostInErrStd, alpha=0.3, color=cls[2])
-    ax.fill_between(id, escapeCostEMErrMean-escapeCostEMErrStd, escapeCostEMErrMean+escapeCostEMErrStd, alpha=0.3, color=cls[3])
+    ax.fill_between(id, escapeCostInErrMean-escapeCostInErrStd, escapeCostInErrMean+escapeCostInErrStd, alpha=0.3, color=cls[1])
+    ax.fill_between(id, escapeCostEMErrMean-escapeCostEMErrStd, escapeCostEMErrMean+escapeCostEMErrStd, alpha=0.3, color=cls[2])
 
     # Settings for plot
     ax.set_xticks(xticks.astype(int))
@@ -576,6 +576,95 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     plt.legend()
     # plt.show()
     plt.savefig('{}test01-error.png'.format(SaveFolderName), dpi=200)
+
+
+def plot_test02(SaveFolderName, groundTruthZ, ):
+    '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
+    '''
+    cls = get_colors()
+    noFrame = 8
+    noFolder = 5
+    planners = ['informedRRT*', 'RRTstar', 'RRTConnect', 'AITstar', 'RRT']
+        
+    # Get folder names
+    os.chdir(SaveFolderName)
+    folderList = []
+    for p in planners:
+        f = []
+        for folderName in glob.glob("*" + p):
+            f.append(folderName + '/')
+        folderList.append(f)
+    
+    # Retrieve data of energy minimization
+    gtRecorded = False
+    escapeCosts = []
+    for j,planner in enumerate(planners):
+        escapeCostEM = np.zeros((noFolder, noFrame))
+        for i,folder in enumerate(folderList[j][:noFolder]):
+            # Get energy data from single csv file
+            energyData, _ = get_results_from_csv(folder)
+            row = energyData[3]
+            escapeCostEM[i,:] = np.asarray(row)
+
+            # Get initial energy over frames
+            if not gtRecorded:
+                initEnergy = []
+                groundTruthEscapeEnergy = []
+                with open('{}/data.csv'.format(folder), 'r') as csvfile:
+                    csvreader = csv.DictReader(csvfile)
+                    for row in csvreader:
+                        initEnergy.append(float(row['obj_pos_z']))
+                        groundTruthEscapeEnergy.append(max(0.0, groundTruthZ-float(row['obj_pos_z'])))
+                gtRecorded = 1
+        escapeCosts.append(escapeCostEM)
+    os.chdir('./../../../')
+
+    # Retrieve indices of keyframes
+    id = np.asarray(list(range(0, noFrame)))
+    xticks = np.asarray(list(range(0, noFrame+1, 1)))
+    
+    # Retrieve mean and std
+    escapeCostsMean = [np.nanmean(e, axis=0) for e in escapeCosts]
+    escapeCostsStd = [np.nanstd(e, axis=0) for e in escapeCosts]
+
+    ###### Escape energy plot
+    _, ax = plt.subplots()
+    for i,e in enumerate(escapeCosts):
+        ax.plot(id, escapeCostsMean[i], '-', color=cls[i], linewidth=2, label=planners[i])
+        # ax.fill_between(id, escapeCostsMean[i]-escapeCostsStd[i], escapeCostsMean[i]+escapeCostsStd[i], alpha=0.3, color=cls[i])
+        ax.errorbar(id, escapeCostsMean[i], yerr=escapeCostsStd[i], color=cls[i], alpha=0.8, capsize=3, capthick=1)
+    ax.plot(id, groundTruthEscapeEnergy, '-', color=cls[-1], linewidth=2, label='Measured reference')
+
+    # Settings for plot
+    ax.set_xticks(xticks.astype(int))
+    ax.set_xlim(-0.02, noFrame-1)
+    ax.set_xlabel('Index of frames',fontsize=16)
+    ax.set_ylabel('Escape energy / J',fontsize=16)
+    plt.title('Accuracy of search algorithms over frames',fontsize=16)
+    plt.legend()
+    plt.savefig('{}test02-cost.png'.format(SaveFolderName), dpi=200)
+
+    ###### Error plot
+    escapeCostsErr = [(e-groundTruthEscapeEnergy)/groundTruthEscapeEnergy for e in escapeCosts]
+    escapeCostsMeanErr = [np.nanmean(e, axis=0) for e in escapeCostsErr]
+    escapeCostsStdErr = [np.nanstd(e, axis=0) for e in escapeCostsErr]
+
+    _, ax = plt.subplots()
+    for i,e in enumerate(escapeCostsErr):
+        ax.plot(id, escapeCostsMeanErr[i], '-', color=cls[i], linewidth=2, label=planners[i])
+        # ax.fill_between(id, escapeCostsMeanErr[i]-escapeCostsStdErr[i], escapeCostsMeanErr[i]+escapeCostsStdErr[i], alpha=0.3, color=cls[i])
+        plt.errorbar(id, escapeCostsMeanErr[i], yerr=escapeCostsStdErr[i], fmt='o', color=cls[i], alpha=0.8, capsize=3, capthick=1)
+
+    # Settings for plot
+    ax.set_xticks(xticks.astype(int))
+    ax.set_ylim(-0.02, 0.52)
+    ax.set_xlim(-0.02, noFrame-1)
+    ax.set_xlabel('Index of frames',fontsize=16)
+    ax.set_ylabel('Error',fontsize=16)
+    plt.title('Error of search algorithms w.r.t. measured reference',fontsize=16)
+    plt.legend()
+    plt.savefig('{}test02-error.png'.format(SaveFolderName), dpi=200)
+
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
@@ -606,4 +695,8 @@ if __name__ == '__main__':
     _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
     _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
     # print('@@@@finalCostBSFrames', finalCostBSFrames)
-    plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+    # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+
+    # Plot test02
+    folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
+    plot_test02(folderName02, groundTruthZ,)
