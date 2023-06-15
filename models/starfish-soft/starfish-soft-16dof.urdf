@@ -55,7 +55,7 @@
     <child link="arm1"/>
     <origin rpy="0 0 0" xyz="0 0 0"/> 
     <axis xyz="0.99939 0.0349 0"/> 
-    <limit effort="1000" lower="-1.5" upper="1.5" velocity="50"/>
+    <limit effort="1000" lower="-.5" upper=".5" velocity="50"/>
     <dynamics damping="0.001" friction="0.001"/>
   </joint>
   <link name="arm1">

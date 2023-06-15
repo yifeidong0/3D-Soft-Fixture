@@ -224,8 +224,11 @@ class objectBandHorizon(ObjectFromUrdf):
         self.num_dim = self.comDof * self.numCtrlPoint + 1
         self.zeroQuaternion = p.getQuaternionFromEuler([0,0,0])
 
-    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]]):
-        self.joint_bounds = self.numCtrlPoint * basePosBounds[:2]
+    def set_search_bounds(self, vis=1, basePosBounds=[[-1.5, 1.5], [-1.5, 1.5], [0, 2.5]], start=None):
+        offset = 0.3
+        print('start', start)
+        self.joint_bounds = [[max(start[k]-offset,basePosBounds[0][0]), min(start[k]+offset,basePosBounds[0][1])] if k%2==0 else [max(start[k]-offset,basePosBounds[1][0]), min(start[k]+offset,basePosBounds[1][1])] for k in range(len(start[:-1]))]
+        # self.joint_bounds = self.numCtrlPoint * basePosBounds[:2]
         self.joint_bounds.append(basePosBounds[-1])
         print('self.joint_bounds', self.joint_bounds)
         if vis:

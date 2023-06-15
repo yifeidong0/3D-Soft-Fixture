@@ -310,10 +310,10 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
 
     ax.set_xlabel('# iterations',fontsize=14)
     ax.set_ylabel('potential energy / J',fontsize=14)
-    ax.set_aspect(26.5)
+    # ax.set_aspect(26.5)
     ax.grid(True)
     ax.legend(fontsize=14,loc='upper right')
-    ax.set_xticks(np.arange(0,minDataLen,30).astype(int))
+    # ax.set_xticks(np.arange(0,minDataLen,30).astype(int))
 
 def get_results_from_csv(folderName, isArticulatedObject=False):
     indices = []
@@ -356,22 +356,24 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
 
 
 # '''Plot escape cost from multiple csv files with std shading'''
-# if __name__ == '__main__':
-#     args, parser = argument_parser()
-#     rigidObjectList = get_non_articulated_objects()
-#     isArticulatedObj = False if args.object in rigidObjectList else True
+if __name__ == '__main__':
+    args, parser = argument_parser()
+    rigidObjectList = get_non_articulated_objects()
+    isArticulatedObj = False if args.object in rigidObjectList else True
     
-#     folderList = []
-#     path = './results/'
-#     os.chdir(path)
-#     for file_name in glob.glob("HookTrapsRing*"):
-#         folderList.append(file_name)
+    folderList = []
+    # path = './results/ICRA2024/Scenario01Hook-Fish'
+    path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
+    os.chdir(path)
+    # HookFishHole
+    for file_name in glob.glob(args.scenario + "*"):
+        folderList.append(file_name)
 
-#     _, ax = plt.subplots()
-#     plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
-#     plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
-#     # plt.show()
-#     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+    _, ax = plt.subplots()
+    plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
+    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
+    # plt.show()
+    plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################
@@ -668,35 +670,35 @@ def plot_test02(SaveFolderName, groundTruthZ, ):
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
-if __name__ == '__main__':
-    # Insert initial escape energy cost
-    initZ = 1.9201135113652428
-    groundTruthZ = 2.34
-    cInit = 3.5 - initZ
+# if __name__ == '__main__':
+#     # Insert initial escape energy cost
+#     initZ = 1.9201135113652428
+#     groundTruthZ = 2.34
+#     cInit = 3.5 - initZ
 
-    # Read from csv
-    folderName = './results/ICRA2024/Test01HookRing3BasicSearch/'
-    folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
-    folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
-    timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
-    timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
-    # print(timeTickListB)
-    # print(escapeEnergyListB)
+#     # Read from csv
+#     folderName = './results/ICRA2024/Test01HookRing3BasicSearch/'
+#     folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
+#     folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
+#     timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
+#     timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
+#     # print(timeTickListB)
+#     # print(escapeEnergyListB)
 
-    # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
-    groundTruthEscapeEnergy = groundTruthZ - initZ
-    # plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy)
+#     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
+#     groundTruthEscapeEnergy = groundTruthZ - initZ
+#     # plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy)
 
-    # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
-    startKeyFrame = 0
-    cInit = 10
-    folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-09-02-46_binary_200_30'
-    folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
-    _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
-    _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
-    # print('@@@@finalCostBSFrames', finalCostBSFrames)
-    # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+#     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
+#     startKeyFrame = 0
+#     cInit = 10
+#     folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-09-02-46_binary_200_30'
+#     folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
+#     _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
+#     _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
+#     # print('@@@@finalCostBSFrames', finalCostBSFrames)
+#     # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
 
-    # Plot test02
-    folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
-    plot_test02(folderName02, groundTruthZ,)
+#     # Plot test02
+#     folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
+#     plot_test02(folderName02, groundTruthZ,)

@@ -91,10 +91,12 @@ class runScenario():
                 self.obstacleEul = [-.3, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [1, 1, 1]
-                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+                self.basePosBounds = [[-1.5,1.5], [-2,2], [0,3.51]]
                 self.goalCoMPose = [0,1,0.01] + [0]*3
+                self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]] + [[math.radians(-10), math.radians(10)]]*10
+                self.startFrame = 0
                 self.endFrame = 3400
-                self.downsampleRate = 7
+                self.downsampleRate = 50
                 self.boxBasePos = [0,1.5,3]
                 self.boxBaseEul = [0,0,0]
                 self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
@@ -410,7 +412,7 @@ class runScenario():
 
         # Change dynamics of objects
         p.changeDynamics(box_id, -1, lateralFriction=0.8, spinningFriction=0, rollingFriction=0,)
-        p.changeDynamics(self.obstacleId, -1, lateralFriction=0.28, spinningFriction=0, rollingFriction=0,)
+        p.changeDynamics(self.obstacleId, -1, lateralFriction=0.20, spinningFriction=0, rollingFriction=0.001,)
 
         # Dynamics rolling on
         while (1):
@@ -440,7 +442,7 @@ class runScenario():
             new_state_box = [curr_state_box[k]+increment_box[k] for k in range(len(curr_state_box))]
             self.box.set_state(new_state_box)
 
-            if i % self.downsampleRate == 0:
+            if i % self.downsampleRate == 0 and i >= self.startFrame:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
@@ -630,7 +632,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(4):
+    for n in range(1):
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
@@ -728,7 +730,9 @@ if __name__ == '__main__':
                 objStartState = sce.objectStateSce[i]
             else:
                 objJointPos = [round(n, 2) for n in sce.objJointPosSce[i]]
-                objStartState = sce.objBasePosSce[i] + sce.objBaseEulSce[i] + objJointPos
+                # TODO
+                basePos = [sce.objBasePosSce[i][k] if k<2 else sce.objBasePosSce[i][k]+0.018 for k in range(len(sce.objBasePosSce[i]))] # 0.018
+                objStartState = basePos + sce.objBaseEulSce[i] + objJointPos
             if args.object in ['Chain']:
                 objGoalState = sce.objectGoal
             elif args.object in ['MaskBand']:

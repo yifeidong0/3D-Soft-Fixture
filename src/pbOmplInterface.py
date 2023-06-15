@@ -66,7 +66,7 @@ class PbOMPL():
         self.set_obstacles()
         self.use_bisection_search = 0
         
-        if self.args.planner in ["BITstar"]:
+        if self.args.planner in ["BITstar", "AITstar"]:
             self.useGoalSpace = 0 # not applicable
         else:
             self.useGoalSpace = 1
@@ -92,12 +92,25 @@ class PbOMPL():
         self.use_bisection_search = 1
         self.energy_threshold = energy_threshold
 
+    def set_spring_params(self, springneutralLen, k):
+        self.springneutralLen = springneutralLen
+        self.k_spring = k
+
     def is_state_valid(self, state):
         # Check if the state overshoots the energy threshold in bisection search
         if self.use_bisection_search:
             current_energy = utils.get_state_energy(state, self.args.object)
             if current_energy > self.energy_threshold:
                 return False
+
+        # Skip the collision check of initial state
+        # if letInitStateGo:
+        #     stateNp = np.asarray([float(s) for s in state])
+        #     initNp = np.asarray([float(s) for s in self.robot.get_cur_state()])
+        #     print('initNp', initNp)
+        #     print('np.linalg.norm(stateNp-initNp)', np.linalg.norm(stateNp-initNp))
+        #     if np.linalg.norm(stateNp-initNp)<1e-5:
+        #         return True
 
         # Check self-collision
         stateList = self.state_to_list(state)
@@ -141,6 +154,7 @@ class PbOMPL():
         else:
             for body1, body2 in self.check_body_pairs:
                 if utils.pairwise_collision(body1, body2):
+                    # print('collision!')
                     return False
 
         return True
@@ -190,13 +204,13 @@ class PbOMPL():
             self.planner.params().setParam("range", "0.05")
         elif planner_name == "RRTstar":
             self.planner = og.RRTstar(self.si)
-            self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
-            # self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
+            self.planner.params().setParam("range", "0.3") # controls the maximum distance between a new state and its nearest neighbor in the tree
+            self.planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase 
             # self.planner.params().setParam("tree_pruning", "1")
             # self.planner.params().setParam("use_k_nearest", "0")
             # self.planner.params().setParam("use_admissible_heuristic", "0") 
             # self.planner.params().setParam("number_sampling_attempts", "1000")
-            # self.planner.params().setParam("focus_search", "1")
+            self.planner.params().setParam("focus_search", "1")
         elif planner_name == "EST":
             self.planner = og.EST(self.si)
         elif planner_name == "FMT":
@@ -205,10 +219,10 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            self.planner.params().setParam("samples_per_batch", "2000") # fish, starfish, hook
+            # self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
+            self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "InformedRRTstar":
@@ -278,7 +292,7 @@ class PbOMPL():
             elif self.args.object == "Snaplock":
                 self.potentialObjective = objective.SnaplockPotentialObjective(self.si, start, self.args)
             elif self.args.object in ["Band", "BandHorizon"]:
-                self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args)
+                self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args, self.springneutralLen, self.k_spring)
             elif self.args.object == "MaskBand":
                 self.potentialObjective = objective.MaskBandPotentialObjective(self.si, start, self.args, self.bandFixedV0, self.bandFixedV1)
             elif self.args.object == "Jelly":

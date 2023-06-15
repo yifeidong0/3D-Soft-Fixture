@@ -110,7 +110,7 @@ class ChainPotentialObjective(ob.OptimizationObjective):
 
 
 class ElasticBandPotentialObjective(ob.OptimizationObjective):
-    def __init__(self, si, start, args):
+    def __init__(self, si, start, args, springneutralLen=.1, k=1):
         super(ElasticBandPotentialObjective, self).__init__(si)
         self.si_ = si
         self.start_ = start
@@ -125,8 +125,9 @@ class ElasticBandPotentialObjective(ob.OptimizationObjective):
             self.numCtrlPoint = int((len(start)-1)/2)
         # self.numCtrlPoint = int(self.numStateSpace/3)
 
-        self.stiffnesss = [10] * self.numCtrlPoint
-        self.springneutralLen = .1
+        self.springneutralLen = springneutralLen
+        self.k = k
+        self.stiffnesss = [self.k] * self.numCtrlPoint
         
         # calculated energy of initial pose
         self.energyStart = self.stateEnergy(self.start_)
@@ -431,8 +432,9 @@ class StarfishPotentialObjective(ob.OptimizationObjective):
         self.numLinks = self.numJoints + 1
         self.numArms = 5
         self.g = 9.81
-        # TODO:
+        self.sizeScale = 1/15
         self.masses = [.3,.1,.1,.1,.1,.1]
+        self.masses = [x*self.sizeScale for x in self.masses]
         self.o = np.array([1.])
         self.path = path_collector()
         self.chain = kp.build_chain_from_urdf(open(self.path[self.args_.object]).read())
