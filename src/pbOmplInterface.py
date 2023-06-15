@@ -66,7 +66,7 @@ class PbOMPL():
         self.set_obstacles()
         self.use_bisection_search = 0
         
-        if self.args.planner in ["BITstar", "AITstar"]:
+        if self.args.planner in ["BITstar", "AITstar",]:
             self.useGoalSpace = 0 # not applicable
         else:
             self.useGoalSpace = 1
@@ -204,7 +204,7 @@ class PbOMPL():
             self.planner.params().setParam("range", "0.05")
         elif planner_name == "RRTstar":
             self.planner = og.RRTstar(self.si)
-            self.planner.params().setParam("range", "0.3") # controls the maximum distance between a new state and its nearest neighbor in the tree
+            self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
             self.planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase 
             # self.planner.params().setParam("tree_pruning", "1")
             # self.planner.params().setParam("use_k_nearest", "0")
@@ -219,10 +219,10 @@ class PbOMPL():
             self.planner = og.BITstar(self.si)
             # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
-            # self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
+            self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
             # self.planner.params().setParam("samples_per_batch", "20000") # band
             # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
+            # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "InformedRRTstar":

@@ -20,7 +20,7 @@ R1 = r1 / np.cos(alpha)
 s1 = 2 * r1 * np.tan(alpha)
 s2 = 2 * r2 * np.tan(alpha)
 # E1 = np.asarray([0.0]*7)
-E2 = 0.5 * k * n * (s2-s1)**2 # 0.5618, 0.37069253, 0.2809, 0.22800636, 0.19277928, 0.16745418,
+E2 = 0.5 * k * n * (s2-s1)**2 # E_true = 1.3847808
 
 if __name__ == '__main__':
     for s in range(7):

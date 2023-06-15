@@ -183,7 +183,7 @@ class MaskBandPotentialObjective(ob.OptimizationObjective):
         self.args_ = args
         self.bandFixedV0 = bandFixedV0
         self.bandFixedV1 = bandFixedV1
-        self.incrementalCost = 1
+        self.incrementalCost = 0
 
         # parameters of articulated object
         self.numStateSpace = len(start)

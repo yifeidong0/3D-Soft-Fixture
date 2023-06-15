@@ -150,7 +150,7 @@ class runScenario():
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [1.0,]*3
                 self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
-                self.startFrame = 137
+                self.startFrame = 120 # 137
                 self.endFrame = 163
             case 'HookTrapsRing':
                 self.object = 'Ring'
@@ -595,6 +595,11 @@ class runScenario():
                     mask_band_collision_raycast(bandVerticesState, self.bandFixedV0, self.bandFixedV1, visRays=1, lifeTime=.1)
                     sleep(.1)
                     self.objectStateSce.append(bandVerticesState)
+        
+        # Set goal region
+        ofs = 0.05
+        self.goalSpaceBounds = [[x-ofs, x+ofs] for x in self.objectGoal] # [[0,0.1], [0,0.1], [0.5,.51]] * self.numCtrlPoint
+        
         p.disconnect()
 
     def runDynamicFalling(self):
@@ -632,7 +637,7 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(1):
+    for n in range(200):
         args, parser = argument_parser()
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
