@@ -33,7 +33,7 @@ def argument_parser():
     # BandHourglass - BandHorizon, Hourglass
     # HookFishHole - FishHole, Hook
     # StarfishBowl - Starfish, LeftHandAndBowl
-    parser.add_argument('-c', '--scenario', default='MaskEar', \
+    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -49,19 +49,19 @@ def argument_parser():
         'SORRTstar', 'RRT', 'AITstar', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
 
-    parser.add_argument('-j', '--object', default='MaskBand', \
+    parser.add_argument('-j', '--object', default='Ring', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Ear', \
+    parser.add_argument('-l', '--obstacle', default='Hook', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
                  'ShadowHand', 'Bucket', 'Ear'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=300, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=2, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
@@ -99,7 +99,7 @@ def path_collector():
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
             'Bucket': 'models/bucket/bucket-cutPoly.stl',
-            'Hourglass': 'models/hourglass/half-hourglass.stl',
+            'Hourglass': 'models/hourglass/half-hourglass-downsized.stl',
             # 'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
             'Maze': 'models/maze/maze_cutpoly.stl',

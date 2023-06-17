@@ -162,12 +162,12 @@ class runScenario():
                 self.obstacleEul = [1.57, -0.3, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.8]] # searching bounds
+                self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
                 self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
                 self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
-                self.startFrame = 280
-                self.endFrame = 520
-                self.downsampleRate = 30
+                self.startFrame = 390 # 280 - 520
+                self.endFrame = 390
+                self.downsampleRate = 1
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -610,7 +610,7 @@ class runScenario():
             p.setGravity(0, 0, self.gravity)
             time.sleep(1/240.)
 
-            if i % self.downsampleRate == 0 and i > self.startFrame:
+            if i % self.downsampleRate == 0 and i >= self.startFrame:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
@@ -637,8 +637,13 @@ class runScenario():
 
 
 if __name__ == '__main__':
-    for n in range(200):
-        args, parser = argument_parser()
+    # t_list = [2,6,10,15,22,30,38,50,70,100,200,350,600]
+    # for t in t_list:
+    args, parser = argument_parser()
+    # args.runtime = t
+    # print(args.runtime)
+    numRunTime = 10
+    for n in range(numRunTime):
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
     
@@ -664,7 +669,7 @@ if __name__ == '__main__':
             sce.readMaskEar(folderName)
         elif args.scenario in ['HookTrapsRing']:
             sce.runDynamicFalling()
-            record_dynamics_scene(sce, args)
+            # record_dynamics_scene(sce, args)
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
@@ -756,9 +761,9 @@ if __name__ == '__main__':
 
             # Choose a searching method
             if args.search == 'BisectionSearch':
-                useBisecSearch = 1 # True: bisection search; False: Conservative search
-                maxT = 200
-                numIter = 3
+                useBisecSearch = 0 # True: bisection search; False: Conservative search
+                maxT = 600
+                numIter = 10
                 env.energy_bisection_search(numIter=numIter, useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
                 # env.visualize_bisection_search() # visualize
                 # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))

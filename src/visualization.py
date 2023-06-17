@@ -19,7 +19,7 @@ def record_data_init(sce, args, env):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
     print("date and time =", dt_string)
-    folderName = './results/{}_{}'.format(args.scenario, dt_string)
+    folderName = './results/{}sec_{}_{}'.format(args.runtime, args.scenario, dt_string)
     os.mkdir(folderName)
 
     # create csv headers
