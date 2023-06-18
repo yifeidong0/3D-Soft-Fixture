@@ -235,7 +235,9 @@ class RigidObjectCaging():
                 # Set lower and upper bounds
                 if useBisectionSearch: # bisection search
                     if not res: # no solution
-                        cLower = cUpper
+                        if cUpper < np.min(self.escape_energy_list):
+                            cLower = cUpper 
+                        # cLower = cUpper
                         cUpper = np.min(self.escape_energy_list)
                     else: # solution found
                         if curr_cost < cLower: # a solution lower than lower bound found

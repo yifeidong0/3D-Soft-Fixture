@@ -380,7 +380,7 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
 ###############################For Benchmark Plot#################################
 ##################################################################################
 
-def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIter=6):
+def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIter=15):
     tOneIter = [0.0]
     cOneIter = [float(cInit)]
     timeTickList = []
@@ -404,55 +404,103 @@ def get_benckmark_results_from_csv(folderName, cInit, getOnlyOneFrame=True, noIt
 
     return timeTickList, escapeEnergyList
 
+def test05_get_structured_bits_data(noIter=10):
+    folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
+    t_list_int = [2,6,10,15,22,30,38,50,70,100,200,350,600]
+    t_list = [str(t) for t in t_list_int]
+    tOneIter = [0.0]
+    cOneIter = [float(cInit)]
+    timeTickList = []
+    escapeEnergyList = []
+
+    # Read data folder names
+    os.chdir(folderName)
+    folderListAll = []
+    for t in t_list:
+        folderList = []
+        for folderName in glob.glob(t + "*"):
+            folderList.append(folderName + '/')
+        folderListAll.append(folderList)
+    
+    # Record data
+    escapeEnergyAll = []
+    for i,tim in enumerate(t_list):
+        escapeEnergy = []
+        for j in range(noIter):
+            with open('{}/data.csv'.format(folderListAll[i][j]), 'r') as csvfile:
+                csvreader = csv.DictReader(csvfile)
+                for row in csvreader:
+                    escapeEnergy.append(float(row['escape_energy_cost']))
+        escapeEnergyAll.append(escapeEnergy)
+    escapeEnergyAll = np.asarray(escapeEnergyAll).T
+
+    # Summarize and write to new file
+    for j in range(noIter):
+        with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([0,]+[j]+t_list_int)
+            writer.writerow([0,]+[j]+escapeEnergyAll[j].tolist())
+
+    os.chdir('./../../../../')
+
 from matplotlib.ticker import FormatStrFormatter
 
-def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy, maxTimeB=480, maxTimeE=180):
+def plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy, maxTime=600):
     # Color codes
     cls = get_colors()
-    noIter = len(timeTickListE)
+    noIter = 10
+    timeTickListBits, escapeEnergyListBits = bits
+    print('timeTickListBits', timeTickListBits)
+    timeTickListInc, escapeEnergyListInc = inc
+    timeTickListBin, escapeEnergyListBin = bin
 
     # Create numpy arrays structures for data
-    timeTickB = np.asarray(list(range(maxTimeB)))
-    timeTickE = np.asarray(list(range(maxTimeE)))
-    escapeEnergyB = np.zeros((noIter, maxTimeB))
-    escapeEnergyE = np.zeros((noIter, maxTimeE))
+    timeTick = np.asarray(list(range(maxTime)))
+    escapeEnergyBits = np.zeros((noIter, maxTime))
+    escapeEnergyInc = np.zeros((noIter, maxTime))
+    escapeEnergyBin = np.zeros((noIter, maxTime))
 
     # Interpolation
     for i in range(noIter):
-        # For bound shrink search
-        f = interpolate.interp1d(timeTickListB[i], escapeEnergyListB[i])
-        tnew = np.arange(0, maxTimeB, 1)
-        escapeEnergyB[i,:] = np.asarray(f(tnew))
+        f = interpolate.interp1d(timeTickListBits[i], escapeEnergyListBits[i])
+        tnew = np.arange(0, maxTime, 1)
+        escapeEnergyBits[i,:] = np.asarray(f(tnew))
 
-        # For energy minimization search
-        f = interpolate.interp1d(timeTickListE[i], escapeEnergyListE[i])
-        tnew = np.arange(0, maxTimeE, 1)
-        escapeEnergyE[i,:] = np.asarray(f(tnew))
+        f = interpolate.interp1d(timeTickListInc[i], escapeEnergyListInc[i])
+        tnew = np.arange(0, maxTime, 1)
+        escapeEnergyInc[i,:] = np.asarray(f(tnew))
 
-        # plt.plot(timeTickListB[0], escapeEnergyListB[0], 'o', xnew, ynew, '-')
-        # plt.show()
+        f = interpolate.interp1d(timeTickListBin[i], escapeEnergyListBin[i])
+        tnew = np.arange(0, maxTime, 1)
+        escapeEnergyBin[i,:] = np.asarray(f(tnew))
 
     # Retrieve mean and std
-    escapeEnergyBmean = np.mean(escapeEnergyB, axis=0)
-    escapeEnergyEmean = np.mean(escapeEnergyE, axis=0)
-    escapeEnergyBstd = np.std(escapeEnergyB, axis=0)
-    escapeEnergyEstd = np.std(escapeEnergyE, axis=0)
+    escapeEnergyBits[np.isinf(escapeEnergyBits)] = np.nan
+    escapeEnergyBitsMean = np.nanmean(escapeEnergyBits, axis=0)
+    escapeEnergyBitsStd = np.nanstd(escapeEnergyBits, axis=0)
+    escapeEnergyIncMean = np.mean(escapeEnergyInc, axis=0)
+    escapeEnergyIncStd = np.std(escapeEnergyInc, axis=0)
+    escapeEnergyBinMean = np.mean(escapeEnergyBin, axis=0)
+    escapeEnergyBinStd = np.std(escapeEnergyBin, axis=0)
 
     # Plot mean escape energy cost
     fig, ax = plt.subplots()
+    ax.set_xscale('log')
     # ax.set_yscale('log')
-    ax.set_ylim(0.4, 1.0)
-    ax.plot(timeTickB, escapeEnergyBmean, '-', color=cls[0], linewidth=3, label='Baseline: bisectional search')
-    ax.plot(timeTickE, escapeEnergyEmean, '-', color=cls[3], linewidth=3, label='BIT*-based search')
+    ax.set_xlim(1,600)
+    ax.plot(timeTick, escapeEnergyBitsMean, '-', color=cls[0], linewidth=3, label='BIT* search')
+    ax.plot(timeTick, escapeEnergyIncMean, '-', color=cls[1], linewidth=3, label='incremental search')
+    ax.plot(timeTick, escapeEnergyBinMean, '-', color=cls[2], linewidth=3, label='binary search')
 
     # Plot std shade
-    ax.fill_between(timeTickB, escapeEnergyBmean-escapeEnergyBstd, escapeEnergyBmean+escapeEnergyBstd, alpha=0.3, color=cls[0])
-    ax.fill_between(timeTickE, escapeEnergyEmean-escapeEnergyEstd, escapeEnergyEmean+escapeEnergyEstd, alpha=0.3, color=cls[3])
+    ax.fill_between(timeTick, escapeEnergyBitsMean-escapeEnergyBitsStd, escapeEnergyBitsMean+escapeEnergyBitsStd, alpha=0.3, color=cls[0])
+    ax.fill_between(timeTick, escapeEnergyIncMean-escapeEnergyIncStd, escapeEnergyIncMean+escapeEnergyIncStd, alpha=0.3, color=cls[1])
+    ax.fill_between(timeTick, escapeEnergyBinMean-escapeEnergyBinStd, escapeEnergyBinMean+escapeEnergyBinStd, alpha=0.3, color=cls[2])
     
     # Plot lines parallel to x axis
-    ax.axhline(y=escapeEnergyBmean[-1], color=cls[0], linestyle = '--')
-    ax.axhline(y=escapeEnergyEmean[-1], color=cls[3], linestyle = '--')
-    ax.axhline(y=groundTruthEscapeEnergy, color=cls[1], linestyle = '--', label='Ground truth')
+    # ax.axhline(y=escapeEnergyBmean[-1], color=cls[0], linestyle = '--')
+    # ax.axhline(y=escapeEnergyEmean[-1], color=cls[3], linestyle = '--')
+    ax.axhline(y=groundTruthEscapeEnergy, color=cls[3], linestyle = '--', label='reference')
 
     # Settings for plot
     ax.set_xlabel('Time / sec',fontsize=16)
@@ -461,7 +509,7 @@ def plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escap
     plt.title('Convergence of search algorithms over time',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}/benchmark_convergence_keyframe18.png'.format(folderName), dpi=200)
+    plt.savefig('{}/test05convergence.png'.format(folderName), dpi=200)
 
 def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ, startKeyFrame=18):
     '''Plot the comparisons of two searching algorithms (Bound shrink search and energy minimization search) over several frames.
@@ -726,22 +774,23 @@ def calculate_test04():
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
 if __name__ == '__main__':
     # Insert initial escape energy cost
-    initZ = 1.9201135113652428
-    groundTruthZ = 2.34
-    cInit = 3.5 - initZ
+    initZ = 1.7285293405317828
+    groundTruthZ = 2.315
+    cInit = 2.7 - initZ
 
     # Read from csv
-    folderName = './results/ICRA2024/Test01HookRing3BasicSearch/'
-    folderNameB = './results/Benchmarking/26-03-2023-17-00-43_BoundShrink_keyframe18'
-    folderNameE = './results/Benchmarking/25-03-2023-21-12-00_EnergyMinimization_keyframe18'
-    timeTickListB, escapeEnergyListB = get_benckmark_results_from_csv(folderNameB, cInit, getOnlyOneFrame=1)
-    timeTickListE, escapeEnergyListE = get_benckmark_results_from_csv(folderNameE, cInit, getOnlyOneFrame=1)
-    # print(timeTickListB)
-    # print(escapeEnergyListB)
+    folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
+    folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
+    folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
+    folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
+    inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
+    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=15)
+    bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
 
     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
     groundTruthEscapeEnergy = groundTruthZ - initZ
-    # plot_convergence_test(timeTickListB, escapeEnergyListB, timeTickListE, escapeEnergyListE, folderName, groundTruthEscapeEnergy)
+    # test05_get_structured_bits_data()
+    plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
 
     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
     startKeyFrame = 0
@@ -756,4 +805,4 @@ if __name__ == '__main__':
     # Plot test02
     folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
     # plot_test02(folderName02, groundTruthZ,)
-    calculate_test04()
+    # calculate_test04()

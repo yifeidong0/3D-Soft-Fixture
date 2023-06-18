@@ -7,22 +7,22 @@ from utils import *
 from time import sleep
 import numpy as np
 
-# # for test03: band-hourglass
-r1 = 0.21
-r2 = .2717
-h = 0.409
-# k = 1.0
-startDim = 3
-n = np.asarray(list(range(startDim,10)))
-k = np.asarray(list(range(startDim,10)))
-alpha = 180 / n
-alpha = alpha / 180 * np.pi
-R1 = r1 / np.cos(alpha)
-R2 = r2 / np.cos(alpha)
-s1 = 2 * r1 * np.tan(alpha)
-s2 = 2 * r2 * np.tan(alpha)
-E2 = 0.5 * k * n * (s2-s1)**2 # E_true = 0.1262, [0.2646    , 0.1568    , 0.12932669, 0.1176    , 0.11136516,
-    #    0.10761051, 0.10515812] - range(3,10)
+# # # for test03: band-hourglass
+# r1 = 0.21
+# r2 = .2717
+# h = 0.409
+# # k = 1.0
+# startDim = 3
+# n = np.asarray(list(range(startDim,10)))
+# k = np.asarray(list(range(startDim,10)))
+# alpha = 180 / n
+# alpha = alpha / 180 * np.pi
+# R1 = r1 / np.cos(alpha)
+# R2 = r2 / np.cos(alpha)
+# s1 = 2 * r1 * np.tan(alpha)
+# s2 = 2 * r2 * np.tan(alpha)
+# E2 = 0.5 * k * n * (s2-s1)**2 # E_true = 0.1262, [0.2646    , 0.1568    , 0.12932669, 0.1176    , 0.11136516,
+#     #    0.10761051, 0.10515812] - range(3,10)
 
 if __name__ == '__main__':
     # for s in range(len(n)):
