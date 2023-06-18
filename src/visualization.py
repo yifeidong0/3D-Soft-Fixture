@@ -327,6 +327,7 @@ def get_results_from_csv(folderName, isArticulatedObject=False):
 
         for row in csvreader:
             indices.append(float(row['index']))
+            # indices.append(float(row['frameID'])) # MaskEar
             start_energy.append(float(row['start_energy']))
             escape_energy_cost.append(float(row['escape_energy_cost']))
             if isArticulatedObject:
