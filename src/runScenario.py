@@ -63,24 +63,26 @@ class runScenario():
         #         self.downsampleRate = 200
         #         self.half_box_size = [1,2.5,.1]
         #     case 'ShovelFish':
-        #         self.object = 'Fish'
-        #         self.objectPos = [0,-1.3,1.7]
-        #         self.objectEul = [3.14,3.14,3.14]
-        #         self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-        #         self.obstacle = 'Shovel'
-        #         self.obstaclePos = [0, 6, 1.75]
-        #         self.obstacleEul = [-.1, 0, 3.14]
-        #         self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-        #         self.obstacleScale = [1]*3
-        #         self.handScale = [1,1,1]
-        #         self.handPos = [.5,-1.6,1.8]
-        #         self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
-        #         self.basePosBounds=[[-3,3], [-2,2], [-1,3]]
-        #         self.goalCoMPose = [2,0,.01] + [0, 0, 0]
-        #         self.endFrame = 40000
-        #         self.downsampleRate = 100
-        #         self.boxBasePos = [0,0,1]
-        #         self.half_box_size = [1,2.5,.1]
+            self.object = 'Fish'
+            self.objectPos = [0,-1.3,1.7]
+            self.objectEul = [3.14,3.14,3.14]
+            self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+            self.obstacle = 'Shovel'
+            self.obstaclePos = [0, 6, 1.75]
+            self.obstacleEul = [-.1, 0, 3.14]
+            self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            self.obstacleScale = [1]*3
+            self.handScale = [1,1,1]
+            self.handPos = [.5,-1.6,1.8]
+            self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
+            self.basePosBounds = [[-1,1], [-1,1], [1.5,7]] # [[-2,2], [-1.5,1], [0,2]] # [[-1,1], [-1,1], [1.5,7]]
+            self.goalCoMPose = [0,0.8,1.51] + [0, 0, 0] # [1.5,0,.5] + [0, 0, 0] # [0,0.8,1.51] + [0, 0, 0]
+            self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[-.1,.1]]*9
+            self.startFrame = 28000 # 0 # 28000
+            self.endFrame = 40000 # 28000 # 40000
+            self.downsampleRate = 650 # 500
+            self.boxBasePos = [0,0,1]
+            self.half_box_size = [1,2.5,.1]
         #     case 'StarfishBowl':
         #         self.object = 'Starfish'
         #         self.objectPos = [0,1.5,3.5]
@@ -153,21 +155,21 @@ class runScenario():
         #         self.startFrame = 120 # 137
         #         self.endFrame = 163
         #     case 'HookTrapsRing':
-            self.object = 'Ring'
-            self.objectPos = [1.3,-.1,3.4]
-            self.objectQtn = [0,1,0,1]
-            self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
-            self.obstacle = 'Hook'
-            self.obstaclePos = [0, 0, 2]
-            self.obstacleEul = [1.57, -0.3, 0]
-            self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-            self.obstacleScale = [.1,.1,.1]
-            self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
-            self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
-            self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
-            self.startFrame = 390 # 280 - 520
-            self.endFrame = 390
-            self.downsampleRate = 1
+            # self.object = 'Ring'
+            # self.objectPos = [1.3,-.1,3.4]
+            # self.objectQtn = [0,1,0,1]
+            # self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+            # self.obstacle = 'Hook'
+            # self.obstaclePos = [0, 0, 2]
+            # self.obstacleEul = [1.57, -0.3, 0]
+            # self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            # self.obstacleScale = [.1,.1,.1]
+            # self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
+            # self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
+            # self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
+            # self.startFrame = 390 # 280 - 520
+            # self.endFrame = 390
+            # self.downsampleRate = 1
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -374,7 +376,7 @@ class runScenario():
             new_state_shovel = [curr_state_shovel[k]+increment_shovel[k] for k in range(len(curr_state_shovel))]
             self.obstacle.set_state(new_state_shovel)
             
-            if i % self.downsampleRate == 0:
+            if i % self.downsampleRate == 0 and i >= self.startFrame:
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
@@ -641,7 +643,6 @@ if __name__ == '__main__':
     # for t in t_list:
     args, parser = argument_parser()
     # args.runtime = t
-    # print(args.runtime)
     numRunTime = 20
     for n in range(numRunTime):
         rigidObjectList = get_non_articulated_objects()

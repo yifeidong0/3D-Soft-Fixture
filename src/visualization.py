@@ -19,7 +19,7 @@ def record_data_init(sce, args, env):
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y-%H-%M-%S") # dd/mm/YY H:M:S
     print("date and time =", dt_string)
-    folderName = './results/{}sec_{}_{}'.format(args.runtime, args.scenario, dt_string)
+    folderName = './results/{}_{}'.format(args.scenario, dt_string)
     os.mkdir(folderName)
 
     # create csv headers
@@ -784,7 +784,7 @@ if __name__ == '__main__':
     folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
     folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
     inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
-    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=15)
+    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
     bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
 
     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
