@@ -454,8 +454,8 @@ def plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy, m
     # Color codes
     cls = get_colors()
     noIter = 10
+    noIterBin = 30
     timeTickListBits, escapeEnergyListBits = bits
-    print('timeTickListBits', timeTickListBits)
     timeTickListInc, escapeEnergyListInc = inc
     timeTickListBin, escapeEnergyListBin = bin
 
@@ -463,7 +463,7 @@ def plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy, m
     timeTick = np.asarray(list(range(maxTime)))
     escapeEnergyBits = np.zeros((noIter, maxTime))
     escapeEnergyInc = np.zeros((noIter, maxTime))
-    escapeEnergyBin = np.zeros((noIter, maxTime))
+    escapeEnergyBin = np.zeros((noIterBin, maxTime))
 
     # Interpolation
     for i in range(noIter):
@@ -475,6 +475,7 @@ def plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy, m
         tnew = np.arange(0, maxTime, 1)
         escapeEnergyInc[i,:] = np.asarray(f(tnew))
 
+    for i in range(noIterBin):
         f = interpolate.interp1d(timeTickListBin[i], escapeEnergyListBin[i])
         tnew = np.arange(0, maxTime, 1)
         escapeEnergyBin[i,:] = np.asarray(f(tnew))
@@ -781,22 +782,22 @@ def calculate_test04():
 if __name__ == '__main__':
     # Insert initial escape energy cost
     initZ = 1.7285293405317828
-    groundTruthZ = 2.33
+    groundTruthZ = 2.32
     cInit = 2.7 - initZ
 
     # Read from csv
     folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
     folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
-    folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
+    folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/20-06-2023-14-47-44_binary_new_600_50'
     folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
     inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
-    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
+    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=30)
     bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
 
     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
     groundTruthEscapeEnergy = groundTruthZ - initZ
     # test05_get_structured_bits_data()
-    # plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
+    plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
 
     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
     startKeyFrame = 0
@@ -807,7 +808,7 @@ if __name__ == '__main__':
     _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
     # print('@@@@finalCostBSFrames', finalCostBSFrames)
     folderName = 'results/ICRA2024/Test01HookRing3BasicSearch'
-    plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+    # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
 
     # Plot test02
     folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
