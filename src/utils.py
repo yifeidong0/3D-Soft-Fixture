@@ -34,7 +34,7 @@ def argument_parser():
     # HookFishHole - FishHole, Hook
     # StarfishBowl - Starfish, LeftHandAndBowl
     # ShovelFish - Fish, Shovel
-    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
+    parser.add_argument('-c', '--scenario', default='ShovelFish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -65,7 +65,7 @@ def argument_parser():
     parser.add_argument('-t', '--runtime', type=float, default=8, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
 
     # Parse the arguments

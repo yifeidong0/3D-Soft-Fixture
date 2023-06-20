@@ -246,7 +246,7 @@ def analyze_energy_data(folderList, isArticulatedObject):
     minDataLen = np.inf
     for f in folderList:
         # Get energy data from single csv file
-        energyData, _ = get_results_from_csv(f, isArticulatedObject)
+        energyData, indices = get_results_from_csv(f, isArticulatedObject)
         energyDataList.append(energyData)
         minDataLen = min(minDataLen, len(energyData[3]))
 
@@ -275,9 +275,10 @@ def analyze_energy_data(folderList, isArticulatedObject):
     meanTot, meanG, meanE, meanEsc = None, np.nanmean(GEnergySce,axis=0), np.nanmean(EEnergySce,axis=0), np.nanmean(escapeEnergyCostSce,axis=0)
     stdTot, stdG, stdE, stdEsc = None, np.nanstd(GEnergySce,axis=0), np.nanstd(EEnergySce,axis=0), np.nanstd(escapeEnergyCostSce,axis=0)
 
-    return (minTot, minG, minE, minEsc, meanTot, meanG, meanE, meanEsc, stdTot, stdG, stdE, stdEsc), minDataLen
+    return (minTot, minG, minE, minEsc, meanTot, meanG, meanE, meanEsc, stdTot, stdG, stdE, stdEsc), minDataLen, indices
 
-def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=False, axvline=None, addAxvLabel=1, labelNames=['A','B','C','D']):
+def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
+                       isArticulatedObject=False, axvline=None, addAxvLabel=1, labelNames=['A','B','C','D']):
     # TODO: use broken axis to represent inf.
     # Color codes
     cls = get_colors()
@@ -286,17 +287,20 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, isArticulatedObject=F
     minTot, minG, minE, minEsc, _, meanG, meanE, meanEsc, _, stdG, stdE, stdEsc = energyDataAnalysis
 
     # Plot min escape energy
-    ax.plot(IterId, minTot, '-', color=cls[0], linewidth=2, label='total energy')
+    useIndices = 0 # 1 for fish shovel data with unevenly spaced indices
+    if useIndices:
+        x = indices
+    else:
+        x = IterId
+
+    ax.plot(x, minTot, '-', color=cls[0], linewidth=2, label='total energy')
     if isArticulatedObject:
-        ax.plot(IterId, minG, '-', color=cls[1], label='gravity potential energy')
-        ax.plot(IterId, minE, '-', color=cls[2], label='elastic potential energy')
-    ax.plot(IterId, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
+        ax.plot(x, minG, '-', color=cls[1], label='gravity potential energy')
+        ax.plot(x, minE, '-', color=cls[2], label='elastic potential energy')
+    ax.plot(x, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
 
     # Plot std shade
-    # if isArticulatedObject:
-    #     ax.fill_between(IterId, meanG-stdG, meanG+stdG, alpha=0.4, color=cls[1])
-    #     ax.fill_between(IterId, meanE-stdE, meanE+stdE, alpha=0.4, color=cls[2])
-    ax.fill_between(IterId, meanEsc-stdEsc, meanEsc+stdEsc, alpha=0.4, color=cls[3])
+    ax.fill_between(x, meanEsc-stdEsc, meanEsc+stdEsc, alpha=0.4, color=cls[3])
     
     # Optional: plot vertical line of current no. of iteration
     if axvline is not None:
@@ -326,7 +330,7 @@ def get_results_from_csv(folderName, isArticulatedObject=False):
         csvreader = csv.DictReader(csvfile)
 
         for row in csvreader:
-            indices.append(float(row['index']))
+            indices.append(int(row['index']))
             # indices.append(float(row['frameID'])) # MaskEar
             start_energy.append(float(row['start_energy']))
             escape_energy_cost.append(float(row['escape_energy_cost']))
@@ -350,31 +354,32 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
     '''Plot escape energy after running the algorithm.
     '''
     # Get min, mean, std of data
-    energyDataAnalysis, minDataLen = analyze_energy_data(folderList, isArticulatedObject)
+    energyDataAnalysis, minDataLen, indices = analyze_energy_data(folderList, isArticulatedObject)
 
     # Escape energy plots
-    plot_escape_energy(ax, energyDataAnalysis, minDataLen,isArticulatedObject, axvline)
+    plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices, isArticulatedObject, axvline)
 
 
-# '''Plot escape cost from multiple csv files with std shading'''
-# if __name__ == '__main__':
-#     args, parser = argument_parser()
-#     rigidObjectList = get_non_articulated_objects()
-#     isArticulatedObj = False if args.object in rigidObjectList else True
+'''Plot escape cost from multiple csv files with std shading'''
+if __name__ == '__main__':
+    args, parser = argument_parser()
+    rigidObjectList = get_non_articulated_objects()
+    isArticulatedObj = False if args.object in rigidObjectList else True
     
-#     folderList = []
-#     # path = './results/ICRA2024/Scenario01Hook-Fish'
-#     path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
-#     os.chdir(path)
-#     # HookFishHole
-#     for file_name in glob.glob(args.scenario + "*"):
-#         folderList.append(file_name)
+    folderList = []
+    # path = './results/ICRA2024/Scenario01Hook-Fish'
+    # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
+    path = 'results/ICRA2024/Scenario04Fish-Shovel'
+    os.chdir(path)
+    # HookFishHole
+    for file_name in glob.glob(args.scenario + "*"):
+        folderList.append(file_name)
 
-#     _, ax = plt.subplots()
-#     plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
-#     plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
-#     # plt.show()
-#     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+    _, ax = plt.subplots()
+    plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
+    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
+    # plt.show()
+    plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################
@@ -772,37 +777,37 @@ def calculate_test04():
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
-if __name__ == '__main__':
-    # Insert initial escape energy cost
-    initZ = 1.7285293405317828
-    groundTruthZ = 2.315
-    cInit = 2.7 - initZ
+# if __name__ == '__main__':
+#     # Insert initial escape energy cost
+#     initZ = 1.7285293405317828
+#     groundTruthZ = 2.315
+#     cInit = 2.7 - initZ
 
-    # Read from csv
-    folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
-    folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
-    folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
-    folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
-    inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
-    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
-    bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
+#     # Read from csv
+#     folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
+#     folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
+#     folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
+#     folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
+#     inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
+#     bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
+#     bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
 
-    # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
-    groundTruthEscapeEnergy = groundTruthZ - initZ
-    # test05_get_structured_bits_data()
-    plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
+#     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
+#     groundTruthEscapeEnergy = groundTruthZ - initZ
+#     # test05_get_structured_bits_data()
+#     plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
 
-    # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
-    startKeyFrame = 0
-    cInit = 10
-    folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-09-02-46_binary_200_30'
-    folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
-    _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
-    _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
-    # print('@@@@finalCostBSFrames', finalCostBSFrames)
-    # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+#     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
+#     startKeyFrame = 0
+#     cInit = 10
+#     folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-09-02-46_binary_200_30'
+#     folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
+#     _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
+#     _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
+#     # print('@@@@finalCostBSFrames', finalCostBSFrames)
+#     # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
 
-    # Plot test02
-    folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
-    # plot_test02(folderName02, groundTruthZ,)
-    # calculate_test04()
+#     # Plot test02
+#     folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
+#     # plot_test02(folderName02, groundTruthZ,)
+#     # calculate_test04()

@@ -1,0 +1,16 @@
+*****Search goalCoMPose: [1.5, 0, 0.5, 0, 0, 0]
+*****Search basePosBounds: [[-2, 2], [-1.5, 1], [0, 2], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], (-0.5, 0.5), (-0.4, 0.4), (-0.3, 0.3), (-0.25, 0.25), (-0.25, 0.25), (-0.2, 0.2), (-0.2, 0.2), (-0.15, 0.15), (-0.1, 0.1)]
+*****args: Namespace(scenario='ShovelFish', search='EnergyBiasedSearch', planner='BITstar', object='Fish', obstacle='Shovel', runtime=400, visualization=0)
+*****planner params: delay_rewiring_to_first_solution = 0
+drop_unconnected_samples_on_prune = 0
+find_approximate_solutions = 0
+prune_threshold_as_fractional_cost_change = 0.05
+rewire_factor = 1.1
+samples_per_batch = 1000
+stop_on_each_solution_improvement = 0
+use_graph_pruning = 1
+use_just_in_time_sampling = 0
+use_k_nearest = 1
+use_strict_queue_ordering = 1
+*****Fish links' mass: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+*****Fish joints' stiffness: [10, 10, 10, 10, 10, 10, 10, 10, 10]
