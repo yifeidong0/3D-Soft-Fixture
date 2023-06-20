@@ -128,7 +128,7 @@ if __name__ == '__main__':
     if args.search == 'BisectionSearch':
         # useGreedySearch = False # True: bisection search; False: Conservative search
         # env.bound_shrink_search(useGreedySearch)
-        env.energy_bisection_search(numIter=15, maxTimeTaken=600, useBisectionSearch=1)
+        env.energy_bisection_search(numIter=15, maxTimeTaken=50, useBisectionSearch=1)
         # env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':

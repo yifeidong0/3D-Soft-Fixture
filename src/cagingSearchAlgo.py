@@ -204,14 +204,14 @@ class RigidObjectCaging():
         plt.title('State energy along the escape path in the energy biased search')
         plt.show()
 
-    def energy_bisection_search(self, numIter=1, maxTimeTaken=120, epsThreshold=1e-3, useBisectionSearch=0):
+    def energy_bisection_search(self, numIter=1, maxTimeTaken=120, epsThreshold=5e-4, useBisectionSearch=0):
         '''Iteratively find the (lowest) threshold of escape energy upper bound that allows an escaping path.
         '''
         initCUpper = 10
         self.time_taken_list_runs, self.escape_energy_list_runs = [], [] # record over several runs
         startEnergy = get_state_energy(self.start, self.args.object)
         for i in range(numIter):
-            cUpper, cLower = initCUpper, 0
+            cUpper, cLower, cEs = initCUpper, 0, 0
             self.escape_energy_list = [] # successful escapes
             self.time_taken_list = [] # corresponding time taken
             moveOn = True
@@ -232,24 +232,36 @@ class RigidObjectCaging():
                 # Update bounds
                 curr_cost = self.escape_energy_list[-1]
 
+                print("----------cUpper - cEs - cLower: ", cUpper, ' - ', cEs, ' - ', cLower)
                 # Set lower and upper bounds
                 if useBisectionSearch: # bisection search
-                    if not res: # no solution
-                        if cUpper < np.min(self.escape_energy_list):
-                            cLower = cUpper 
-                        # cLower = cUpper
-                        cUpper = np.min(self.escape_energy_list)
-                    else: # solution found
+                    # if not res: # no solution
+                    #     if cUpper < np.min(self.escape_energy_list):
+                    #         cLower = cUpper 
+                    #     # cLower = cUpper
+                    #     cUpper = np.min(self.escape_energy_list)
+                    # else: # solution found
+                    #     if curr_cost < cLower: # a solution lower than lower bound found
+                    #         cUpper = curr_cost
+                    #         cLower = 0
+                    #     else: # solution found within expected bounds
+                    #         cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
+
+                    if res: # found solution
+                        cUpper = curr_cost
                         if curr_cost < cLower: # a solution lower than lower bound found
-                            cUpper = curr_cost
                             cLower = 0
-                        else: # solution found within expected bounds
-                            cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
-                    
+                    else: # solution not found
+                        cLower = cEs 
+
                     # Conditions of termination
                     eps = abs(cUpper-cLower)
                     if eps < epsThreshold or accumulate_time > maxTimeTaken:
                         moveOn = False
+
+                    # Reset energy threshold
+                    cEs = (cUpper + cLower) / 2
+                    self.pb_ompl_interface.reset_bisec_energy_thres(cEs+startEnergy)
 
                 else: # incremental search - slower but guaranteed lower bound
                     # Update upper bound
@@ -260,12 +272,11 @@ class RigidObjectCaging():
                     if cUpper <= 0.0 or self.time_taken_list[-1] > maxTimeTaken:
                         moveOn = False
 
-                # Reset energy threshold
-                self.pb_ompl_interface.reset_bisec_energy_thres(cUpper+startEnergy)
+                    # Reset energy threshold
+                    self.pb_ompl_interface.reset_bisec_energy_thres(cUpper+startEnergy)
 
                 print("----------escape_energy_list: ", self.escape_energy_list)
                 print("----------time_taken_list: ", self.time_taken_list)
-                print("----------cUpper, cLower: ", cUpper, cLower)
             
             # Record data over runs
             self.time_taken_list_runs.append(self.time_taken_list) 
