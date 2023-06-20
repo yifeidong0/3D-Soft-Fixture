@@ -361,25 +361,25 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
 
 
 '''Plot escape cost from multiple csv files with std shading'''
-if __name__ == '__main__':
-    args, parser = argument_parser()
-    rigidObjectList = get_non_articulated_objects()
-    isArticulatedObj = False if args.object in rigidObjectList else True
+# if __name__ == '__main__':
+#     args, parser = argument_parser()
+#     rigidObjectList = get_non_articulated_objects()
+#     isArticulatedObj = False if args.object in rigidObjectList else True
     
-    folderList = []
-    # path = './results/ICRA2024/Scenario01Hook-Fish'
-    # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
-    path = 'results/ICRA2024/Scenario04Fish-Shovel'
-    os.chdir(path)
-    # HookFishHole
-    for file_name in glob.glob(args.scenario + "*"):
-        folderList.append(file_name)
+#     folderList = []
+#     # path = './results/ICRA2024/Scenario01Hook-Fish'
+#     # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
+#     path = 'results/ICRA2024/Scenario04Fish-Shovel'
+#     os.chdir(path)
+#     # HookFishHole
+#     for file_name in glob.glob(args.scenario + "*"):
+#         folderList.append(file_name)
 
-    _, ax = plt.subplots()
-    plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
-    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
-    # plt.show()
-    plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+#     _, ax = plt.subplots()
+#     plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
+#     plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
+#     # plt.show()
+#     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################
@@ -521,11 +521,12 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     '''
     cls = get_colors()
     noIter = 3
+    noIterBin = 5
 
     # Retrieve data of bound shrink
     finalCostBiFrames = [i[-1] for i in CostBiFrames]
-    noFrame = int(len(finalCostBiFrames) / noIter)
-    escapeCostBi = np.asarray(finalCostBiFrames).reshape((noIter, noFrame),order='F')
+    noFrame = int(len(finalCostBiFrames) / noIterBin)
+    escapeCostBi = np.asarray(finalCostBiFrames).reshape((noIterBin, noFrame),order='F')
     finalCostInFrames = [i[-1] for i in CostInFrames]
     escapeCostIn = np.asarray(finalCostInFrames).reshape((noIter, noFrame),order='F')
         
@@ -584,8 +585,8 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
 
     # Plot std shade
     ax.fill_between(id, escapeCostBimean-escapeCostBistd, escapeCostBimean+escapeCostBistd, alpha=0.3, color=cls[0])
-    ax.fill_between(id, escapeCostInmean-escapeCostInstd, escapeCostInmean+escapeCostInstd, alpha=0.3, color=cls[2])
-    ax.fill_between(id, escapeCostEMmean-escapeCostEMstd, escapeCostEMmean+escapeCostEMstd, alpha=0.3, color=cls[3])
+    ax.fill_between(id, escapeCostInmean-escapeCostInstd, escapeCostInmean+escapeCostInstd, alpha=0.3, color=cls[1])
+    ax.fill_between(id, escapeCostEMmean-escapeCostEMstd, escapeCostEMmean+escapeCostEMstd, alpha=0.3, color=cls[2])
 
     # Settings for plot
     ax.set_xticks(xticks.astype(int))
@@ -595,7 +596,7 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     plt.title('Accuracy of search algorithms over frames',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}test01-cost.png'.format(SaveFolderName), dpi=200)
+    plt.savefig('{}/test01-cost.png'.format(SaveFolderName), dpi=200)
 
     ###### Error plot
     escapeCostBiErr = (escapeCostBi-groundTruthEscapeEnergy)/groundTruthEscapeEnergy
@@ -631,7 +632,7 @@ def plot_acurracy_test(CostBiFrames, CostInFrames, SaveFolderName, groundTruthZ,
     plt.title('Error of search algorithms w.r.t. measured reference',fontsize=16)
     plt.legend()
     # plt.show()
-    plt.savefig('{}test01-error.png'.format(SaveFolderName), dpi=200)
+    plt.savefig('{}/test01-error.png'.format(SaveFolderName), dpi=200)
 
 
 def plot_test02(SaveFolderName, groundTruthZ, ):
@@ -777,37 +778,38 @@ def calculate_test04():
 
 '''Compare the convergence time of BIT* search and bisectional search over 8min and 3min search time, respectively, in one frame'''
 '''Compare the accuracy of BIT* search and bisectional search over dozens of frames'''
-# if __name__ == '__main__':
-#     # Insert initial escape energy cost
-#     initZ = 1.7285293405317828
-#     groundTruthZ = 2.315
-#     cInit = 2.7 - initZ
+if __name__ == '__main__':
+    # Insert initial escape energy cost
+    initZ = 1.7285293405317828
+    groundTruthZ = 2.33
+    cInit = 2.7 - initZ
 
-#     # Read from csv
-#     folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
-#     folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
-#     folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
-#     folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
-#     inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
-#     bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
-#     bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
+    # Read from csv
+    folderName = 'results/ICRA2024/Test05HookRingErrorVsRuntime'
+    folderNameIncre = 'results/ICRA2024/Test05HookRingErrorVsRuntime/17-06-2023-08-29-07_incremental_600_75'
+    folderNameBinary = 'results/ICRA2024/Test05HookRingErrorVsRuntime/18-06-2023-13-49-47_binary_600_50'
+    folderNameBITs = 'results/ICRA2024/Test05HookRingErrorVsRuntime/bit*_2sec_to_600sec'
+    inc = get_benckmark_results_from_csv(folderNameIncre, cInit, getOnlyOneFrame=1, noIter=10)
+    bin = get_benckmark_results_from_csv(folderNameBinary, cInit, getOnlyOneFrame=1, noIter=10)
+    bits = get_benckmark_results_from_csv(folderNameBITs, cInit, getOnlyOneFrame=1, noIter=10)
 
-#     # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
-#     groundTruthEscapeEnergy = groundTruthZ - initZ
-#     # test05_get_structured_bits_data()
-#     plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
+    # Plot search algorithms convergence in 1 keyframe (frame 144 / keyframe 18 in Hook traps ring case)
+    groundTruthEscapeEnergy = groundTruthZ - initZ
+    # test05_get_structured_bits_data()
+    # plot_convergence_test(bits, bin, inc, folderName, groundTruthEscapeEnergy)
 
-#     # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
-#     startKeyFrame = 0
-#     cInit = 10
-#     folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-09-02-46_binary_200_30'
-#     folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
-#     _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
-#     _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
-#     # print('@@@@finalCostBSFrames', finalCostBSFrames)
-#     # plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
+    # Plot comparison of two algos over several keyframes (starting from frame 144 / keyframe 18)
+    startKeyFrame = 0
+    cInit = 10
+    folderNameBi = 'results/ICRA2024/Test01HookRing3BasicSearch/binary/20-06-2023-12-53-30_binary_new_200_35'
+    folderNameIn = 'results/ICRA2024/Test01HookRing3BasicSearch/11-06-2023-00-35-33_incremental_200_50'
+    _, CostBiFrames = get_benckmark_results_from_csv(folderNameBi, cInit, getOnlyOneFrame=0)
+    _, CostInFrames = get_benckmark_results_from_csv(folderNameIn, cInit, getOnlyOneFrame=0)
+    # print('@@@@finalCostBSFrames', finalCostBSFrames)
+    folderName = 'results/ICRA2024/Test01HookRing3BasicSearch'
+    plot_acurracy_test(CostBiFrames, CostInFrames, folderName, groundTruthZ, startKeyFrame,)
 
-#     # Plot test02
-#     folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
-#     # plot_test02(folderName02, groundTruthZ,)
-#     # calculate_test04()
+    # Plot test02
+    folderName02 = './results/ICRA2024/Test02HookRingPlannersComp/'
+    # plot_test02(folderName02, groundTruthZ,)
+    # calculate_test04()
