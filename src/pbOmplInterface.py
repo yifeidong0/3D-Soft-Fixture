@@ -198,7 +198,7 @@ class PbOMPL():
             self.planner = og.PRM(self.si)
         elif planner_name == "RRT":
             self.planner = og.RRT(self.si)
-            self.planner.params().setParam("range", "0.5")
+            # self.planner.params().setParam("range", "0.5")
         elif planner_name == "RRTConnect":
             self.planner = og.RRTConnect(self.si)
             self.planner.params().setParam("range", "0.05")
