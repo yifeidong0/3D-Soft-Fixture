@@ -96,6 +96,7 @@ if __name__ == '__main__':
         linkLen = 0.7
         start = [-.5,0.3,1.,1.,0,1.57] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
         goal = [0,0,.1,0,1.57,0] + [math.radians(360/(numCtrlPoint+3)-1),0]*numCtrlPoint + [0]
+        goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
         env = ChainCaging(args, numCtrlPoint, linkLen, start, goal)
         env.robot.set_search_bounds(vis=1, basePosBounds=[[-2,2], [-2,2], [0, 3]])
         env.add_obstacles(scale=[10]*3, pos=[0,-.5,2.2], qtn=p.getQuaternionFromEuler([-1.57, -2, 1.57])) # 3fGripper

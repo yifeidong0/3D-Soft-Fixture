@@ -83,9 +83,9 @@ class ChainPotentialObjective(ob.OptimizationObjective):
         self.baseDof_ = 6
         self.ctrlPointDof_ = 2
         self.numCtrlPoint_ = int((self.numStateSpace_-self.baseDof_-1) / self.ctrlPointDof_)
-        self.handBagMass_ = 1
+        self.handBagMass_ = 0.04
         self.g_ = 9.81
-        self.bagHalfDiag = .5
+        self.bagHalfDiag = 1
 
         self.startStateEnergy = self.stateEnergy(self.start_)
 

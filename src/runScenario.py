@@ -44,134 +44,138 @@ class runScenario():
         self.idxSce = []
 
     def initializeParams(self):
-        match self.args.scenario:
-            case 'HookFishHole':
-                self.object = 'FishHole'
-                self.objectPos = [.0,-.4,1.4]
-                self.objectEul = [3.14,3.14,3.14]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'Hook'
-                self.obstaclePos = [0.5, -.35, 3]
-                self.obstacleEul = [-.6, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-.3,.3], [.5,2.5], [1.8,3]]
-                self.goalCoMPose = [0,2,1.9] + [0, 0, 0]
-                self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[math.radians(-10), math.radians(10)]]*3
-                self.startFrame = 12000
-                self.endFrame = 18000
-                self.downsampleRate = 200
-                self.half_box_size = [1,2.5,.1]
-            case 'ShovelFish':
-                self.object = 'Fish'
-                self.objectPos = [0,-1.3,1.7]
-                self.objectEul = [3.14,3.14,3.14]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'Shovel'
-                self.obstaclePos = [0, 6, 1.75]
-                self.obstacleEul = [-.1, 0, 3.14]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1]*3
-                self.handScale = [1,1,1]
-                self.handPos = [.5,-1.6,1.8]
-                self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
-                self.basePosBounds = [[-2,2], [-1.5,1], [0,2]] # [[-2,2], [-1.5,1], [0,2]] # [[-1,1], [-1,1], [1.5,7]]
-                self.goalCoMPose = [1.5,0,.5] + [0, 0, 0] # [1.5,0,.5] + [0, 0, 0] # [0,0.8,1.51] + [0, 0, 0]
-                self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[-.1,.1]]*9
-                self.startFrame = 5200 # 0 # 28000
-                self.endFrame = 28000 # 28000 # 40000
-                self.downsampleRate = 650 # 500
-                self.boxBasePos = [0,0,1]
-                self.half_box_size = [1,2.5,.1]
-            case 'StarfishBowl':
-                self.object = 'Starfish'
-                self.objectPos = [0,1.5,3.5]
-                self.objectEul = [0,0,0]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'LeftHandAndBowl'
-                self.obstaclePos = [0,0,1]
-                self.obstacleEul = [-.3, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1, 1, 1]
-                self.basePosBounds = [[-1.5,1.5], [-2,2], [0,3.51]]
-                self.goalCoMPose = [0,1,0.01] + [0]*3
-                self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]] + [[math.radians(-10), math.radians(10)]]*10
-                self.startFrame = 0
-                self.endFrame = 3400
-                self.downsampleRate = 50
-                self.boxBasePos = [0,1.5,3]
-                self.boxBaseEul = [0,0,0]
-                self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
-                self.half_box_size = [1,1,.05]
-            case 'BimanualRubic':
-                self.object = 'Rubic'
-                self.objectPos = [0,0,2]
-                self.objectEul = [0,0,0]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = '3fGripper'
-                self.obstaclePos = [0,0,1]
-                self.obstacleEul = [1.57, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstaclePos1 = [0,0,4]
-                self.obstacleEul1 = [-1.57, 0, 1.57,]
-                self.obstacleQtn1 = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [10.0,]*3
-                self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
-                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
-                self.goalCoMPose = [0,1,0.01] + [0]*3
-                self.startFrame = 4000
-                self.endFrame = 4200
-                self.downsampleRate = 50 # 10
-            case 'HandbagGripper':
-                self.object = 'Chain'
-                self.numCtrlPoint = 4 # numChainLink = numChainNode = numCtrlPoint+3
-                self.linkLen = 0.85
-                self.objectPos = [-0.05,0.3,.3]
-                self.objectEul = [.5,0,1.57]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
-                self.objectJointPos = [math.radians(360/(self.numCtrlPoint+3)-1),0]*self.numCtrlPoint + [-1.57]
-                self.objectStart = self.objectPos + self.objectEul + self.objectJointPos
-                self.goalCoMPose = [0,0,.1,] + [0,1.57,0]
-                self.objectGoal = self.goalCoMPose + self.objectJointPos
-                self.obstacle = '3fGripper'
-                self.obstaclePos = [0,-.5,2.2]
-                self.obstacleEul = [-1.57, -2, 1.57]
-                # self.obstaclePos = [0,-1,2.5]
-                # self.obstacleEul = [0, -1.57, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [10.0,]*3
-                self.basePosBounds = [[-2,2], [-2,2], [0,3]]
-                self.endFrame = 347
-                self.downsampleRate = 1
-            case 'MaskEar':
-                self.object = 'MaskBand'
-                self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
-                self.objectStart = [0,0,0] * self.numCtrlPoint
-                self.objectGoal = [] # [0,0,.5] * self.numCtrlPoint
-                self.obstacle = 'Ear'
-                self.obstaclePos = [0,0,0]
-                self.obstacleEul = [0,0,0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1.0,]*3
-                self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
-                self.startFrame = 120 # 137
-                self.endFrame = 163
-            case 'HookTrapsRing':
-                self.object = 'Ring'
-                self.objectPos = [1.3,-.1,3.4]
-                self.objectQtn = [0,1,0,1]
-                self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
-                self.obstacle = 'Hook'
-                self.obstaclePos = [0, 0, 2]
-                self.obstacleEul = [1.57, -0.3, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
-                self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
-                self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
-                self.startFrame = 390 # 280 - 520
-                self.endFrame = 390
-                self.downsampleRate = 1
+        # match self.args.scenario:
+        #     case 'HookFishHole':
+        #         self.object = 'FishHole'
+        #         self.objectPos = [.0,-.4,1.4]
+        #         self.objectEul = [3.14,3.14,3.14]
+        #         self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+        #         self.obstacle = 'Hook'
+        #         self.obstaclePos = [0.5, -.35, 3]
+        #         self.obstacleEul = [-.6, 0, 0]
+        #         self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+        #         self.obstacleScale = [.1,.1,.1]
+        #         self.basePosBounds=[[-.3,.3], [.5,2.5], [1.8,3]]
+        #         self.goalCoMPose = [0,2,1.9] + [0, 0, 0]
+        #         self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[math.radians(-10), math.radians(10)]]*3
+        #         self.startFrame = 12000
+        #         self.endFrame = 18000
+        #         self.downsampleRate = 200
+        #         self.half_box_size = [1,2.5,.1]
+        #     case 'ShovelFish':
+        #         self.object = 'Fish'
+        #         self.objectPos = [0,-1.3,1.7]
+        #         self.objectEul = [3.14,3.14,3.14]
+        #         self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+        #         self.obstacle = 'Shovel'
+        #         self.obstaclePos = [0, 6, 1.75]
+        #         self.obstacleEul = [-.1, 0, 3.14]
+        #         self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+        #         self.obstacleScale = [1]*3
+        #         self.handScale = [1,1,1]
+        #         self.handPos = [.5,-1.6,1.8]
+        #         self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
+        #         self.basePosBounds = [[-2,2], [-1.5,1], [0,2]] # [[-2,2], [-1.5,1], [0,2]] # [[-1,1], [-1,1], [1.5,7]]
+        #         self.goalCoMPose = [1.5,0,.5] + [0, 0, 0] # [1.5,0,.5] + [0, 0, 0] # [0,0.8,1.51] + [0, 0, 0]
+        #         self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[-.1,.1]]*9
+        #         self.startFrame = 5200 # 0 # 28000
+        #         self.endFrame = 28000 # 28000 # 40000
+        #         self.downsampleRate = 650 # 500
+        #         self.boxBasePos = [0,0,1]
+        #         self.half_box_size = [1,2.5,.1]
+        #     case 'StarfishBowl':
+        #         self.object = 'Starfish'
+        #         self.objectPos = [0,1.5,3.5]
+        #         self.objectEul = [0,0,0]
+        #         self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+        #         self.obstacle = 'LeftHandAndBowl'
+        #         self.obstaclePos = [0,0,1]
+        #         self.obstacleEul = [-.3, 0, 0]
+        #         self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+        #         self.obstacleScale = [1, 1, 1]
+        #         self.basePosBounds = [[-1.5,1.5], [-2,2], [0,3.51]]
+        #         self.goalCoMPose = [0,1,0.01] + [0]*3
+        #         self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]] + [[math.radians(-10), math.radians(10)]]*10
+        #         self.startFrame = 0
+        #         self.endFrame = 3400
+        #         self.downsampleRate = 50
+        #         self.boxBasePos = [0,1.5,3]
+        #         self.boxBaseEul = [0,0,0]
+        #         self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
+        #         self.half_box_size = [1,1,.05]
+        #     case 'BimanualRubic':
+        #         self.object = 'Rubic'
+        #         self.objectPos = [0,0,2]
+        #         self.objectEul = [0,0,0]
+        #         self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+        #         self.obstacle = '3fGripper'
+        #         self.obstaclePos = [0,0,1]
+        #         self.obstacleEul = [1.57, 0, 0]
+        #         self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+        #         self.obstaclePos1 = [0,0,4]
+        #         self.obstacleEul1 = [-1.57, 0, 1.57,]
+        #         self.obstacleQtn1 = list(p.getQuaternionFromEuler(self.obstacleEul))
+        #         self.obstacleScale = [10.0,]*3
+        #         self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
+        #         self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+        #         self.goalCoMPose = [0,1,0.01] + [0]*3
+        #         self.startFrame = 4000
+        #         self.endFrame = 4200
+        #         self.downsampleRate = 50 # 10
+        #     case 'HandbagGripper':
+            self.object = 'Chain'
+            self.numCtrlPoint = 4 # numChainLink = numChainNode = numCtrlPoint+3
+            self.linkLen = 0.85
+            self.objectPos = [-0.05,0.3,.3]
+            self.objectEul = [.5,0,1.57]
+            self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul))
+            self.objectJointPos = [math.radians(360/(self.numCtrlPoint+3)-1),0]*self.numCtrlPoint + [-1.57]
+            self.objectStart = self.objectPos + self.objectEul + self.objectJointPos
+            self.goalCoMPose = [0,-1.5,.1,] + [0,1.57,0]
+            self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]] + \
+                [[math.radians(360/(self.numCtrlPoint+3)-1),math.radians(360/(self.numCtrlPoint+3)-1)+.1],[0,.1]]*self.numCtrlPoint + \
+                [[0,.1]]
+            self.objectGoal = self.goalCoMPose + [math.radians(360/(self.numCtrlPoint+3)-1),0]*self.numCtrlPoint + [0]
+            self.obstacle = '3fGripper'
+            self.obstaclePos = [0,-.5,2.2]
+            self.obstacleEul = [-1.57, -2, 1.57]
+            # self.obstaclePos = [0,-1,2.5]
+            # self.obstacleEul = [0, -1.57, 0]
+            self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            self.obstacleScale = [10.0,]*3
+            self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+            self.startFrame = 0
+            self.endFrame = 140
+            self.downsampleRate = 4 # 1
+            # case 'MaskEar':
+            #     self.object = 'MaskBand'
+            #     self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
+            #     self.objectStart = [0,0,0] * self.numCtrlPoint
+            #     self.objectGoal = [] # [0,0,.5] * self.numCtrlPoint
+            #     self.obstacle = 'Ear'
+            #     self.obstaclePos = [0,0,0]
+            #     self.obstacleEul = [0,0,0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = [1.0,]*3
+            #     self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
+            #     self.startFrame = 120 # 137
+            #     self.endFrame = 163
+            # case 'HookTrapsRing':
+            #     self.object = 'Ring'
+            #     self.objectPos = [1.3,-.1,3.4]
+            #     self.objectQtn = [0,1,0,1]
+            #     self.objectEul = list(p.getEulerFromQuaternion(self.objectQtn))
+            #     self.obstacle = 'Hook'
+            #     self.obstaclePos = [0, 0, 2]
+            #     self.obstacleEul = [1.57, -0.3, 0]
+            #     self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+            #     self.obstacleScale = [.1,.1,.1]
+            #     self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
+            #     self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
+            #     self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
+            #     self.startFrame = 390 # 280 - 520
+            #     self.endFrame = 390
+            #     self.downsampleRate = 1
 
     def loadObject(self):
         if self.args.object not in ['Chain', 'MaskBand']:
@@ -228,10 +232,10 @@ class runScenario():
         i = 0
         new_state_chain = self.objectStart
         while (1):
-            print(i)
+            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            # time.sleep(20/240.)
+            # time.sleep(2/240.)
 
             i_thres = [150,450]
             if i < i_thres[0]:
@@ -250,12 +254,12 @@ class runScenario():
             new_state_chain = [new_state_chain[k]+increment_chain[k] for k in range(len(self.objectStart))]
 
             # Validate collision status
-            if i < i_thres[0]:
-                print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
-            else:
-                print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
+            # if i < i_thres[0]:
+            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
+            # else:
+            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
                 
-            if i % self.downsampleRate == 0:
+            if i % self.downsampleRate == 0 and i >= self.startFrame:
                 # Record obstacle state - hand
                 self.obsBasePosSce.append(new_state_left[:3])
                 self.obsBaseEulSce.append(new_state_left[3:6])
