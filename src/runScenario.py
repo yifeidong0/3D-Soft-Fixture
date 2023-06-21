@@ -119,8 +119,9 @@ class runScenario():
                 self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
                 self.basePosBounds = [[-2,2], [-2,2], [0,4]]
                 self.goalCoMPose = [0,1,0.01] + [0]*3
-                self.endFrame = 4000
-                self.downsampleRate = 100 # 10
+                self.startFrame = 4000
+                self.endFrame = 4200
+                self.downsampleRate = 50 # 10
             case 'HandbagGripper':
                 self.object = 'Chain'
                 self.numCtrlPoint = 4 # numChainLink = numChainNode = numCtrlPoint+3
@@ -534,7 +535,7 @@ class runScenario():
 
             # print(len(p.getClosestPoints(bodyA=self.objectId, bodyB=self.obstacleId, distance=-0.025)))
 
-            if i % self.downsampleRate == 0:
+            if i % self.downsampleRate == 0 and i > self.startFrame:
                 # Record obstacle state - left hand
                 self.obsJointPosSce.append(new_state_left[6:])
                 self.obsBasePosSce.append(new_state_left[:3])

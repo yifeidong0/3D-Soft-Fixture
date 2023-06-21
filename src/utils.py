@@ -62,7 +62,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear'], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=250, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=300, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
