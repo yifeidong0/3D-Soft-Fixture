@@ -649,7 +649,7 @@ if __name__ == '__main__':
     # for t in t_list:
     args, parser = argument_parser()
     # args.runtime = t
-    numRunTime = 10
+    numRunTime = 20
     for n in range(numRunTime):
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
