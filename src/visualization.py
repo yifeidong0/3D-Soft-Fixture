@@ -287,7 +287,7 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
     minTot, minG, minE, minEsc, _, meanG, meanE, meanEsc, _, stdG, stdE, stdEsc = energyDataAnalysis
 
     # Plot min escape energy
-    useIndices = 1 # 1 for fish-shovel, rubic-bimanual data with unevenly spaced indices
+    useIndices = 0 # 1 for fish-shovel, rubic-bimanual data with unevenly spaced indices
     if useIndices:
         x = indices
     else:
@@ -370,7 +370,8 @@ if __name__ == '__main__':
     # path = './results/ICRA2024/Scenario01Hook-Fish'
     # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
     # path = 'results/ICRA2024/Scenario04Fish-Shovel'
-    path = 'results/ICRA2024/Scenario05Rubic-Bimanual'
+    # path = 'results/ICRA2024/Scenario05Rubic-Bimanual'
+    path = 'results/ICRA2024/Scenario06Bag-Gripper'
     os.chdir(path)
     # HookFishHole
     for file_name in glob.glob(args.scenario + "*"):

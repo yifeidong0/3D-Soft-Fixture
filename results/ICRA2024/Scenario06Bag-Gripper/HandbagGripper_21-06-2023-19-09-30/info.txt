@@ -1,0 +1,19 @@
+*****Search goal region: [[-2, 2], [-2, 2], [0, 0.1], [-0.1, 0.1], [-0.1, 0.1], [-0.1, 0.1], [0.880144608505712, 0.980144608505712], [0, 0.1], [0.880144608505712, 0.980144608505712], [0, 0.1], [0.880144608505712, 0.980144608505712], [0, 0.1], [0.880144608505712, 0.980144608505712], [0, 0.1], [0, 0.1]]
+*****Search basePosBounds: [[-2, 2], [-2, 2], [0, 4], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-3.141592653589793, 3.141592653589793], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-1.1593972888248048, 1.1593972888248048], [-3.141592653589793, 3.141592653589793]]
+*****args: Namespace(object='Chain', obstacle='3fGripper', planner='RRTstar', runtime=200, scenario='HandbagGripper', search='EnergyBiasedSearch', visualization=0)
+*****planner params: delay_collision_checking = 1
+focus_search = 1
+goal_bias = 0.05
+informed_sampling = 1
+new_state_rejection = 1
+number_sampling_attempts = 100
+ordered_sampling = 0
+ordering_batch_size = 1
+prune_threshold = 0.05
+pruned_measure = 1
+range = 0.1
+rewire_factor = 0.01
+sample_rejection = 0
+tree_pruning = 1
+use_admissible_heuristic = 1
+use_k_nearest = 1

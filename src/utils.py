@@ -125,7 +125,7 @@ def texture_path_list():
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
-            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear']
+            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear', 'Chain']
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f4a63e', '#FF69B4', '#f03b20', ] # green, purple, blue, orange, pink, red, 
