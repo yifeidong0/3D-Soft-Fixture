@@ -640,7 +640,7 @@ def plot_test02(SaveFolderName, groundTruthZ, ):
     cls = get_colors()
     noFrame = 8
     noFolder = 5
-    planners = ['informedRRT*', 'RRTstar', 'RRTConnect', 'AITstar', 'RRT']
+    planners = ['informedRRTstar', 'RRTstar', 'RRTConnect', 'AITstar', 'RRT']
         
     # Get folder names
     os.chdir(SaveFolderName)
