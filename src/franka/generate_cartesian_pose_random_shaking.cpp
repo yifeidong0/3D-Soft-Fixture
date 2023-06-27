@@ -74,9 +74,9 @@ std::vector<std::array<double, 3>> samplePointsInBall(double R, int numPoints) {
         double r = R * std::abs(dis(gen));
 
         std::array<double, 3> point;
-        point.x = r * u / scale;
-        point.y = r * v / scale;
-        point.z = r * w / scale;
+        point[0] = r * u / scale;
+        point[1] = r * v / scale;
+        point[2] = r * w / scale;
         
         points.push_back(point);
     }
@@ -86,29 +86,29 @@ std::vector<std::array<double, 3>> samplePointsInBall(double R, int numPoints) {
 
 // Function to sample euler angles
 std::vector<std::array<double, 3>> sampleEulerAngle(double limit, int numPoints) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<double> dis(-1.0, 1.0);
-    
-    std::vector<std::array<double, 3>> angles;
-    for (int i = 0; i < numPoints; ++i) {
-        double u = dis(gen);
-        double v = dis(gen);
-        double w = dis(gen);
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> dis(-1.0, 1.0);
+  
+  std::vector<std::array<double, 3>> angles;
+  for (int i = 0; i < numPoints; ++i) {
+      double u = dis(gen);
+      double v = dis(gen);
+      double w = dis(gen);
 
-        std::array<double, 3> angle;
-        angle.x = limit * u;
-        angle.y = limit * v;
-        angle.z = limit * w;
-        
-        angles.push_back(angle);
-    }
-    
-    return angles;
+      std::array<double, 3> angle;
+      angle[0] = limit * u;
+      angle[1] = limit * v;
+      angle[2] = limit * w;
+      
+      angles.push_back(angle);
+  }
+  
+  return angles;
 }
 
 // Function to cast euler angles to rotation matrix
-void eulerToRotationMat(std::array<double, 16>& initT, std::array<double, 3> eulerAngles, double scale) {
+void getNewEETransform(std::array<double, 16>& initT, std::array<double, 3> eulerAngles, double scale) {
   double roll = eulerAngles[0] * scale;
   double pitch = eulerAngles[1] * scale;
   double yaw = eulerAngles[2] * scale;
@@ -121,6 +121,24 @@ void eulerToRotationMat(std::array<double, 16>& initT, std::array<double, 3> eul
   writeMatrix3dToUpperLeft(matNew, initT);
 }
 
+std::array<double, 7> generate_random_pose(std::array<double, 7> q_init, double perturbLimit) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<double> dis(-M_PI_4, M_PI_4);
+  
+  std::array<double, 7> q_random;
+  for (int i = 0; i < 7; ++i) {
+      double u = dis(gen);
+      if (i<3)
+        q_random[i] = q_init[i];
+      else
+        q_random[i] = q_init[i] + perturbLimit * u;
+  }
+  
+  return q_random;
+}
+
+
 int main(int argc, char** argv) {
   if (argc != 2) {
     std::cerr << "Usage: " << argv[0] << " <robot-hostname>" << std::endl;
@@ -131,8 +149,8 @@ int main(int argc, char** argv) {
     setDefaultBehavior(robot);
 
     // First move the robot to a suitable joint configuration
-    std::array<double, 7> q_goal = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
-    MotionGenerator motion_generator(0.5, q_goal);
+    std::array<double, 7> q_init = {{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
+    MotionGenerator motion_generator(0.5, q_init);
     std::cout << "WARNING: This example will move the robot! "
               << "Please make sure to have the user stop button at hand!" << std::endl
               << "Press Enter to continue..." << std::endl;
@@ -148,52 +166,73 @@ int main(int argc, char** argv) {
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
 
-    std::array<double, 16> initial_pose;
+    // std::array<double, 16> initial_pose;
 
-    double radius = .1;
-    double limit = .1;
-    double velocity = .5;
-    double timeEnd = 1.0 / velocity;
-    int numPoints = 10;
+    // double radius = .1;
+    // double limit = .1;
+    // double velocity = 1;
+    // double timeEnd = 1.0 / velocity;
+    // int numPoints = 10;
     
-    std::vector<std::array<double, 3>> sampledPoints = samplePointsInBall(radius, numPoints);
-    std::vector<std::array<double, 3>> sampledAngles = sampleEulerAngle(limit, numPoints);
+    // std::vector<std::array<double, 3>> sampledPoints = samplePointsInBall(radius, numPoints);
+    // std::vector<std::array<double, 3>> sampledAngles = sampleEulerAngle(limit, numPoints);
 
-    for (i=0; i<numPoints; ++i) {
-      double time = 0.0;
+    // for (int i=0; i<numPoints; ++i) {
+    //   double time = 0.0;
 
-      // Go to the desired random pose
-      robot.control([&time, &initial_pose](const franka::RobotState& robot_state,
-                                          franka::Duration period) -> franka::CartesianPose {
-        time += period.toSec();
+    //   // Go to the desired random pose
+    //   std::cout << std::endl << "Going to the desired random pose!" << std::endl;
+    //   robot.control([&time, &initial_pose, velocity, timeEnd, sampledPoints, sampledAngles, i](const franka::RobotState& robot_state,
+    //                                       franka::Duration period) -> franka::CartesianPose {
+    //     time += period.toSec();
 
-        if (time == 0.0) {
-          initial_pose = robot_state.O_T_EE_c;
-        }
-        std::array<double, 16> new_pose = initial_pose;
+    //     if (time == 0.0) {
+    //       initial_pose = robot_state.O_T_EE_c;
+    //     }
+    //     std::array<double, 16> new_pose = initial_pose;
 
-        // A scaling factor that interpolates the init-to-goal line
-        double scale = velocity * time;
+    //     // A scaling factor that interpolates the init-to-goal line
+    //     double scale = velocity * time;
+    //     std::cout << std::endl << "scale" << scale << std::endl;
 
-        // Get new EE position
-        new_pose[12] += sampledPoints[i][0] * scale;
-        new_pose[13] += sampledPoints[i][1] * scale;
-        new_pose[14] += sampledPoints[i][2] * scale;
+    //     // Get new EE position
+    //     std::cout << std::endl << "Get new EE position" << std::endl;
+    //     new_pose[12] += sampledPoints[i][0] * scale;
+    //     new_pose[13] += sampledPoints[i][1] * scale;
+    //     new_pose[14] += sampledPoints[i][2] * scale;
 
-        // Get new EE orientation
-        eulerToRotationMat(new_pose, sampledAngles[i], scale)
+    //     // Get new EE orientation
+    //     std::cout << std::endl << "Get new EE orientation" << std::endl;
+    //     getNewEETransform(new_pose, sampledAngles[i], scale);
 
-        if (time >= timeEnd) {
-          // std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
-          return franka::MotionFinished(new_pose);
-        }
-        return new_pose;
-      });
+    //     if (time >= timeEnd) {
+    //       // std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
+    //       return franka::MotionFinished(new_pose);
+    //     }
+    //     return new_pose;
+    //   });
 
-      // Return to initiall pose
-      robot.control(motion_generator);
+    //   // Return to initiall pose
+    //   std::cout << std::endl << "Returning to initiall pose!" << std::endl;
+    //   robot.control(motion_generator);
+    // }
+    
+    // double timeEnd = 10.0;
+    double perturbLimit = .4;
+    bool return_to_init = 0;
+    while (1) {
+      if (return_to_init == 1) {
+        MotionGenerator motion_generator(.5, q_init);
+        robot.control(motion_generator);
+        return_to_init = 0;
+      }
+      else {
+        std::array<double, 7> q_random = generate_random_pose(q_init, perturbLimit);
+        MotionGenerator motion_generator(.5, q_random);
+        robot.control(motion_generator);
+        return_to_init = 1;
+      }
     }
-      
   } catch (const franka::Exception& e) {
     std::cout << e.what() << std::endl;
     return -1;
