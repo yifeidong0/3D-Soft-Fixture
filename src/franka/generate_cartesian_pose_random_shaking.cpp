@@ -166,11 +166,12 @@ int main(int argc, char** argv) {
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
 
+    ////// EE space random shaking ////// 
     // std::array<double, 16> initial_pose;
 
     // double radius = .1;
     // double limit = .1;
-    // double velocity = 1;
+    // double velocity = .1;
     // double timeEnd = 1.0 / velocity;
     // int numPoints = 10;
     
@@ -202,11 +203,11 @@ int main(int argc, char** argv) {
     //     new_pose[14] += sampledPoints[i][2] * scale;
 
     //     // Get new EE orientation
-    //     std::cout << std::endl << "Get new EE orientation" << std::endl;
-    //     getNewEETransform(new_pose, sampledAngles[i], scale);
+    //     // std::cout << std::endl << "Get new EE orientation" << std::endl;
+    //     // getNewEETransform(new_pose, sampledAngles[i], scale);
 
-    //     if (time >= timeEnd) {
-    //       // std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
+    //     if (scale >= 1.0) {
+    //       std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
     //       return franka::MotionFinished(new_pose);
     //     }
     //     return new_pose;
@@ -217,21 +218,28 @@ int main(int argc, char** argv) {
     //   robot.control(motion_generator);
     // }
     
-    // double timeEnd = 10.0;
-    double perturbLimit = .4;
+    // ////// joint space random shaking ////// 
+    double perturbLimit = .01;
     bool return_to_init = 0;
-    while (1) {
-      if (return_to_init == 1) {
-        MotionGenerator motion_generator(.5, q_init);
-        robot.control(motion_generator);
-        return_to_init = 0;
+    double maxTimes = 10;
+    while (perturbLimit <= 1) {
+      std::cout << "Current perturbation limits: " << perturbLimit << std::endl;
+      double count = 0;
+      while (count <= 2*maxTimes) {
+        if (return_to_init == 1) {
+          MotionGenerator motion_generator(.5, q_init);
+          robot.control(motion_generator);
+          return_to_init = 0;
+        }
+        else {
+          std::array<double, 7> q_random = generate_random_pose(q_init, perturbLimit);
+          MotionGenerator motion_generator(.5, q_random);
+          robot.control(motion_generator);
+          return_to_init = 1;
+        }
+        count += 1;
       }
-      else {
-        std::array<double, 7> q_random = generate_random_pose(q_init, perturbLimit);
-        MotionGenerator motion_generator(.5, q_random);
-        robot.control(motion_generator);
-        return_to_init = 1;
-      }
+      perturbLimit *= 1.6;
     }
   } catch (const franka::Exception& e) {
     std::cout << e.what() << std::endl;
