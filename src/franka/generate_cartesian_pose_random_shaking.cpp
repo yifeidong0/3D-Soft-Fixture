@@ -129,7 +129,7 @@ std::array<double, 7> generate_random_pose(std::array<double, 7> q_init, double 
   std::array<double, 7> q_random;
   for (int i = 0; i < 7; ++i) {
       double u = dis(gen);
-      if (i<3)
+      if (i==0 || i==3)
         q_random[i] = q_init[i];
       else
         q_random[i] = q_init[i] + perturbLimit * u;
@@ -219,10 +219,11 @@ int main(int argc, char** argv) {
     // }
     
     // ////// joint space random shaking ////// 
-    double perturbLimit = .01;
+    double perturbLimit = .1;
+    double maxPerturbLimit = 1.5;
     bool return_to_init = 0;
     double maxTimes = 10;
-    while (perturbLimit <= 1) {
+    while (perturbLimit <= maxPerturbLimit) {
       std::cout << "Current perturbation limits: " << perturbLimit << std::endl;
       double count = 0;
       while (count <= 2*maxTimes) {
@@ -235,11 +236,14 @@ int main(int argc, char** argv) {
           std::array<double, 7> q_random = generate_random_pose(q_init, perturbLimit);
           MotionGenerator motion_generator(.5, q_random);
           robot.control(motion_generator);
-          return_to_init = 1;
+          return_to_init = 0;
         }
         count += 1;
       }
-      perturbLimit *= 1.6;
+      std::cout << "WARNING: This example will increase the perturbation level!"
+                << "Press Enter to continue..." << std::endl;
+      std::cin.ignore();
+      perturbLimit += 0.1;
     }
   } catch (const franka::Exception& e) {
     std::cout << e.what() << std::endl;
