@@ -287,20 +287,30 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
     minTot, minG, minE, minEsc, _, meanG, meanE, meanEsc, _, stdG, stdE, stdEsc = energyDataAnalysis
 
     # Plot min escape energy
-    useIndices = 0 # 1 for fish-shovel, rubic-bimanual data with unevenly spaced indices
+    useIndices = 1 # 1 for fish-shovel, rubic-bimanual data with unevenly spaced indices
     if useIndices:
-        x = indices
+        x = [id / 571.4 for id in indices] # for fish-shovel
+        # x = indices
     else:
         x = IterId
 
-    ax.plot(x, minTot, '-', color=cls[0], linewidth=2, label='total energy')
-    if isArticulatedObject:
-        ax.plot(x, minG, '-', color=cls[1], label='gravity potential energy')
-        ax.plot(x, minE, '-', color=cls[2], label='elastic potential energy')
-    ax.plot(x, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
+    useDoubleAxis = 0 # 1 for fish-shovel
+    if useDoubleAxis:
+        ax1 = ax.twinx()
+    # ax.plot(x, minTot, '-', color=cls[0], linewidth=2, label='total energy')
+    # if isArticulatedObject:
+    #     ax.plot(x, minG, '-', color=cls[1], label='g-potential energy')
+    #     if useDoubleAxis:
+    #         ax1.plot(x, minE, '-', color=cls[2], label='e-potential energy')
+    #     else:
+    #         ax.plot(x, minE, '-', color=cls[2], label='e-potential energy')
+    if useDoubleAxis:
+        ax1.plot(x, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
+        ax1.fill_between(x, meanEsc-stdEsc, meanEsc+stdEsc, alpha=0.4, color=cls[3])
+    else:
+        ax.plot(x, minEsc, '-', color=cls[3], linewidth=2, label='escape energy')
+        ax.fill_between(x, meanEsc-stdEsc, meanEsc+stdEsc, alpha=0.4, color=cls[3])
 
-    # Plot std shade
-    ax.fill_between(x, meanEsc-stdEsc, meanEsc+stdEsc, alpha=0.4, color=cls[3])
     
     # Optional: plot vertical line of current no. of iteration
     if axvline is not None:
@@ -313,10 +323,17 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
                 # ax.text(axvline[i]+.5, -1, labelNames[i], fontsize=18, color='k')
 
     ax.set_xlabel('# iterations',fontsize=14)
-    ax.set_ylabel('potential energy / J',fontsize=14)
+    ax.set_ylabel('energy / J',fontsize=14)
+    # ax.set_ylabel('energy-total/grav / J',fontsize=14)
+    # ax.set_yscale('log')
+    ax.set_ylim(-.2,3.6)
+    if useDoubleAxis:
+        ax1.set_ylabel('energy-elas/esc / J',fontsize=14)
+        ax1.set_ylim(0,5)
+        ax1.legend(fontsize=14,loc='upper right')
     # ax.set_aspect(26.5)
     ax.grid(True)
-    ax.legend(fontsize=14,loc='upper right')
+    ax.legend(fontsize=14,loc='upper left')
     # ax.set_xticks(np.arange(0,minDataLen,30).astype(int))
 
 def get_results_from_csv(folderName, isArticulatedObject=False):
@@ -361,6 +378,7 @@ def plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObject=False,
 
 
 '''Plot escape cost from multiple csv files with std shading'''
+import tikzplotlib
 if __name__ == '__main__':
     args, parser = argument_parser()
     rigidObjectList = get_non_articulated_objects()
@@ -369,9 +387,9 @@ if __name__ == '__main__':
     folderList = []
     # path = './results/ICRA2024/Scenario01Hook-Fish'
     # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
-    # path = 'results/ICRA2024/Scenario04Fish-Shovel'
+    path = 'results/ICRA2024/Scenario04Fish-Shovel'
     # path = 'results/ICRA2024/Scenario05Rubic-Bimanual'
-    path = 'results/ICRA2024/Scenario06Bag-Gripper'
+    # path = 'results/ICRA2024/Scenario06Bag-Gripper'
     os.chdir(path)
     # HookFishHole
     for file_name in glob.glob(args.scenario + "*"):
@@ -382,6 +400,7 @@ if __name__ == '__main__':
     plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
     # plt.show()
     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
+    # tikzplotlib.save('{}/energy_plot_std.tex'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################

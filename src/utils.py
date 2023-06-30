@@ -35,7 +35,7 @@ def argument_parser():
     # StarfishBowl - Starfish, LeftHandAndBowl
     # ShovelFish - Fish, Shovel
     # HandbagGripper - Chain, 3fGripper
-    parser.add_argument('-c', '--scenario', default='HandbagGripper', \
+    parser.add_argument('-c', '--scenario', default='ShovelFish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -51,13 +51,13 @@ def argument_parser():
         'SORRTstar', 'RRT', 'AITstar', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
 
-    parser.add_argument('-j', '--object', default='Chain', \
+    parser.add_argument('-j', '--object', default='Fish', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='3fGripper', \
+    parser.add_argument('-l', '--obstacle', default='Shovel', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
                  'ShadowHand', 'Bucket', 'Ear'], \
