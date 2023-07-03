@@ -35,7 +35,8 @@ def argument_parser():
     # StarfishBowl - Starfish, LeftHandAndBowl
     # ShovelFish - Fish, Shovel
     # HandbagGripper - Chain, 3fGripper
-    parser.add_argument('-c', '--scenario', default='ShovelFish', \
+    # Franka - x, x
+    parser.add_argument('-c', '--scenario', default='Franka', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -46,27 +47,27 @@ def argument_parser():
         choices=['BisectionSearch', 'EnergyBiasedSearch'], \
         help='(Optional) Specify the sampling-based search method to use, defaults to BisectionSearch if not given.')
     
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default='BITstar', \
         choices=['BFMTstar', 'BITstar', 'FMT', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar', 'RRT', 'AITstar', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
 
-    parser.add_argument('-j', '--object', default='Fish', \
+    parser.add_argument('-j', '--object', default='Ftennis', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
-                 'Rubic', 'Chain'], \
+                 'Rubic', 'Chain', 'Ftennis', 'Ftape', 'Fglue', 'Fbanana'], \
         help='(Optional) Specify the object to cage.')
 
-    parser.add_argument('-l', '--obstacle', default='Shovel', \
+    parser.add_argument('-l', '--obstacle', default='FbowlS', \
         choices=['Box', 'Hook', '3fGripper', 'Bowl', 'Bust', 'Hourglass', 'Ring', 'Hole', \
                  'Maze', '2Dkey', 'SplashBowl', 'Radish', 'Shovel', 'LeftHand', 'LeftHandAndBowl', \
-                 'ShadowHand', 'Bucket', 'Ear'], \
+                 'ShadowHand', 'Bucket', 'Ear', 'FbowlS', 'FbowlM', 'FbowlL',], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=200, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=6, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
 
     # Parse the arguments
@@ -113,6 +114,15 @@ def path_collector():
             'LeftHandAndBowl': 'models/leftHandAndBowl/leftHandAndBowl-vhacd.obj',
             'Rubic': 'models/rubic-cube/rubic.urdf',
             'Ear': 'models/ear/ear.stl',
+
+            # Franka (F) physical experiments
+            'Ftape': 'models/physical-experiment/downsampled4blender/Ftape.urdf',
+            'Fglue': 'models/physical-experiment/downsampled4blender/.urdf',
+            'Ftennis': 'models/physical-experiment/downsampled4blender/Ftennis.urdf',
+            'Fbanana': 'models/physical-experiment/downsampled4blender/.stl',
+            'FbowlS': 'models/physical-experiment/downsampled4blender/FbowlS.stl',
+            'FbowlM': 'models/physical-experiment/downsampled4blender/.stl',
+            'FbowlL': 'models/physical-experiment/downsampled4blender/.stl',
             }
 
 def texture_path_list():
@@ -125,7 +135,8 @@ def texture_path_list():
 def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
-            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear', 'Chain']
+            'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear', 'Chain', \
+            'Ftennis', 'Ftape', 'Fglue', 'Fbanana', 'FbowlS', 'FbowlM', 'FbowlL',]
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f4a63e', '#FF69B4', '#f03b20', ] # green, purple, blue, orange, pink, red, 

@@ -116,6 +116,15 @@ if __name__ == '__main__':
         env = SnapLock2DCaging(args, objScale, basePosBounds)
         env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
         env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
+    elif args.object == 'Ftennis':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg 
+        start = [0.365,0,0.486,0,0,0]
+        goal = [0,0,-.9]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [-1,2]])
+        env.reset_start_and_goal(start=start, goal=goal)
 
     env.create_ompl_interface()
     print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
@@ -126,6 +135,7 @@ if __name__ == '__main__':
     #     env.pb_ompl_interface.set_spring_params(springneutralLen, k_spring)
     
     # Choose from different searching methods
+    # sleep(200)
     if args.search == 'BisectionSearch':
         # useGreedySearch = False # True: bisection search; False: Conservative search
         # env.bound_shrink_search(useGreedySearch)
