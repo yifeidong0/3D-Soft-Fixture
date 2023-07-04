@@ -1,0 +1,111 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{seagreen4916384}{RGB}{49,163,84}
+\definecolor{slateblue117107177}{RGB}{117,107,177}
+\definecolor{steelblue43140190}{RGB}{43,140,190}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={# control points},
+xmin=3, xmax=9,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={escape energy},
+ymin=0.05, ymax=0.7,
+ytick style={color=black}
+]
+\path [draw=slateblue117107177, fill=slateblue117107177, opacity=0.3]
+(axis cs:3,0.247877286820441)
+--(axis cs:3,0.226957941536287)
+--(axis cs:4,0.170210554870321)
+--(axis cs:5,0.175192545565182)
+--(axis cs:6,0.211742575264267)
+--(axis cs:7,0.291748083403441)
+--(axis cs:8,0.334004710803269)
+--(axis cs:9,0.461745373709534)
+--(axis cs:9,0.65889211151978)
+--(axis cs:9,0.65889211151978)
+--(axis cs:8,0.404059673343059)
+--(axis cs:7,0.353023946044547)
+--(axis cs:6,0.259174661652487)
+--(axis cs:5,0.211877073994421)
+--(axis cs:4,0.190948518747258)
+--(axis cs:3,0.247877286820441)
+--cycle;
+
+\addplot [thick, seagreen4916384, mark=*, mark size=3, mark options={solid}]
+table {%
+3 0.20557206
+4 0.12182048
+5 0.100476017713583
+6 0.09136536
+7 0.0865214089075129
+8 0.083604360073597
+9 0.0816990636286701
+};
+\addlegendentry{ref. energy}
+\addplot [thick, slateblue117107177, mark=*, mark size=3, mark options={solid}]
+table {%
+3 0.237417614178364
+4 0.18057953680879
+5 0.193534809779802
+6 0.235458618458377
+7 0.322386014723994
+8 0.369032192073164
+9 0.560318742614657
+};
+\addlegendentry{est. energy}
+\addplot [thick, steelblue43140190, mark=asterisk, mark size=3, mark options={solid}]
+table {%
+3 107
+4 109
+5 111
+6 113
+7 115
+8 117
+9 119
+};
+\addlegendentry{dimension}
+\end{axis}
+
+\begin{axis}[
+axis y line=right,
+tick align=outside,
+x grid style={darkgray176},
+xmin=3, xmax=9,
+xtick pos=left,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={dim},
+ymin=6.4, ymax=19.6,
+ytick pos=right,
+ytick style={color=black},
+yticklabel style={anchor=west}
+]
+\addplot [thick, steelblue43140190, mark=asterisk, mark size=3, mark options={solid}]
+table {%
+3 7
+4 9
+5 11
+6 13
+7 15
+8 17
+9 19
+};
+\end{axis}
+
+\end{tikzpicture}

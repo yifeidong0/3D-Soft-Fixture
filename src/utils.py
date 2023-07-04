@@ -4,7 +4,7 @@ https://github.com/StanfordVL/iGibson/blob/master/igibson/external/pybullet_tool
 '''
 
 from __future__ import print_function
-import pybullet as p
+# import pybullet as p
 from collections import defaultdict, deque, namedtuple
 from itertools import product, combinations, count
 import argparse
@@ -35,7 +35,7 @@ def argument_parser():
     # StarfishBowl - Starfish, LeftHandAndBowl
     # ShovelFish - Fish, Shovel
     # HandbagGripper - Chain, 3fGripper
-    parser.add_argument('-c', '--scenario', default='ShovelFish', \
+    parser.add_argument('-c', '--scenario', default='HookTrapsRing', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
@@ -651,7 +651,7 @@ def are_links_adjacent(body, link1, link2):
            (get_link_parent(body, link2) == link1)
 
 import numpy as np
-import kinpy as kp
+# import kinpy as kp
 from scipy.spatial.transform import Rotation as R
 def getGravityEnergy(state, args, path):
     comDof = 6

@@ -1,0 +1,669 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite, balance}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage[font=small,skip=0pt]{caption}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\bxi}{\boldsymbol{\xi}}
+% for tikz
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+\DeclareUnicodeCharacter{2212}{−}
+\usepgfplotslibrary{groupplots,dateplot}
+\usetikzlibrary{patterns,shapes.arrows}
+\pgfplotsset{compat=newest}
+\pgfplotsset{every tick label/.append style={font=\tiny}}
+
+% for algorithm
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{amssymb}
+\usepackage{algorithmicx}
+% \renewcommand{\algorithmicforall}{\textbf{for each}}
+
+% for url
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	filecolor=magenta,      
+	urlcolor=blue,
+	pdftitle={Overleaf Example},
+	pdfpagemode=FullScreen,
+}
+\urlstyle{same}
+
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+		T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+	
+	\title{Soft Fixtures: Practical Caging-Based Manipulation of Rigid and Deformable Objects
+		\thanks{Funded by the European Commission under the Horizon Europe Framework Programme project SoftEnable, grant number 101070600, \url{http://softenable.eu/}.
+			%Both authors are with the division of Robotics, Perception and Learning, 
+			The authors are with the division of Robotics, Perception and Learning,
+			KTH Royal Institute of Technology, Sweden, \{yifeid, fpokorny\}@kth.se.}
+	}
+	
+	\author{
+		\IEEEauthorblockN{Yifei Dong \and Florian T. Pokorny
+		}
+	}
+	
+	\maketitle
+	
+	\begin{abstract}
+		We present a sampling-based approach and experiments to reasoning about the manipulation of both rigid and a simplified class of deformable objects, modeled as articulated rigid bodies with gravitational and elastic potential energy in 3D. We extend earlier work generalizing the notion of caging to include energy function constraints to allow for a quasi-static analysis and the inclusion of elastic potential energy of deformable objects. While past works on caging have predominantly focused on provably correct algorithms applicable to restricted simple classes of rigid objects such as polygons in 2D or simple meshes in 3D, our approach only provides upper bounds to escape energies, but in return allows for the analysis of such soft fixtures in much higher-dimensional configuration spaces. In this paper, we present demonstrations of simulation scenarios indicating that our approach can be applied to the analysis of escape energy for quasi-static manipulation scenarios involving rigid and articulated objects. Simulation results indicate that our proposed iterative or optimality-based search approaches provide a convincing and useful upper bound estimation of escape energy.
+	\end{abstract}
+	% The characteristics of caging grasps demonstrate advantages in handling delicate, irregular or deformable objects to assist human beings in industrial robot manipulation.
+	%An object is caged by obstacles if it cannot escape arbitrarily far away.
+	%Energy-bounded caging is a generalization of caging that considers the inclusion of energy constraints. 
+	% allows for the tolerance of  escape paths with high energy costs.
+	% It refers to trapping an object within a semi-closed free space partially bounded by obstacles in the presence of intrinsic or extrinsic forces. 
+	%We propose a caging analysis approach that extends the state-of-the-art in several ways, including the analysis of 3D objects and obstacles, as well as different sources of bounding energy and various articulation of bodies.
+	% 1. Caging analysis of 3D objects and obstacles of arbitrary shapes.
+	% 2. Different sources of bounding energy - from external forces to internal elastic forces.
+	% 3. Various types of bodies - from rigid to multi-joint articulated bodies.
+	% We formulate the problem as randomly exploring the configuration space, building a potential energy map, and finding the optimal escape path.
+	%To handle the high-dimensional configuration space of articulated objects in the presence of obstacles, a sampling-based approach and collision detection in a physics engine are used to implicitly approximate the free space.
+	% almost-surely asymptotically optimal
+	%To find an optimal escape path with minimum energy cost in the problem domain, an informed, anytime planner based on Batch Informed Trees (BIT*) with a configuration-cost function is presented. 
+	%We implement the algorithm in Bullet and Open Motion Planning Library (OMPL) and empirically verify the BIT*-based approach with an iterative incremental search approach.
+	%Initial experimented evaluation is presented in example scenarios, covering different body types, caging completeness, and complexity.
+	%The results indicate the feasibility of applying our methods in high-dimensional articulated objects or approximated soft objects. 
+	% The study provides complementary material, including videos with per-frame caging analysis and plots.
+	
+	
+	\begin{IEEEkeywords}
+		robotic manipulation, caging, sampling-based motion planning, potential energy
+	\end{IEEEkeywords}
+	
+	
+	\section{Introduction}
+	The task of restraining an object, which is also referred to as fixturing, is one of the key
+	functions of robotic grasping \cite{b18} and a key step towards robust dexterous manipulation.
+	Enveloping grasps \cite{b19} effectively constrain objects by wrapping the fingers and palm around
+	them, while fingertip grasps enable dexterous manipulation of objects with distal phalanges. While
+	classical grasping approaches such as form and force closure \cite{b20} focus on the analysis of
+	point-contacts with the goal of fully controlling the pose of a grasped object, these approaches,
+	however, might suffer from grasp instability issues due to noise in perception and susceptibility to external disturbances. 
+	
+	Caging provides an alternative approach to fixturing, where the object is not necessarily fully immobilized. 
+	% F. T. Pokorny, J. A. Stork, and D. Kragic, “Grasping objects with holes: A topological approach,” in ICRA, 2013, pp. 1100–1107.
+	% ——, “A topology-based object representation for clasping, latching and hooking,” in HUMANOIDS, 2013.
+	Caging by wrapping around objects and restricting their mobility provides a potential avenue to the fixture by taking advantage of the distal phalanges, the palm, or extrinsic dexterity \cite{b21} as additional constraints.
+	Caging is a concept in which obstacles form a cage around an object, 
+	% restricting its mobility without necessarily making contact with its surface. 
+	and thus it requires the reasoning of objects' global attributes through configuration space, and the tolerance of bounded mobility makes it resistant to noise.
+	%  unlike wrench space analysis which focuses on local contact characteristics.
+	A potential advantage of caging we can envision is thus it allows a robot to fixture delicate or fragile objects without damaging them. 
+	Caging could also be useful for grasping irregularly shaped objects that are difficult to grip using force closure grasps.
+	% The advantages of caging grasps enable assistive robots to perform manipulation tasks in hazardous environments such as cold rooms, or in sanitization-demanding procedures. 
+	% The tasks include handling delicate or soft items in the food industry such as meat and fish, as well as personal protective equipment in the medical industry such as masks, gowns, medical hats, etc.
+	
+	% \begin{figure}
+		%     \centering
+		%     \input{texs/hook-mosaic}
+		%     \input{texs/fish-mosaic}
+		%     % \vspace{-10pt}
+		%     \caption{
+			%     Quasi-static soft fixture analysis of two simulated dynamic scenes of a rigid ring under gravity (top) and a deformable fish model falling into a bowl (bottom). We display total potential energy (green), gravitational potential energy (purple), elastic potential energy (blue), and estimated required soft fixture escape energy (red) for each frame. Escape energy is estimated using 5 independent runs of a 2-min execution of the BIT*-based escape energy approximation.}
+		%     % Each iteration is repeated 5 times independently.
+		%     % the green curves denote the total potential energy of the caged objects, the red curves the minimum of escape energy costs over $6$ runs, with
+		%     %The plus/minus one standard deviation of the escape energy costs extends from its mean (not plotted since we care about the minimum only, which is closest to and upper-bounds the optimal escape energy costs $u^* = V(\sigma^*) $) in red shadings. }
+	%     \label{fig1}
+	%     % \vspace{-19pt}
+	% \end{figure}
+
+In this work, we present progress on further extending the notion of caging to what we refer to as a \textbf{soft fixture}, where an object is constrained to a bounded path-component within a sublevel set of a suitable constraint function.
+We in particular explore constraints imposed by the sublevel set of a function defined in terms of potential energy for this purpose. 
+Unlike computationally expensive volumetric approximations of configuration space such as 3D rigid body caging using the methods of \cite{x1}, which currently cannot be applied in higher-dimensional configuration spaces or dynamic scenarios, we utilize a sampling-based approach that we show is applicable even to deformable objects approximately modeled as articulated objects.
+
+Our primary contributions include 1) A generalization of 2D energy-bounded caging of rigid objects towards high-dimensional 3D rigid or deformable objects soft fixture in terms of a potential energy-based constraint function; 
+2) Sampling-based algorithms that give an estimated upper bound of escape energy; 
+3) Analysis of escape energy in manipulation primitives of practical scenarios ranging from fields of food processing and health care that cover various rigid or deformable objects, as well as simple evaluation in a physical experiment.
+Demonstrations of such soft fixtures and their quasi-static analysis are implemented in the experiment\footnote{A video is available here: \url{https://youtu.be/tnYr7MSPMTw}}.
+% J. Mahler, F. T. Pokorny, Z. McCarthy, A. F. van der Stappen, and K. Goldberg, “Energy-bounded caging: Formal definition and 2-d energy lower bound algorithm based on weighted alpha shapes,” IEEE Robotics and Automation Letters, vol. 1, no. 1, pp. 508–515, 2016.
+% J. Mahler, F. T. Pokorny, S. Niyaz, and K. Goldberg, “Synthesis of energy-bounded planar caging grasps using persistent homology,” IEEE Transactions on Automation Science and Engineering, 2018.
+%Our approach in particular builds on the concept of energy-bounded caging is an inter-body behavior that we frequently see in daily life such as a smartphone held in hand or keys in the pocket.
+
+%In these scenarios, a target object is partially surrounded by obstacles and securely stays within the neighborhood of a local minimum of an energy function.
+%The partial caging is assumed unbreakable unless external energy above a threshold is provided.
+% The escape path that leads the caged object out of the trap usually passes through a saddle point in the configuration space.
+%The energy bound plays an important role and we usually want to maximize it in order to form a robust cage against disturbances.
+% transport a glass of water from point A to B
+
+% \vspace{-2pt}
+\section{Related Work}
+
+\subsection{Caging Grasps}
+The notion of caging was introduced by Kuperberg\cite{b1} as the problem of preventing a polygon from escaping arbitrarily far away using a set of fixed point-obstacles. More precisely, an object configuration is caged if its path-component in collision-free configuration space is bounded. Rimon et al.\cite{b2}, \cite{b3} then applied the caging concept in the context of robotic grasping and introduced a theory for caging-based grasping of planar objects \cite{b4}, \cite{b5} and presented methods of finding two-finger cage formations of planar polygons or 3D polyhedra based on contact-space search. 
+Rodriguez et al. \cite{b7} showed that caging grasps may be regarded as a viable means of achieving immobilizing grasps through finger closure. 
+Based on the analysis of topological and geometric features, \cite{b9}, \cite{b8} have applied caging grasps to certain classes of 3D rigid and deformable objects, but the proposed methods are only applicable to objects with specific features, such as holes or double forks. 
+
+% 2. Energy-bounded caging
+Makapunyo et al. \cite{b10} initially introduced the concept of partial caging, which they define as a finger arrangement that permits limited escape movements.
+% T. Makapunyo, T. Phoka, P. Pipattanasomporn, N. Niparnan, and A. Sudsang, “Measurement framework of partial cage quality,” in ROBIO, 2012
+Satoshi et al. \cite{} discussed partial caging with a circular object moved in the planar hand. 
+% Evaluation of Finger Configuration for Partial Caging, Satoshi Makita1 and Kazuyuki Nagata
+Varava et al. \cite{b11} \cite{} defined a clearance-based quality measure and generated a 2D partial caging dataset with deep neural networks.
+% Partial Caging: A Clearance-Based Definition and Deep Learning
+% Welle, Michael C., et al. "Partial caging: a clearance-based definition, datasets, and deep learning." Autonomous Robots 45 (2021): 647-664.
+Energy-bounded caging of 2D objects was introduced by Mahler et al.\cite{b12}, \cite{b13} and introduced additional constraints defined in terms of potential energy to the caging paradigm and relied on a cell-based decomposition of configuration space and the use of persistent homology. 
+
+% 1. caging:
+% Caging a rigid or deformable object is trapping it within a closed free space bounded by obstacles. 
+%Caging is initially a mathematical problem raised by Kuperberg\cite{b1} of preventing a polygon from running arbitrarily far away using a set of points. 
+% Kuperberg W. Problems on polytopes and convex sets.In: Proceedings of DIMACS: workshop on Polytopes.Piscataway Township, NJ;1990. p. 584–589.
+%Rimon et al.\cite{b2}, \cite{b3} applied the idea in the context of robotic grasping and
+%introduced a theory for caging-based grasping of planar objects.
+% Rimon E, Blake A. Caging 2D bodies by 1-parametertwo-fingered gripping systems. In: Proceedings of IEEEInternational Conference on Robotics and Automation.Trondheim, Norway;1996. p. 1458–1464.
+% Rimon E, Blake A. Caging planar bodies by one-parameter two-fingered gripping systems. Int J Rob Res.1999;18:299–318
+% \cite{b4}, \cite{b5} presented methods of finding two-finger cage formations of planar polygons or 3D polyhedra based on contact-space search.
+% Allen, Thomas F., Joel W. Burdick, and Elon Rimon. "Two-finger caging of polygonal objects using contact space search." IEEE Transactions on Robotics 31.5 (2015): 1164-1179.
+% Allen, Thomas F., Elon Rimon, and Joel W. Burdick. "Two-finger caging of 3D polyhedra using contact space search." 2014 IEEE international conference on robotics and automation (ICRA). IEEE, 2014.
+%An object is caged if the current path-component in collision-free space is bounded.
+%The paradigm relaxes the boundary of force closure, form closure and immobilizing grasps by allowing restricted movement of caged objects in the object's configuration space\cite{b6}.
+%The survey also raised unsolved open problems in algorithmic caging, which mostly deal with point fingers with extrinsic dexterity or tools, polygon fingers, etc. in the 3D workspace. 
+% Makita, Satoshi, and Weiwei Wan. "A survey of robotic caging and its applications." Advanced Robotics 31.19-20 (2017): 1071-1085.
+%Synthesis of caging grasp requires the representation and reasoning about non-local properties of objects.
+%Rodriguez et al. \cite{b7} proposed that caging grasps may be regarded as a viable means of
+%achieving immobilizing grasps through finger closure owing to the non-local properties and noise
+%resistance %capability of caging.
+% A. Rodriguez, M. T. Mason, and S. Ferry. From caging to grasping. The Int. Journal of Robotics Research 31(7), pp.886-900, 2012
+% H. A. Bunis, Caging Based Grasping via Minimalistic Robot Hands, PhD Thesis, Dept. of Mech. Eng., Technion, Israel, 2019
+% T. F. Allen, Two and Three Finger Caging of Polygons and Polyhedra, PhD Thesis, Dept. of Mechanical Engineering, Caltech, U.S.A., 2016.
+%\cite{b8}, \cite{b9} are the primary instances in which the caging principle is employed for 3D deformable objects, and they rely on assessments of the topological properties, thereby enabling handling amidst perception-related noise.
+%The proposed methods may only be applicable to objects with specific topological features, such as holes or double forks. This can limit the generalizability of the methods in a broader range of real-world applications.
+% F. T. Pokorny, J. A. Stork, and D. Kragic, “Grasping objects with holes: A topological approach,” in ICRA, 2013, pp. 1100–1107.
+% ——, “A topology-based object representation for clasping, latching and hooking,” in HUMANOIDS, 2013.
+% A. Varava, D. Kragic, and F. T. Pokorny, “Caging grasps of rigid and partially deformable 3-d objects with double fork and neck features.” IEEE Transactions Robotics, vol. 32, no. 6, pp. 1479–1497, 2016.
+\subsection{Sampling-based Planning for Manipulation}
+Sampling-based motion planning methods include non-optimality methods such as RRTs \cite{} and PRMs\cite{}, and asymptotically optimal methods such as RRT* and PRM* \cite{}.
+% that avoid a priori approximations of the search space
+% PRMs: Kavraki LE, Švestka P, Latombe JC, Overmars MH. 1996. Probabilistic roadmaps for path planning in high-dimensional configuration spaces. IEEE Trans. Robot. Autom. 12:566–80
+% RRTs: LaValle SM, Kuffner JJ Jr. 2001. Randomized kinodynamic planning. Int. J. Robot. Res. 20:378–400
+% RRT* and PRM*: S. Karaman and E. Frazzoli, “Sampling-based algorithms for optimal motion planning,” The International Journal of Robotics Research, vol. 30, no. 7, pp. 846–894, 2011.
+The latter motivates a significant amount of quality-guaranteed work such as Batch Informed Trees (BIT*) \cite{b14} - a planning algorithm that balances the benefits of graph-search and sampling-based techniques. The search in BIT* is prioritized by potential solution quality, as in A*, and is asymptotically optimal, as in RRT* \cite{b16}. 
+Cost-space path planning is optimal path planning with respect to a cost function or a path quality criterion such as path-length integral, mechanical work along a path, etc.\cite{b17} 
+We, in particular, discuss a problem related to bottleneck pathfinding - finding a path minimizing the maximal value along a feasible path with respect to an implicitly defined cost map \cite{}. A bottleneck tree (BTT) algorithm is proposed in this paper to solve this problem arising in, for instance, high-clearance multi-robot motion \cite{} and Frechet matching between curves \cite{}.
+% Efficient Sampling-Based Bottleneck Path finding over Cost Maps
+% Kiril Solovey and Dan Halperin. Efficient sampling-based bottleneck pathfinding over cost maps. In IEEE/RSJ International Conference on Intelligent Robots and Systems, 2017. to appear.
+% Rachel M. Holladay, Oren Salzman, and Siddhartha Srinivasa. Minimizing task space frechet error via efficient incremental graph search. CoRR, abs/1710.06738, 2017. URL http://arxiv.org/abs/1710.06738.
+
+Manipulation problems deal with multiple configurations or modalities and are thus suitable for general sampling-based motion planners\cite{}. 
+Schmitt et. al.\cite{} consider manipulation tasks as a multi-modal planning problem in high-dimensional configuration space and use PRM*-based approach for offline manipulation planning.
+% Asymptotically Optimal Sampling-Based Motion Planning Methods,Jonathan D. Gammell and Marlin P. Strub
+% Schmitt PS, Neubauer W, Feiten W, Wurm KM, Wichert GV, Burgard W. 2017. Optimal, samplingbased manipulation planning. In 2017 IEEE International Conference on Robotics and Automation, 
+Shome et. al. \cite{} improve the computational scalability of dual-arm systems without having to explicitly construct a roadmap in the composite space and provide asymtotic optimality guarantees.   
+%https://people.cs.rutgers.edu/~kb572/pubs/asymp_optimal_dual_arm.pdf
+Sampling-based planners such as CBiRRT are developed to explore constraint manifolds in manipulation \cite{}\cite{}, and one of the extensions automatically generates motion primitives by exploring lower-dimensional manifolds of the C-space \cite{}.
+% Manipulation Planning on Constraint Manifolds
+% https://hal.laas.fr/hal-01987879/file/03ijrr.pdf, Manipulation Planning with Probabilistic Roadmaps
+% https://arxiv.org/pdf/2011.01454.pdf, Contact Mode Guided Sampling-Based Planning for Quasistatic Dexterous Manipulation in 2D
+
+\section{Problem Statement}
+We consider the problem of the minimum energy a deformable object $\mathcal{O}\subset\mathbb{R}^3$ requires to escape from fixed environmental constraints.
+The constraints include robot end-effectors, in-hand tools for manipulation, extrinsic dexterity and so on.
+The maximum bounded sublevel set of an energy function in terms of the configuration of $\mathcal{O}$ corresponds to the minimum energy of the object to escape from constraints. 
+We aim to efficiently find the critical sublevel set approximating deformable objects using  articulated models composed of 3D rigid polygonal links. 
+% maybe start with the meta part now, i.e. high level modelling in terms of an energy function defined as E=... problem being how to approximate a minimum escape energy path, then the practical implementation in terms of motion planner and approximation of max cost.. another thought was to simplify notation wherever you can, e.g. instead of q_j just another letter, p or similar. 
+
+%We present an approach of energy-bounded caging with 3D articulated obstacles and objects.
+%We define the objective of the caging analysis as finding an escape path with the minimum traversing energy costs on the potential energy function of the configuration space.
+% -- no need for section introduction in such a short paper, saves us some space.
+%In this section, we present the classic formulation of caging, upon which we introduce the soft fixture space that restrains escape paths under a function defined in terms of gravitational and elastic potential energy.   
+%A sampling-based planner based on Batch Informed Trees (BIT*) \cite{b14} is presented that biasedly samples in an informed set and provides an upper bound of the minimum escape energy.
+% that approaches the optimal with indefinite runtime. 
+% The anytime planner based on Batch Informed Trees (BIT*) \cite{b14} efficiently approximates the high dimensionality of the problem domain.
+% % and generates accurate results given indefinitely long runtime. 
+% Furthermore, we define a configuration-cost function that prioritizes configurations with lower values of potential energy so that an approximately optimal escape path can be found efficiently.
+% The algorithm is implemented using the collision detection of Bullet, and the collision space is thus implicitly approximated. 
+% To evaluate its effectiveness, we verify the BIT*-based approach with an iterative baseline method based on Rapidly-exploring Random Tree (RRT) \cite{b15} and incremental search.
+
+
+%\section{Caging, Energy Function and Path Search}
+% \section{Definition and Problem Statement}
+\subsection{Articulated Objects with Potential Energy}
+Three types of objects are considered: 1) volumetric rigid objects, 2) volumetric deformable objects such as fish that yield or deform when subjected to external forces and absorb or release energy through a spring-like mechanism, and 3) linear deformable objects such as (non-elastic) ropes and elastic bands.
+
+For all three types of objects except elastic bands, we represent them by links or point masses connected by compliant revolute joints.
+We denote by $\mathcal{C}\subset \mathrm{SE}(3)\times \mathbb{R}^{j}$ the configuration space of an object in 3D with $l$ links connected by $j$ revolute joints (with each angle constrained to $[a_i,b_i] \subset [-\pi,\pi], 0 < i \le j$ and a special case of $j=0$ for rigid objects). 
+We denote an element $\boldsymbol{\xi}\in\mathcal{C}$ by $\boldsymbol{\xi}=(\boldsymbol{r}, \boldsymbol{q}, \boldsymbol{\alpha})$, where $\boldsymbol{r}$, $\boldsymbol{q}$ are the position and orientation (a unit quaternion) of the center of mass of the object's base link respectively, and $\boldsymbol{\alpha}\in[a_i,b_i]^{j}\subset\mathbb{R}^{j}$ is a vector of revolute joint angles. 
+The collision space $\mathcal{S}$ indicates the collection of configurations for which $\mathcal{O}$ penetrates at least one of the $k$ rigid obstacles $\mathcal{K}_{i}$ placed in the workspace:
+\begin{equation} \label{eq0}
+	\mathcal{S} = \{ \bxi \in \mathcal{C} : \exists i \in \mathbb{Z}, i \in [1,k], int(\mathcal{O})\cap \mathcal{K}_{i} \neq \varnothing \}
+\end{equation}
+The free configuration space is given by $\mathcal{F} = \mathcal{C} - \mathcal{S}$. 
+We assume that torsion springs are attached at each of the revolute joints. 
+Therefore, joint configurations other than $\boldsymbol{\alpha}=\boldsymbol{0}$ exhibit non-zero elastic potential energy. 
+Combining this elastic potential energy \cite{b22} with the standard gravitational potential energy and defining points in collision space to have infinite energy, we consider the following energy function $E:\mathcal{C}\to \mathbb{R}\cup\{\infty\}$:
+
+%and the total potential energy of the object $\mathcal{O}$ at configuration $\boldsymbol{\xi}$ contains both a gravitational and elastic potential energy component.
+% The latter is stored in a non-rigid object when it is bent, compressed, stretched, etc. 
+%If we assume revolute joints are actuated by torsion springs, the elastic potential energy is stored in the joint springs of articulated objects\cite{b22}. 
+% and prismatic joints actuated by compression springs
+% that provide them with restricted flexibility
+% The total potential energy
+%The total potential energy an articulated rigid object possesses includes gravitational potential energy and elastic potential energy. 
+%For rigid articulated objects or soft bodies approximated by mass-spring systems, the \textbf{energy function} is formulated as  
+
+\begin{equation} \label{eq1}
+	E(\boldsymbol{\xi}) = 
+	\begin{cases}
+		\sum_{i=1}^{l} m_i g z_i +\sum_{h=1}^{j} \frac{1}{2} k_h {\alpha}_{h}^2, & \text{if }\boldsymbol{\xi}\in \mathcal{F}\\
+		\infty & \text{if }\boldsymbol{\xi}\in \mathcal{S}
+	\end{cases}
+\end{equation}
+
+Here, $g$ denotes the gravitational acceleration constant, $z_i$ the height of the center of mass of the $i$'th link in the world coordinates (gravity in $-z$ direction), $k_h$ the stiffness coefficient of the $h$'th joint and ${\alpha}_{h}$ the $h$'th joint angle. 
+% , or the translation of the end of a compression or tension spring with respect to the free length
+%The poses of links with $z_i(\boldsymbol{\xi})$ are calculated through forward kinematics given $\boldsymbol{\xi}$.
+
+For an enclosed linear elastic deformable object such as a rubber band, we select $c$ equally spaced key points along it and assume these points are loosely joined by $s$ non-compressible tension springs.
+The configuration space is approximated by $\mathcal{C}\subset \mathbb{R}^{3c}$ with an element $\boldsymbol{\xi}=(\boldsymbol{r}_1, \boldsymbol{r}_2, ..., \boldsymbol{r}_c)$. 
+Its elastic potential energy for $\boldsymbol{\xi}\in \mathcal{F}$ is given by
+\begin{equation} \label{eq2}
+	E(\boldsymbol{\xi}) = 
+	\sum_{i=1}^{c} \frac{1}{2} k_i (\max\{\|{\boldsymbol{r}_i}-{\boldsymbol{r}_{i-1}}\|-L, 0\})^2
+\end{equation}
+where $L$ is the rest length of an elastic object segment separated by two adjacent key points, ${\boldsymbol{r}_0}$ and ${\boldsymbol{r}_c}$ are identical key points along the enclosed loop.
+
+\subsection{Caging and Soft Fixtures}
+We now derive soft fixture from caging that indicates an object $\mathcal{O}$ is partially caged under an energy threshold. 
+
+\textit{Definition 1}: An object with a configuration $\bxi$ is \textit{caged} if it lies in a bounded path-connected component of $\mathcal{F}$. 
+
+Based on caging that indicates the object cannot escape arbitrarily far away, \textit{partial caging} allows limited escape paths through narrow passages.
+In some cases, paths that require high energy for $\mathcal{O}$ to escape are tolerated since it is difficult to escape under a certain perturbation threshold. 
+As a relaxation of caging in terms of escape energy, we introduce the following concept:
+
+\textit{Definition 2}: 
+We consider $\mathcal{O}$ in configuration $\boldsymbol{\xi}_{init}\in \mathcal{F}$ to be in a \textit{soft fixture} configuration with respect to $E$ if, for some $u\ge 0$, $\boldsymbol{\xi}_{init}$ lies in a bounded path component inside the sublevel set:
+\begin{equation} \label{eq3}
+	\mathcal{U}(\bxi_{init}, u) = \{ \bxi \in \mathcal{F} : E(\bxi)\le E(\bxi_{init})+u \}
+\end{equation}
+We call the supremum over all such $u\ge 0$ the \textit{escape energy of the fixture} $\mathcal{E}(\bxi_{init})$.
+
+This discussion is, in essence, a reformulation of the notion of an energy-bounded cage defined in 2D in \cite{b12, b13} to general energy functions.
+The notion implies that the initial configuration $\boldsymbol{\xi}_{init}$ is constrained to a bounded path component subject to not raising potential energy by more than a certain threshold. 
+With respect to our definition of energy function above, a soft fixture with infinite escape energy in particular corresponds to the classical concept of a cage as in Def. 1, where $\boldsymbol{\xi}_{init}$ lies in a bounded path component of $\mathcal{F}$.
+
+\textit{Definition 3}:
+For any feasible path $\sigma:[0, 1]\to \mathcal{F}$, we define 
+% $V(\sigma)=\max_{t\in[0, 1]} E(\sigma(t))$ to be the maximal potential energy encountered along $\sigma$.
+the \textit{escape energy along $\sigma$}
+\begin{equation} \label{eq4}
+	U(\sigma)= -E(\sigma(0)) + \max_{t\in[0, 1]} E(\sigma(t))
+\end{equation}
+A feasible path defines a continuous and collision-free path with initial configuration $\sigma(0) = \bxi_{init}$ and final configuration within a goal configuration space $\mathcal{F}_{goal} \subset \mathcal{F}$, $\sigma(1) \in \mathcal{F}_{goal}$.
+
+For all escape paths starting from $\bxi_{init}$, we define the collection of them as $\mathcal{P}(\bxi_{init})$. 
+The escape energy of a soft fixture defined in Def. 2 is equivalent to the minimum escape energy of all escape paths
+\begin{equation} \label{eq5}
+	\mathcal{E}(\bxi_{init}) = \min\limits_{p_i \in \mathcal{P}(\bxi_{init})} \{ U(p_i) \}
+\end{equation}
+Considering $\mathcal{P}(\bxi_{init})$ is an infinite set in the continuous workspace, we can in principle densely sample in $\mathcal{C}$, retrieve a finitely large number of escape paths, and approximately estimate an upper bound of $\mathcal{E}(\bxi_{init})$ as is detailed in the next section.
+% \begin{figure}
+	%   \includegraphics[width=\linewidth]{figures/icra24/basin-demo1.png}
+	%   \caption{Demonstration of soft fixture in terms of an energy function.}
+	%   \label{fig:boat1}
+	% \end{figure}
+
+\section{Escape Energy Estimation}
+% \subsection{Estimation of Escape Energy Upper Bounds}
+We now discuss sampling-based algorithms that we implement to estimate an upper bound of the escape energy.
+Note that as long as the object $\mathcal{O}$ is in a configuration $\bxi_{goal}$ that is sufficiently far away from obstacles there always exist trivial trajectories that escape arbitrarily far away from the $\bxi_{goal}$ without ever raising potential energy. E.g. by moving a finite amount away from potential obstacles in the plane orthogonal to the gravity direction and then following the direction of gravity as far as desired.
+Our strategy for estimating soft fixture escape energy is to search for escape paths $\sigma\subset \mathcal{U}(\bxi_{init}, u)$ starting at an initial configuration $\bxi_{init}$ and connecting to some $\mathcal{F}_{goal}$ with lower energy $E(\bxi_{goal}) < E(\bxi_{init}), \forall \bxi_{goal} \in \mathcal{F}_{goal}$ and sufficiently far away from obstacles to demonstrate an escape path at a given threshold $u$, thus providing an upper bound to escape energy. 
+
+\subsection{Iterative Search}
+As a baseline, we can run an RRT \cite{b15} planner constrained to $\mathcal{U}(\bxi_{init}, u)$ starting at $\bxi_{init}$ and attempt to reach $\mathcal{F}_{goal}$ sufficiently far away from obstacles. 
+In experiments, we consider a cubic area $\mathcal{G} \subset \mathbb{R}^3$ that is adequately lower than the obstacles in the workspace along the gravity direction.
+A path in $\mathcal{U}(\bxi_{init}, u)$ has escaped sufficiently far from an initial configuration $\bxi_{init}$ if a configuration $\bxi_{goal}=(\boldsymbol{r}_g, \boldsymbol{q}_g, \boldsymbol{\alpha}_g)$ (for the general formulation) is reached with $\boldsymbol{r}_g \in \mathcal{G}$, an arbitrary rotation $\boldsymbol{q}_g$ and an equilibrium $\boldsymbol{\alpha}_g=0$.
+It guarantees a goal space with configurations that have lower elastic and gravitational potential energy with respect to $\bxi_{init}$. 
+% we consider a ball $\mathcal{B}$ containing the obstacles in workspace and consider a path in $\mathcal{U}(\bxi_{init}, u)$ to have escaped sufficiently far from an initial configuration $\bxi_{init}$ with position component $\boldsymbol{r}_s\in \mathcal{B}$ if a configuration $\bxi_{goal}=(\boldsymbol{r}_g, \boldsymbol{q}_g, \boldsymbol{\alpha}_g)$ is reached with position $\boldsymbol{r}_g$ corresponding to the ``bottom'' lowest position of that ball in gravity direction, an arbitrary rotation $\boldsymbol{q}_g$ and an equilibrium $\boldsymbol{\alpha}_g=0$, to demonstrate that $\bxi_{init}\in\mathcal{U}(\bxi_{init}, u)$ does not lie in a bounded path component.
+
+To approximate escape energy upper bounds, we first consider an incremental search (Algo. \ref{algo1}) which does not guarantee convergence to the optimality but has runtime advantages.
+In each iteration $i$, we run an RRT motion planner with a finite time budget to search for a trajectory fully contained in $\mathcal{U}(\bxi_{init}, u^i)$, starting at $\bxi_{init}$ and connecting to $\mathcal{F}_{goal}$, starting with $u^0\gg 0$ (Line 4). 
+We then retrieve a feasible path $\sigma^i$ if it is found which establishes an upper bound 
+$u^{i+1} = U(\sigma^i)$ for escape energy and the search restarts in the smaller sublevel set $\mathcal{U}(\bxi_{init}, u^{i+1})$ (Line 5-7).
+Any found path successively attempts to establish a tighter upper bound for escape energy. 
+The search repeats within the previous search region if no path is found (Line 8-10).
+The loop terminates when $u^{i}\approx 0$, or a maximum iteration limit or a time limit is reached for the execution of the motion planner, thus establishing an upper bound for escape energy.
+
+\begin{algorithm}[h]
+	% \KwData{$\textit{SINR}_k$, $\Delta_i$ of each $k^\text{th}$ user}
+	% \KwResult{Optimal ${D_{u}}$}
+	\text{Initialize}, $i \gets 0$, $u^{0} \gets \infty$, $\mathcal{F}^{0} \gets \mathcal{F}$, $t \gets 0$\\
+	\text{Set stopping criteria}, $t_{max}$\\
+	
+	\Repeat{$t \ge t_{max}$ or $u^{i}\approx0$}
+	{
+		$t^i, \sigma^i \gets \bold{RRTSearch} (\mathcal{F}^{i})$  
+		% \tcc{Perform RRT search}
+		\\
+		\If{$\sigma^i$ is not empty}{
+			$u^{i+1} \gets U(\sigma^i)$ \\
+			$\mathcal{F}^{i+1} \gets \mathcal{U}(\bxi_{init}, u^{i+1})$ \\
+		}
+		\Else{
+			$u^{i+1} \gets u^{i}$ \\
+			$\mathcal{F}^{i+1} \gets \mathcal{F}^{i}$ \\
+		} 
+		$i \gets i + 1$ \\
+		$t \gets t + t^i$ \\
+	} 
+	\textbf{Return} \textit{{$u^{i}$, $\sigma^{i}$}}
+	\caption{Incremental Search}
+	\label{algo1}
+\end{algorithm}
+
+\begin{algorithm}[h]
+	% \KwData{$\textit{SINR}_k$, $\Delta_i$ of each $k^\text{th}$ user}
+	% \KwResult{Optimal ${D_{u}}$}
+	\text{Initialize}, $i \gets 0$, $u_{+}^{0}$, $u_{-}^{0} \gets 0$, $u_{es}^{0} \gets 0$, $\mathcal{F}^{0} \gets \mathcal{F}$, $t \gets 0$\\
+	\text{Set stopping criteria}, $t_{max}$, $u_{\epsilon}$\\
+	
+	\Repeat{$t \ge t_{max}$ or $u_+^{i}\approx0$ or $u_{+}^i-u_{-}^i < u_{\epsilon}$}
+	{
+		$u_{es}^{i} = (u_{+}^{i} + u_{-}^{i}) / 2$ \\
+		$\mathcal{F}^{i} \gets \mathcal{U}(\bxi_{init}, u_{es}^{i})$ \\
+		$t^i, \sigma^i \gets \bold{RRTSearch} (\mathcal{F}^{i})$  \\
+		\If{$\sigma^i$ is not empty}{
+			% $U_{min} = U(\sigma^i)$ \\
+			$u_{+}^{i+1} \gets U(\sigma^i)$ \\
+			\If{$U(\sigma^i) < u_{-}^{i}$}{
+				%     $u_{+}^{i+1} \gets U(\sigma^i)$ \\
+				$u_{-}^{i+1} \gets 0$ \\
+			}
+			% \Else{
+				%     $u_{+}^{i+1} \gets (U(\sigma^i)+u_{-}^{i})/2$
+				%     }    
+		}
+		\Else{
+			$u_{-}^{i+1} \gets u_{es}^{i}$ \\
+			% \If{$u_{+}^{i}<U_{min}$}{
+				%     $u_{-}^{i+1} \gets u_{+}^{i}$
+				%     }
+			% $u_{+}^{i+1} \gets U_{min}$ \\
+		}
+		$i \gets i + 1$ \\
+		$t \gets t + t^i$ \\
+	} 
+	\textbf{Return} \textit{{$u_+^{i}$, $\sigma^{i}$}}
+	\caption{Binary Search}
+	\label{algo2}
+\end{algorithm}
+
+A binary search approach (Algo. \ref{algo2}) is also implemented -- in spirit similar to the bisection method of \cite{b11}, which applied this to the clearance estimation in a 2D partial caging, while in our case the bisection criterion is the escape energy.
+In the binary search, we follow the principle of divide and conquer, and locate escape energy by maintaining its lower bound $u_{-}^i$ and upper bounds $u_{+}^i$ and shrinking the range.
+On the contrary to Algo. \ref{algo1} that only maintains an upper bound, the optimality can be secured by Algo. \ref{algo2} given infinitely long runtime in each RRT search.
+In each iteration, we run RRT within the sublevel set $\mathcal{U}(\bxi_{init}, u_{es}^{i})$ in terms of $u_{es}^{i}$ that averages current upper and lower bound (Line 4-6).
+If a path is discovered, the upper bound for escape energy is updated (Line 7-8) as in Algo. \ref{algo1}. The lower bound is updated with $u_{es}^i$ otherwise (Line 11-12).
+In practice, $u_-^i$ does not necessarily lower-bounds escape energy since a finite time budget is allocated to RRT in practice and thus not finding a path only means the range does not contain the target with a high probability.  
+As a consequence, escape energy $U(\sigma^i)$ lower than lower bound $u_-^i$ could be found and in this case, we reset the lower bound to $0$ (Line 9-10).
+
+%{\color{blue}
+	%We define the escape goal configuration $\boldsymbol{\xi}_{g} \in \mathcal{F}$ as a state in the free space where the object is considered to have completely escaped from the cage. 
+	
+	%An escape path $\sigma = \{ \bxi_{init}, ...,\boldsymbol{\xi}_{g}\}$ denotes a collision-free path with $\sigma: [0,1] \rightarrow \mathcal{F}$ from the start configuration $\bxi_{init}$ to $\boldsymbol{\xi}_{g}$.
+	%The escape path set $\mathcal{P}({\boldsymbol{\xi}}) = \{p_1,...,p_t\}$ consists of all valid nontrivial escape paths $p_i$ starting from $\boldsymbol{\xi}$.
+	%A configuration $\boldsymbol{\xi} \in \mathcal{F}$ is \textbf{caged} if there exists no escape path away from a connected component of $\mathcal{F}$, $\mathcal{P}({\boldsymbol{\xi}}) = \emptyset$, otherwise $t \rightarrow %\infty$ in the continuous configuration space. 
+	%To generalize caging to soft fixture, we introduce the energy function $E: SE(3) \times \mathbb{R}^{j} \rightarrow \mathbb{R}$, mapping a configuration $\boldsymbol{\xi}$ to its corresponding potential energy. 
+	%We assume $\boldsymbol{\xi} \in \mathcal{S}$  has infinitely large potential energy.
+	%Furthermore, a quasi-static process is assumed, which means an escaping object follows an escape path $\sigma$ slowly enough that it is in thermal equilibrium with its surroundings, and has zero kinetic energy. 
+	% the escape energy cost
+	%We thus define the minimum \textbf{escape energy} $V^*(\bxi_{init})$ starting from $\bxi_{init}$,
+	
+	%\begin{equation} \label{eq:2}
+	%\begin{aligned}   
+	%    V^*(\bxi_{init}) = \min_{\sigma \in \mathcal{P}({\bxi_{init}})} \{V(\sigma) \mid \sigma(0)=\bxi_{init},\sigma(1)=\boldsymbol{\xi}_{g}, \\
+	%    \forall \theta \in [0,1], \sigma(\theta) \in \mathcal{F} \}, 
+	%\end{aligned}
+	%\end{equation}
+	%where $V: \mathcal{P} \rightarrow \mathbb{R}_{\ge 0}$ denotes the energy cost of a particular escape path $\sigma$, or in other words, the external energy the object requires to reach $\boldsymbol{\xi}_{g}$,
+	%\begin{equation} \label{eq:3}
+	%V(\sigma) = \max \{\max_{\theta \in [0,1]} \{E(\sigma(\theta)) - E(\bxi_{init})\},0\}
+	%\end{equation}
+	%$V(p_i)$ is bounded by the configuration along the path with maximum potential energy.
+	%We denote the corresponding optimal path as $\sigma^*$. 
+	%We define the u-energy \textbf{soft fixture space}, 
+	%\begin{equation}
+	%    \mathcal{F}_{u} (\bxi_{init}, u) = \{\boldsymbol{\xi} \in \mathcal{F} \mid E(\boldsymbol{\xi}) \le u + E(\bxi_{init}), 0 < u < V^*(\bxi_{init})\}, 
+	%\end{equation}
+	%which is a bounded path-component within the sublevel set of $E(\boldsymbol{\xi})$ at level $u+ E(\bxi_{init})$.
+	%The object at $\bxi_{init}$ is in a soft fixture by the energy constraints and jointly constrained by $\mathcal{S}$.
+	%}
+%The dimensionality of the configuration space $d = 6 + j $ $(j\gg1)$ in the problem domain is challenging and requires an approximation of it with high resolution and an efficient planning algorithm.
+
+\subsection{Energy-biased Optimality Search}
+The iterative approaches above are intuitive but have a loss of either efficiency or accuracy.
+We introduce a configuration-cost function that aims to prioritize states with lower potential energy based on a standard RRT* as is detailed in Algo. \ref{algo3}.
+$V$ and $W$ are data structures maintaining vertices and edges in the tree, respectively, and $c:V \rightarrow \mathbb{R}_{\geq 0}$ is a cost-to-come function that maps a vertex $v \in V$ to the cost of the unique path from the root of the tree to $v$. 
+We also define $C:\Sigma \rightarrow \mathbb{R}_{\geq 0}$ a cost function defined over the set of all paths $\Sigma$.
+% the cost-to-come of a node that corresponds to a configuration.
+The cost function is utilized in vertex expansion (Line 7-14) and rewiring  (Line 15-18) after a standard sample-and-steer in RRT-like methods (Line 3-5).
+We define a reccurence relation $J: V^2 \rightarrow \mathbb{R}_{\geq 0}$ of the cost function between a child vertex $\bxi_{child}$ and a parent vertex $\bxi_{parent}$:
+\begin{equation} \label{eq6}
+	J(\bxi_{parent}, \bxi_{child}) = \max \{c(\boldsymbol{\xi}_{parent}), E(\boldsymbol{\xi}_{child}) - E(\bxi_{init}), c_{\epsilon}\}
+\end{equation}
+with $c_{\epsilon} \in \mathbb{R}_{+}$ a tiny positive value (except that $c_{\epsilon}=0$ if $\bxi_{parent}=0,\bxi_{child}=0$), $c(\bxi_{init})=0$ and $c(\bxi_{child}) = J(\bxi_{child}, \bxi_{parent})$.
+
+\textit{Theorem 1}: RRT* with a cost function so that $c(\bxi_{child}) = J(\bxi_{child}, \bxi_{parent})$ is asymptotically optimal and probabilistic complete as the number of iterations approaches infinity.
+
+\textit{Proof}: $J(\bxi_{child}, \bxi_{parent})$ guarantees the cost is strictly positive for all non-trivial collision-free paths (i.e. $C(\sigma)=0 \iff \sigma(\tau)=\sigma(0), \forall \tau \in [0,1]$).
+Furthermore, we observe that the cost function is monotonic ($\forall \sigma_1, \sigma_2 \in \Sigma, C(\sigma_1) \leq C(\sigma_1 | \sigma_2$) and bounded given the energy function defined in Eq. \ref{eq1},\ref{eq2}.
+An algorithm is asymptotically optimal if, for any path planning problems and cost function that satisfies the conditions above, it almost surely converges to an optimal solution.
+Furthermore, RRT* is asymptotically optimal (we refer interested readers to the proofs in \cite{} Frazzoli), and we thus concluded that RRT* with such a cost function is also asymptotically optimal.
+Probabilistic completeness is deduced as a necessary condition for asymptotical optimality. $\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\blacksquare$
+
+Taking the example of vertex expansion, we define the cost-to-come $c(\boldsymbol{\xi}_{new})$ of a new sample $\boldsymbol{\xi}_{new} \in \mathcal{F}$ assuming it connects to a nearby vertex $\boldsymbol{\xi}_{near} \in \mathcal{F}$ already in the graph as $J(\bxi_{near}, \bxi_{new})$ as in Line 12.
+In this way, the cost of $\boldsymbol{\xi}_{new}$ denotes the escape energy of path-to-come from $\bxi_{init}$ to $\boldsymbol{\xi}_{new}$ via $\boldsymbol{\xi}_{near}$.
+% $\boldsymbol{\xi}_{n}$ inherits the current vertex's cost $c(\boldsymbol{\xi}_{i})$ unless its state energy with respect to the initial state's is higher than $c(\boldsymbol{\xi}_{i})$.
+The cost function is intended to steer the exploration to expand new vertices and rewire edges according to their potential energy-based cost-to-come with the aim of pruning branches of the search tree that are unlikely to lead to an escape path with minimal escape energy.
+% $U(\sigma) $ ($\sigma$ is a collision-free path with $\sigma(0)=\bxi_{init}, \sigma(1)=\boldsymbol{\xi}_{new}$) 
+We sketch the algorithm with the objective of minimum escape energy using RRT* \cite{sampling1} in particular in Algorithm \ref{algo3}. 
+However, other asymptotically optimal algorithms such as BIT*, Informed RRT*, AIT*, etc. share the same idea of the cost function formulation.
+We in particular use BIT* in plenty of scenarios for its anytime and incremental techniques and increasing search density by reusing information, though a cost-to-go heuristic is not defined with this particular cost function.
+% Sampling-based Algorithms for Optimal Motion Planning, Sertac Karaman Emilio Frazzoli∗
+% vertex choose a parent vertex or rewire to a vertex with a relatively lower state energy cost.
+% The formulation above can be essentially extended from articulated objects to deformable objects if the dimensions of the deformable objects are properly reduced.
+% The algorithm is asymptotically optimal though it might take a very long time to converge. 
+
+
+\begin{algorithm}[h]
+	$V \gets \{\bxi_{\text{init}}\}$; $\text{c}(\bxi_{\text{init}}) \gets 0$; $W \gets \emptyset$;\\
+	\For{$i = 1$ to $n$}
+	{
+		$\bxi_{\text{rand}} \gets \text{SampleFree}_i$\\
+		$\bxi_{\text{nearest}} \gets \text{Nearest}(G = (V, W), \bxi_{\text{rand}})$\\
+		$\bxi_{\text{new}} \gets \text{Steer}(\bxi_{\text{nearest}}, \bxi_{\text{rand}})$\\
+		\If{$\text{ObstacleFree}(\bxi_{\text{nearest}}, \bxi_{\text{new}})$}
+		{
+			$\Xi_{\text{near}} \gets \text{Near}(G = (V, W), \bxi_{\text{new}}, \text{Radius})$\\
+			% \min\{\gamma_{\text{RRT*}} (\log(\text{card}(V))/ \text{card}(V))^{1/d}, \eta\})
+			$V \gets V \cup \{\bxi_{\text{new}}\}$\\
+			$\bxi_{\text{min}} \gets \bxi_{\text{nearest}}$\\
+			$c_{\text{min}} \gets J(\bxi_{\text{nearest}}, \bxi_{\text{new}})$\\
+			\ForEach{$\bxi_{\text{near}} \in \Xi_{\text{near}}$}
+			{    
+				\If{$\text{CollisionFree}(\bxi_{\text{near}}, \bxi_{\text{new}})$ \wedge $J(\bxi_{\text{near}}, \bxi_{\text{new}}) < c_{\text{min}}$}
+				{
+					$\bxi_{\text{min}} \gets \bxi_{\text{near}}$\\
+					$c_{\text{min}} \gets J(\bxi_{\text{near}}, \bxi_{\text{new}})$\\
+				}
+			}
+			\ForEach{$\bxi_{\text{near}} \in \Xi_{\text{near}}$}
+			{
+				\If{$\text{CollisionFree}(\bxi_{\text{new}}, \bxi_{\text{near}})$ \wedge $J(\bxi_{\text{new}}, \bxi_{\text{near}}) < \text{c}(\bxi_{\text{near}})$}
+				{
+					$\bxi_{\text{parent}} \gets \text{Parent}(\bxi_{\text{near}})$\\
+					$W \gets (W \setminus \{(\bxi_{\text{parent}}, \bxi_{\text{near}})\}) \cup \{(\bxi_{\text{new}}, \bxi_{\text{near}})\}$\\
+				}
+			}
+		}     
+	}
+	\textbf{Return} $G = (V, W)$
+	\caption{RRT* Algorithm with Minimum Escape Energy Objective}
+	\label{algo3}
+\end{algorithm}
+
+\section{Evaluation}
+We present an evaluation of the proposed algorithms for quasi-static soft fixture analysis. Nine scenarios of manipulation primitives are presented in the video link, among which two are presented in Figure \ref{fig1}: (1) a mask string caught by a human ear, (2) a fish modeled as an articulated object with elastic potential energy scooped by a shovel. 
+The motion primitives are manually designed at the current stage to demonstrate our methods of finding escape energy. Motion planning of robot grippers or in-hand tools is not considered in this paper.
+% A third scenario of a starfish (modeled as a rigid object) captured by a Robotiq 3-finger gripper \cite{R1} can be found in the supplementary video.
+% this is a conclusion / for later: We qualitatively demonstrate that the approach we propose is applicable to various practical fixturing scenarios and feasible in terms of convergence time and accuracy.
+We used the Open Motion Planning Library (OMPL) \cite{o1} with its Python binding for the implementation of the motion planners, and Pybullet \cite{o2} for collision detection. Forward simulation of bodies under gravity is jointly performed in Pybullet and Blender.
+All experiments are performed on an Intel Core i9-12900H up to 5.0GHz processor with 14 cores and an Intel Core i9-13900K up to 5.8GHz processor with 24 cores. 
+On average, approximately 1000 samples are processed per second by a BIT* planner.
+
+
+
+% \begin{figure}[t]
+	% %\vspace{-8pt}
+	% \center
+	% \input{texs/search-baseline-comparisons}
+	% \vspace{-8pt}
+	% %\centerline{\includegraphics[width=0.7\linewidth]{figures/benchmark_convergence_keyframe18.png}}
+	% \caption{Comparison of the BIT* and baseline for approximating escape energy for each frame of the ring-hook scenario (Figure \ref{fig1} top) shows near identical numerical values. 
+		% The calculated escape energy (as approximated using the BIT*-based and incremental planner) for each frame $i$ (left) is nearly identical for both methods. Convergence of the algorithms over time (right) at frame 18 (corresponding to the vertical dashed line, and a ring configuration $\boldsymbol{\xi}_{18}$ corresponding to B in the top of Figure \ref{fig1}) indicates superior performance by BIT*.
+		% Escape energy is estimated using 6 independent runs of a 3-min execution of the BIT*-based approach, and an 8-min incremental search as the baseline.
+		% The horizontal dashed lines (red and green) indicate the terminal approximation value of escape energy by running BIT* and the baseline, respectively.
+		% %\vspace{-8pt}
+		% }
+	% \label{fig2}
+	% \vspace{-10pt}
+	% \end{figure}
+
+\subsection{Quantitative Analysis}
+% \begin{enumerate}
+	%     \item BIT*, incremental and binary search compared with reference in the ring-hook scenario.
+	%     \item Runtime vs Accuracy (relative error of escape energy w.r.t ground truth) using BIT*
+	%     \item Comparison of using various planners, RRT*, BIT*, ...
+	%     \item Runtime analysis within a search (collision detection, etc.)
+	%     \item Modeling precision (no. of DoF) vs precision in the band-hourglass example
+	% \end{enumerate}
+We empirically verify the accuracy and efficiency of our proposed approaches in Fig. \ref{} with the scenario of a rigid ring swinging on a hook (Fig. \ref{}).
+BIT* appears to result in a very similar accuracy as compared to the iterative methods over dozens of frames, and they are all close to the reference escape energy, which indicates a high level of accuracy in a 6 DoF C-space.
+We observe an improved convergence speed of BIT* over the other two within 10min runtime.
+The convergence of the binary search depends heavily on where the true escape energy $\bar{u}$ lies within the interval of initial energy lower and upper bounds $[u_-^0,u_+^0]$.
+$\bar{u}$ closer to $u_-^0$ clearly leads to faster convergence of the algorithm since the target is always within the search range in the first few iterations.
+We also tested the accuracy in terms of state space dimensionality in a simple scenario of an elastic hair tie escaping from a human wrist (modeled by a conical frustum) as in Fig. \ref{}.
+The hair tie is modeled by 3-9 control points, corresponding to 7-19 DoF in C-space.
+The absolute error between escape energy and the reference increases in terms of higher dimensions and a quadratic energy function as in Eq. \ref{eq2}. 
+\subsection{Qualitative Evaluation of Approximated Escape Energy}
+
+\begin{enumerate}
+	\item Scooping a fish with a shovel
+	\item Hooking a frozen fish with a fishing hook
+	\item Wearing a mask with two fingers
+	\item Catching a starfish with a bowl
+	\item Manipulating a rubic cube with two grippers
+	\item Tying a bunch of radishes with a rubber band
+	\item Grasping a chain of blood bags
+	\item 2D snaplock
+	\item Quick release snaplock for key chains
+\end{enumerate}
+
+The evaluation scenarios present examples of dynamic soft fixtures in the course of hooking an object, catching it with a bowl and a transition from soft fixture to caging for the starfish example. 
+We simulate the objects' trajectories under gravity and potential energy using Pybullet (see the video and Fig.\ref{fig1}).
+In Pybullet, the objects freely fall under gravity and are caught by fixed obstacles (bowl, hook, gripper) afterwards. The object configurations $\boldsymbol{\xi}_{i}$ ($i=0,1,...$) for each frame are recorded in this process and we analyze each such configuration in a quasi-static manner using our BIT*-based approach to approximate the required escape energy -- kinetic energy is ignored in the analysis, but present in the Pybullet simulation. We run 5 independent runs of a 2-min execution of the BIT*-based escape energy approximation for this purpose. 
+
+In the ring-hook example (Figure \ref{fig1} top), a rigid ring with 1 N gravitational force falls (subfigure A) and is caught by the fixed fish hook (B).
+We observe that its escape energy is initially zero as a sidewards translation and ring rotation around the center of mass provides an escape path that does not raise potential energy in the initial frames. After that, it enters a soft fixture (e.g. energy-bounded cage under gravity here) with estimated required escape energy reaching about 1 J as the hook's center of gravity falls deep below the tip of the hook. As the ring is suspended from the hook, it swings back and forth (C, D) due to kinetic energy present in the simulation - this results in an oscillation in our quasi-static escape energy analysis with a local minimum around C and local maximum around D as energy is stored in kinetic and potential energy during this swinging which is coming to rest over time resulting in a stabilizing non-zero escape energy.
+
+
+In the previous example, we consider rigid objects such as the hook as a special case of articulated objects with zero elastic potential energy and  $l = 1, j = 0$. Next, we consider a simple articulated fish model approximation with $l = 12, j = 11$, see the bottom part of Fig.\ref{fig1}. As the fish falls (A) it initially can be pulled arbitrarily far away from its current configuration without raising potential energy, however, it then hits the rim of the bowl and pivots around the contact point (B). Around this time, the required escape energy starts to rise and the elastic potential energy is non-zero due to the deformation caused by the collision with the rim and the pull of gravity.
+The fish slides down slowly (C, D) along the inner wall of the bowl, and its curvature and elastic potential energy are constrained by the curvature of the bowl.
+We also observe that a configuration with maximum energy
+%$ \boldsymbol{\xi}^{*}_{max} = 
+%\sigma^{*}(\argmax_{\theta \in [0,1]} E(\sigma^{*}(\theta)))$
+along an optimal escape path appears to lie in the vicinity of (1) the tip of the fish hook with the ring dangling from it, and (2) the rim of the bowl with the fish body slightly bent downward respectively.
+%, to guarantee minimum energy and sliding through the obstacle borders when $z_{s}(\bxi_{init})$ is below the tip or the rim.
+
+\subsection{Real Experiment}
+
+\section{Conclusion}
+In this paper, we provide a perspective on restraining deformable objects in the configuration space by extending the concept of energy-bounded caging to a high-dimensional space.
+We have demonstrated escape energy approximation of soft fixtures with complex gravitational and elastic potential energy constraints can in principle be studied using the proposed sampling-based methods.
+The work generalizes caging-based manipulation towards more practical ends.
+The approach is, nevertheless, limited in a way that the probability of escape is not solely affected by escape energy, but also obstruction clearance such as narrow passages in the workspace.
+Quasi-static planning along escape paths also ignores some complex dynamics and frictions in reality.
+However, future work based on our work that considers gripper C-space planning in combination with the object escape planning is promising.
+The dimensionality curse of the composite C-space can be tackled by learned latent space planning \cite{} or learned representation of deformable objects \cite{}.
+
+% https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8653875 Robot Motion Planning in Learned Latent Spaces
+% Modeling, learning, perception, and control methods for deformable object manipulation, H Yin, A Varava, D Kragic
+
+% \section{Random Thoughts}
+% Two catalogs: direct manipulation by robot grippers and tool-in-hand manipulation. We wanted to stress the importance of the latter since dexterous tools provide the possibility of more complicated manipulation that a bare human hand cannot achieve.
+% An interesting observation is that in some manipulation cases, it is the tool that is caged or fixtured instead of objects that are desirably manipulated (2D snap lock and coriander example). 
+
+% with string-like properties or isotropic deformable objects.  
+% such as masks, isotropic deformable objects like meat, and other related experiments in real-world scenarios.
+% Our future directions include building a large-scale dataset of caging for deep learning using the offline sampling-based approach we propose. 
+% We also plan to explore caging planning of particle-based deformable objects in the latent space.
+
+
+\balance
+\begin{thebibliography}{00}
+	\bibitem{b18} A. Bicchi and V. Kumar, "Robotic grasping and contact: a review," IEEE International Conference on Robotics and Automation. 2000, pp. 348-353 vol.1.
+	\bibitem{b19} J. C. Trinkle, J. M. Abel, and R. P. Paul, "An Investigation of Frictionless Enveloping Grasping in the Plane," in IEEE International Journal of Robotics Research, vol. 7, no. 3, pp. 33-51, Jun. 1988.
+	\bibitem{b20} V. D. Nguyen, "Constructing Force-Closure Grasps," in IEEE International Journal of Robotics Research, vol. 7, no. 3, pp. 3-16, Jun. 1988.
+	\bibitem{b1} W. Kuperberg, "Problems on polytopes and convex sets," in Proceedings of DIMACS: Workshop on Polytopes, 1990, pp. 584-589.
+	\bibitem{b2} E. Rimon and A. Blake, "Caging 2D bodies by 1-parameter two-fingered gripping systems," Proceedings of IEEE International Conference on Robotics and Automation, 1996, pp. 1458-1464 vol.2.
+	\bibitem{b3} E. Rimon and A. Blake, "Caging planar bodies by one-parameter two-fingered gripping systems," International Journal of Robotics Research, vol. 18, pp. 299-318, 1999.
+	\bibitem{b4} T. F. Allen, J. W. Burdick and E. Rimon, "Two-Finger Caging of Polygonal Objects Using Contact Space Search," in IEEE Transactions on Robotics, vol. 31, no. 5, pp. 1164-1179, Oct. 2015.
+	\bibitem{b5} T. F. Allen, E. Rimon and J. W. Burdick, "Two-finger caging of 3D polyhedra using contact space search," 2014 IEEE International Conference on Robotics and Automation (ICRA), 2014, pp. 2005-2012.
+	\bibitem{b7} A. Rodriguez, M. T. Mason, and S. Ferry, "From caging to grasping," The Int. Journal of Robotics Research, vol. 31, no. 7, pp. 886-900, Jul. 2012.
+	\bibitem{b9} F. T. Pokorny, J. A. Stork and D. Kragic, "Grasping objects with holes: A topological approach," 2013 IEEE International Conference on Robotics and Automation, 2013, pp. 1100-1107.
+	\bibitem{b8} A. Varava, D. Kragic and F. T. Pokorny, "Caging Grasps of Rigid and Partially Deformable 3-D Objects With Double Fork and Neck Features," in IEEE Transactions on Robotics, vol. 32, no. 6, pp. 1479-1497, Dec. 2016.
+	\bibitem{b12} J. Mahler, F. T. Pokorny, Z. McCarthy, A. F. van der Stappen and K. Goldberg, "Energy-Bounded Caging: Formal Definition and 2-D Energy Lower Bound Algorithm Based on Weighted Alpha Shapes," in IEEE Robotics and Automation Letters, vol. 1, no. 1, pp. 508-515, Jan. 2016.
+	\bibitem{b13} J. Mahler, F. T. Pokorny, S. Niyaz and K. Goldberg, "Synthesis of Energy-Bounded Planar Caging Grasps Using Persistent Homology," in IEEE Transactions on Automation Science and Engineering, vol. 15, no. 3, pp. 908-918, July 2018.
+	\bibitem{x1} A. Varava, J. F. Carvalho, D. Kragic, F. T.  Pokorny, "Free space of rigid objects: Caging, path non-existence, and narrow passage detection", The international journal of robotics research 40.10-11 (2021): 1049-1067.
+	\bibitem{b22} H. D. Young and R. A. Freedman, "University Physics with Modern Physics," 13th ed., Pearson Education, Inc., 2012.
+	\bibitem{b15} S. LaValle and J. Kuffner Jr., "Randomized kinodynamic planning," in Proceedings 1999 IEEE International Conference on Robotics and Automation, 1999, pp. 473-479.
+	\bibitem{b11} A. Varava, M. C. Welle, J. Mahler, K. Goldberg, D. Kragic and F. T. Pokomy, "Partial Caging: A Clearance-Based Definition and Deep Learning," 2019 IEEE/RSJ International Conference on Intelligent Robots and Systems, 2019, pp. 1533-1540.
+	\bibitem{b14} J. D. Gammell, S. S. Srinivasa and T. D. Barfoot, "Batch Informed Trees (BIT*): Sampling-based optimal planning via the heuristically guided search of implicit random geometric graphs," 2015 IEEE International Conference on Robotics and Automation, 2015, pp. 3067-3074.
+	\bibitem{b16} J. D. Gammell, T. D. Barfoot, and S. S. Srinivasa, "Batch Informed Trees (BIT*): Informed asymptotically optimal anytime search," The International Journal of Robotics Research, vol. 39, no. 5, pp. 543-567, Apr. 2020.
+	\bibitem{b17} D. Devaurs, T. Siméon and J. Cortés, "Optimal Path Planning in Complex Cost Spaces With Sampling-Based Algorithms", in IEEE Transactions on Automation Science and Engineering, vol. 13, no. 2, pp. 415-424, April 2016.
+	\bibitem{R1} M. Bourgeois, O. Grenier, and S. Bélanger, "The Robotiq 3-Finger Gripper: A Versatile End-Effector for Industrial Robots," in IEEE Robotics Automation Magazine, vol. 23, no. 4, pp. 71-82, Dec. 2016.
+	\bibitem{o1} M. Otte, R. Alterovitz, D. Ferguson, L. E. Kavraki, and J. T. Betts, “Open Motion Planning Library: A planning and control toolbox for motion planning,” in Proceedings of the IEEE International Conference on Robotics and Automation (ICRA), pp. 5422–5429, May 2013.
+	\bibitem{o2} E. Coumans and Y. Bai, "PyBullet, a Python module for physics simulation for games, robotics and machine learning," [Online]. Available: http://pybullet.org, 2016-2021.
+	
+	% \bibitem{b21} N. C. Dafle et al., "Extrinsic dexterity: In-hand manipulation with external forces," 2014 IEEE International Conference on Robotics and Automation, 2014, pp. 1578-1585.
+	% \bibitem{b6} S. Makita, W. W. Wan, "A survey of robotic caging and its applications," Advanced Robotics, 31(19-20), pp. 1071-1085, 2017.
+	\bibitem{b10} T. Makapunyo, T. Phoka, P. Pipattanasomporn, N. Niparnan, and A. Sudsang, “Measurement framework of partial cage quality,” in ROBIO, 2012
+	
+	
+	
+	
+\end{thebibliography}
+\vspace{12pt}
+\color{red}
+
+% \begin{figure*}[htbp]
+	% \centerline{\includegraphics[width=0.8\textwidth]{figures/ICRAfigure_hook2.png}}
+	% \caption{
+		% Plotted are the total potential energy (in green), and the minimum of the escape energy costs (in red) of the per-frame quasi-static caging analysis of the scenarios by running 5-time 2-min BIT*-based motion planning for each datapoint.
+		% % Each iteration is repeated 5 times independently.
+		% % the green curves denote the total potential energy of the caged objects, the red curves the minimum of escape energy costs over $6$ runs, with
+		% The plus/minus one standard deviation of the escape energy costs extends from its mean (not plotted since we care about the minimum only, which is closest to and upper-bounds the optimal escape energy costs $u^* = V(\sigma^*) $) in red shadings. 
+		% }
+	% \label{fig}
+	% \end{figure*}
+
+% \begin{figure*}[htbp]
+	% \centerline{\includegraphics[width=0.8\textwidth]{figures/ICRAfigure_fish.png}}
+	% \caption{
+		% The scenario of fish falling into a bowl.
+		% Additional curves of the gravitational and the elastic potential energy (in purple and blue, respectively) are included.
+		% }
+	% \label{fig}
+	% \end{figure*}
+
+\end{document}
