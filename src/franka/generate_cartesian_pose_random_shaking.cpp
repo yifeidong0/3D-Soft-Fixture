@@ -9,6 +9,7 @@
 
 #include "examples_common.h"
 #include <Eigen/Dense>
+#include <unistd.h>
 
 /**
  * @example generate_cartesian_pose_motion.cpp
@@ -157,6 +158,7 @@ int main(int argc, char** argv) {
     std::cin.ignore();
     robot.control(motion_generator);
     std::cout << "Finished moving to initial joint configuration." << std::endl;
+    sleep(2.0);
 
     // Set additional parameters always before the control loop, NEVER in the control loop!
     // Set collision behavior.
@@ -219,10 +221,10 @@ int main(int argc, char** argv) {
     // }
     
     // ////// joint space random shaking ////// 
-    double perturbLimit = .1;
+    double perturbLimit = .41;
     double maxPerturbLimit = 1.5;
     bool return_to_init = 0;
-    double maxTimes = 10;
+    double maxTimes = 4;
     while (perturbLimit <= maxPerturbLimit) {
       std::cout << "Current perturbation limits: " << perturbLimit << std::endl;
       double count = 0;
@@ -240,10 +242,11 @@ int main(int argc, char** argv) {
         }
         count += 1;
       }
-      std::cout << "WARNING: This example will increase the perturbation level!"
-                << "Press Enter to continue..." << std::endl;
-      std::cin.ignore();
-      perturbLimit += 0.1;
+      // std::cout << "WARNING: This example will increase the perturbation level!"
+      //           << "Press Enter to continue..." << std::endl;
+      // std::cin.ignore();
+      sleep(1.5);
+      perturbLimit += 0.03;
     }
   } catch (const franka::Exception& e) {
     std::cout << e.what() << std::endl;
