@@ -117,14 +117,98 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
         env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
     elif args.object == 'Ftennis':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg 
-        start = [0.365,0,0.486,0,0,0]
-        goal = [0,0,-.9]+[0,0,0]
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        if args.obstacle == 'FbowlS':
+            start = [0.365,0,0.486,0,0,0] # bowlS, gt: 0.20
+        elif args.obstacle == 'FbowlM':
+            start = [0.367,0,0.466,0,0,0] # bowlM, gt: 0.37
+        else:
+            start = [0.367,0,0.508,0,0,0] # bowlL, gt: 0.51
+        goal = [1,1,-.5]+[0,0,0]
         goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
         env = RigidObjectCaging(args)
         env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
-        env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [-1,2]])
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Fglue':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        if args.obstacle == 'FbowlS':
+            start = [0.571,0,0.428,0,1.013,0] # bowlS, gt: 0.08
+        elif args.obstacle == 'FbowlM':
+            start = [0.544,0,0.481,0,0.884,0] # bowlM, gt: 0.18
+        else:
+            start = [0.515,0,0.544,0,0.764,0] # bowlL, gt: 0.28
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Ftape':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        if args.obstacle == 'FbowlS':
+            start = [0.338,0,0.238,0,-0.425,0] # bowlS, gt: 0.24
+        elif args.obstacle == 'FbowlM':
+            start = [0.337,0,0.251,0,-0.456,0] # bowlM, gt: 0.37
+        else:
+            start = [0.337,0,0.276,0,-0.456,0] # bowlL, gt: 0.53
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Fbanana':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        if args.obstacle == 'FbowlS':
+            start = [0.142,0,0.235,0,-2.147,0] # bowlS, gt: 0.24
+        elif args.obstacle == 'FbowlM':
+            start = [0.142,0,0.245,0,-2.147,0] # bowlM, gt: 0.40
+        else:
+            start = [0.136,0.009,0.265,0,-2.404,0] # bowlL, gt: 0.55
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Donut45':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        start = [0.050,0.022,0.222,0,0,0] # bowlS, gt: 0.26
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Donut60':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        start = [0.041,-0.070,0.222,0,0,0] # bowlS, gt: 0.26
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Donut90':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        start = [0.091,-0.089,0.223,0,0,0] # bowlS, gt: 0.26
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+    elif args.object == 'Donut120':
+        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
+        start = [0.151,-0.087,0.223,0,0,0] # bowlS, gt: 0.26
+        goal = [1,1,-.5]+[0,0,0]
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
+        env = RigidObjectCaging(args)
+        env.add_obstacles(scale=[10]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0,0,0]))
+        env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
+        env.reset_start_and_goal(start=start, goal=goal)
+
 
     env.create_ompl_interface()
     print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
@@ -143,15 +227,12 @@ if __name__ == '__main__':
         # env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':
-        numInnerIter = 1
+        numInnerIter = 2
         env.energy_biased_search(numIter=numInnerIter, save_escape_path=0, )
         E2real = env.sol_final_costs
         # env.visualize_energy_biased_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
-        # with open('./data2.csv', 'a', newline='') as csvfile:
-        #     writer = csv.writer(csvfile)
-        #     writer.writerow([n[s].item()]+E2real)
             
     # shut down pybullet (GUI)
     p.disconnect()

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot name="donut">
+
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://physical-experiment/downsampled4blender/donut-120-vhacd.obj" scale="10 10 10"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://physical-experiment/downsampled4blender/donut-120-vhacd.obj" scale="10 10 10"/>
+      </geometry>
+    </collision>
+  </link>
+
+</robot>
+

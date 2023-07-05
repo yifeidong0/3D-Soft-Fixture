@@ -56,7 +56,7 @@ def argument_parser():
     parser.add_argument('-j', '--object', default='Ftennis', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
-                 'Rubic', 'Chain', 'Ftennis', 'Ftape', 'Fglue', 'Fbanana'], \
+                 'Rubic', 'Chain', 'Ftennis', 'Ftape', 'Fglue', 'Fbanana', 'Donut45', 'Donut60', 'Donut90', 'Donut120',], \
         help='(Optional) Specify the object to cage.')
 
     parser.add_argument('-l', '--obstacle', default='FbowlS', \
@@ -65,10 +65,10 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear', 'FbowlS', 'FbowlM', 'FbowlL',], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=6, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=8, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
-    parser.add_argument('-v', '--visualization', type=bool, default=1, help=\
+    parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
         '(Optional) Specify whether to visualize the pybullet GUI. Defaults to False and must be False or True.')
 
     # Parse the arguments
@@ -118,12 +118,18 @@ def path_collector():
 
             # Franka (F) physical experiments
             'Ftape': 'models/physical-experiment/downsampled4blender/Ftape.urdf',
-            'Fglue': 'models/physical-experiment/downsampled4blender/.urdf',
+            'Fglue': 'models/physical-experiment/downsampled4blender/Fglue.urdf',
             'Ftennis': 'models/physical-experiment/downsampled4blender/Ftennis.urdf',
-            'Fbanana': 'models/physical-experiment/downsampled4blender/.stl',
+            'Fbanana': 'models/physical-experiment/downsampled4blender/Fbanana.urdf',
+
+            'Donut45': 'models/physical-experiment/downsampled4blender/Donut45.urdf',
+            'Donut60': 'models/physical-experiment/downsampled4blender/Donut60.urdf',
+            'Donut90': 'models/physical-experiment/downsampled4blender/Donut90.urdf',
+            'Donut120': 'models/physical-experiment/downsampled4blender/Donut120.urdf',
+                        
             'FbowlS': 'models/physical-experiment/downsampled4blender/FbowlS.stl',
-            'FbowlM': 'models/physical-experiment/downsampled4blender/.stl',
-            'FbowlL': 'models/physical-experiment/downsampled4blender/.stl',
+            'FbowlM': 'models/physical-experiment/downsampled4blender/FbowlM.stl',
+            'FbowlL': 'models/physical-experiment/downsampled4blender/FbowlL.stl',
             }
 
 def texture_path_list():
@@ -137,7 +143,8 @@ def get_non_articulated_objects():
     return ['Donut', 'Hook', 'Bowl', 'Ring', 'Bust', 'Hourglass', \
             'Bucket', 'Maze', '2Dkey', 'SplashBowl', 'Radish', 'FishHole', \
             'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Rubic', 'Ear', 'Chain', \
-            'Ftennis', 'Ftape', 'Fglue', 'Fbanana', 'FbowlS', 'FbowlM', 'FbowlL',]
+            'Ftennis', 'Ftape', 'Fglue', 'Fbanana', 'FbowlS', 'FbowlM', 'FbowlL', \
+            'Donut45', 'Donut60', 'Donut90', 'Donut120',]
 
 def get_colors():
     return ['#31a354', '#756bb1', '#2b8cbe', '#f4a63e', '#FF69B4', '#f03b20', ] # green, purple, blue, orange, pink, red, 

@@ -7,21 +7,21 @@ from utils import *
 import matplotlib.pyplot as plt
 import numpy as np
 
-plt.style.use("ggplot")
+# plt.style.use("ggplot")
 
-t = np.arange(0.0, 2.0, 0.1)
-s = np.sin(2 * np.pi * t)
-s2 = np.cos(2 * np.pi * t)
-plt.plot(t, s, "o-", lw=4.1)
-plt.plot(t, s2, "o-", lw=4.1)
-plt.xlabel("time (s)")
-plt.ylabel("Voltage (mV)")
-plt.title("Simple plot $\\frac{\\alpha}{2}$")
-plt.grid(True)
+# t = np.arange(0.0, 2.0, 0.1)
+# s = np.sin(2 * np.pi * t)
+# s2 = np.cos(2 * np.pi * t)
+# plt.plot(t, s, "o-", lw=4.1)
+# plt.plot(t, s2, "o-", lw=4.1)
+# plt.xlabel("time (s)")
+# plt.ylabel("Voltage (mV)")
+# plt.title("Simple plot $\\frac{\\alpha}{2}$")
+# plt.grid(True)
 
-import tikzplotlib
+# import tikzplotlib
 
-tikzplotlib.save("test.tex")
+# tikzplotlib.save("test.tex")
 
 #########################################################################
 
@@ -43,10 +43,10 @@ tikzplotlib.save("test.tex")
 #########################################################################
 #########################################################################
 
-# # # # CREATE CONCAVE SHAPES
-# name_in = 'models/fish/ring2_dec.obj'
-# name_out = 'models/fish/ring2_dec_vhacd.obj'
-# create_convex_vhacd(name_in, name_out, resolution=int(1e6))
+# # # CREATE CONCAVE SHAPES
+name_in = 'models/physical-experiment/downsampled4blender/donut-120.obj'
+name_out = 'models/physical-experiment/downsampled4blender/donut-120-vhacd.obj'
+create_convex_vhacd(name_in, name_out, resolution=int(1e6))
 
 #########################################################################
 #########################################################################

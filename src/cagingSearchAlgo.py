@@ -187,6 +187,10 @@ class RigidObjectCaging():
             self.sol_path_energy_list.append(sol_path_energy)      
             self.sol_final_costs.append(sol_final_cost)
             solveds.append(solved)
+            with open('./tennis-bowlS.csv', 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow([sol_final_cost])
+
         if solveds.count(True) == 0:
             return False
         return True
