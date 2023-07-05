@@ -53,7 +53,7 @@ def argument_parser():
         'SORRTstar', 'RRT', 'AITstar', 'LBTRRT'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
 
-    parser.add_argument('-j', '--object', default='Ftennis', \
+    parser.add_argument('-j', '--object', default='Donut60', \
         choices=['Fish', 'FishWithRing', 'Starfish', 'Ring', 'Band', 'BandHorizon', 'MaskBand', 'Rope', 'Humanoid', 'Donut', \
                  'Jelly', '3fGripper', 'PlanarRobot', 'Snaplock', 'PandaArm', 'FishHole', '2Dlock', \
                  'Rubic', 'Chain', 'Ftennis', 'Ftape', 'Fglue', 'Fbanana', 'Donut45', 'Donut60', 'Donut90', 'Donut120',], \
@@ -65,7 +65,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear', 'FbowlS', 'FbowlM', 'FbowlL',], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=8, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=120, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\

@@ -227,7 +227,7 @@ if __name__ == '__main__':
         # env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':
-        numInnerIter = 2
+        numInnerIter = 8
         env.energy_biased_search(numIter=numInnerIter, save_escape_path=0, )
         E2real = env.sol_final_costs
         # env.visualize_energy_biased_search()
