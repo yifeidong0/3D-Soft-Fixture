@@ -37,7 +37,7 @@ def argument_parser():
     # ShovelFish - Fish, Shovel
     # HandbagGripper - Chain, 3fGripper
     # Franka - x, x
-    parser.add_argument('-c', '--scenario', default='Franka', \
+    parser.add_argument('-c', '--scenario', default='ShovelFish', \
         choices=['FishFallsInBowl', 'HookTrapsRing', 'GripperClenchesStarfish', 'BustTrapsBand', \
                  'RopeBucket', 'BandHourglass', 'JellyMaze', '2DSnapLock', '3DSnapLock', \
                  'StarfishBowl', 'HookFishHole', 'ShovelFish', 'BimanualRubic', 'HandbagGripper', \
