@@ -277,7 +277,7 @@ def analyze_energy_data(folderList, isArticulatedObject):
     return (minTot, minG, minE, minEsc, meanTot, meanG, meanE, meanEsc, stdTot, stdG, stdE, stdEsc), minDataLen, indices
 
 def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
-                       isArticulatedObject=False, axvline=None, addAxvLabel=1, labelNames=['A','B','C','D']):
+                       isArticulatedObject=False, axvline=None, addAxvLabel=0, labelNames=['A','B','C','D']):
     # TODO: use broken axis to represent inf.
     # Color codes
     cls = get_colors()
@@ -321,7 +321,7 @@ def plot_escape_energy(ax, energyDataAnalysis, minDataLen, indices,
                 # ax.text(axvline[i]+.5, -1, labelNames[i], fontsize=18, color='k')
 
     ax.set_xlabel('# iterations',fontsize=14)
-    ax.set_ylabel('energy / J',fontsize=14)
+    ax.set_ylabel('escape energy / J',fontsize=14)
     # ax.set_ylabel('energy-total/grav / J',fontsize=14)
     # ax.set_yscale('log')
     # ax.set_ylim(-.2,3.6)
@@ -384,10 +384,10 @@ if __name__ == '__main__':
 
     _, ax = plt.subplots()
     plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj)
-    plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
+    # plt.title('Escape energy in a dynamic scenario - {}'.format(args.scenario))
     # plt.show()
     plt.savefig('{}/energy_plot_std.png'.format(folderList[0]))
-    tikzplotlib.save('{}/energy_plot_std.tex'.format(folderList[0]))
+    # tikzplotlib.save('{}/energy_plot_std.tex'.format(folderList[0]))
 
 ##################################################################################
 ###############################For Benchmark Plot#################################
