@@ -115,7 +115,8 @@ if __name__ == '__main__':
         basePosBounds = [[-5, 5], [-5, 5]]
         env = SnapLock2DCaging(args, objScale, basePosBounds)
         env.add_obstacles(scale=[1]*3, pos=[1.25,-2.9,0], qtn=p.getQuaternionFromEuler([0, 0, 3.7]))
-        env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,0])
+        env.reset_start_and_goal(start=[-2,2,0,-0.36], goal=[2,2,0,-0.36])
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
     elif args.object == 'Ftennis':
         # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         if args.obstacle == 'FbowlS':
@@ -211,7 +212,7 @@ if __name__ == '__main__':
 
 
     env.create_ompl_interface()
-    print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
+    # print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
     env.pb_ompl_interface.set_goal_space_bounds(goalSpaceBounds)
     # if args.object == 'BandHorizon':
     #     springneutralLen = s1[s].item()
@@ -227,10 +228,10 @@ if __name__ == '__main__':
         # env.visualize_bisection_search() # visualize
 
     elif args.search == 'EnergyBiasedSearch':
-        numInnerIter = 8
-        env.energy_biased_search(numIter=numInnerIter, save_escape_path=0, )
+        numInnerIter = 1
+        env.energy_biased_search(numIter=numInnerIter, save_escape_path=1, )
         E2real = env.sol_final_costs
-        # env.visualize_energy_biased_search()
+        env.visualize_energy_biased_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
             

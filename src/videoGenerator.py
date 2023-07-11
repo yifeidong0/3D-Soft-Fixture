@@ -14,15 +14,29 @@ if __name__ == '__main__':
     
     # get folders of the same task
     folderList = []
-    # path = './results/'
-    path = 'results/ICRA2024/Scenario04Fish-Shovel'
+    # path = './results/ICRA2024/Scenario01Fish-Hook'
+    # path = './results/ICRA2024/Scenario02Starfish-HandAndBowl'
+    # path = 'results/ICRA2024/Scenario03Mask-Ear'
+    # path = 'results/ICRA2024/Scenario04Fish-Shovel'
+    path = 'results/ICRA2024/Scenario05Rubic-Bimanual'
+    # path = 'results/ICRA2024/Scenario06Bag-Gripper'
     os.chdir(path)
     for folderName in glob.glob(args.scenario + "*"):
         folderList.append(folderName + '/')
     
     # save per-frame pics
-    numframes = 399
-    xmax = 70
+    numframes = 401 # starfish
+    xmax = 44
+    # numframes = 141 # starfish
+    # xmax = 35
+    # numframes = int(450*17000/18000) # starfish
+    # xmax = 84
+    # numframes = 472-15+1 # starfish
+    # xmax = 84
+    # numframes = 163-6+1 # mask
+    # xmax = numframes
+    # numframes = 399 # shovel
+    # xmax = 70
     for i in range(numframes):
         _, ax = plt.subplots(figsize=(6,6))
         plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj, axvline=[i*xmax/(numframes-1)])

@@ -198,15 +198,27 @@ class RigidObjectCaging():
     def visualize_energy_biased_search(self):
         '''visualize the convergence of caging depth
         '''
-        _, ax1 = plt.subplots()
-        for i in range(len(self.sol_path_energy_list)):
-            ax1.plot(self.sol_path_energy_list[i], label='path {}'.format(i)) # max z's along successful escape paths
-        ax1.set_xlabel('vertices of solution paths')
-        ax1.set_ylabel('state energy')
-        ax1.grid(True)
-        ax1.legend()
-        plt.title('State energy along the escape path in the energy biased search')
-        plt.show()
+        for i in range(len(self.sol_path_energy_list[0])):
+        # for i in range(5):
+            _, ax = plt.subplots(figsize=(6,6))
+            ax.plot(self.sol_path_energy_list[0],color=get_colors()[3]) # max z's along successful escape paths
+            ax.axvline(x=i, color='k', linestyle='--', linewidth=1)
+            ax.set_xlabel('states along the solution path')
+            ax.set_ylabel('state potential energy / J')
+            ax.set_xlim(0,len(self.sol_path_energy_list[0]))
+            ax.grid(True)
+            # plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj, axvline=[i*xmax/(numframes-1)])
+            plt.savefig("file%03d.png" % i, dpi=300)
+
+        # _, ax1 = plt.subplots()
+        # for i in range(len(self.sol_path_energy_list)):
+        #     ax1.plot(self.sol_path_energy_list[i], label='path {}'.format(i)) # max z's along successful escape paths
+        # ax1.set_xlabel('states along the solution path')
+        # ax1.set_ylabel('state potential energy / J')
+        # ax1.grid(True)
+        # # ax1.legend()
+        # # plt.title('State energy along the escape path in the energy biased search')
+        # plt.show()
 
     def energy_bisection_search(self, numIter=1, maxTimeTaken=120, epsThreshold=5e-4, useBisectionSearch=0):
         '''Iteratively find the (lowest) threshold of escape energy upper bound that allows an escaping path.
