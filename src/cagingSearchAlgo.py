@@ -198,8 +198,8 @@ class RigidObjectCaging():
     def visualize_energy_biased_search(self):
         '''visualize the convergence of caging depth
         '''
-        for i in range(len(self.sol_path_energy_list[0])):
-        # for i in range(5):
+        # for i in range(len(self.sol_path_energy_list[0])):
+        for i in range(5):
             _, ax = plt.subplots(figsize=(6,6))
             ax.plot(self.sol_path_energy_list[0],color=get_colors()[3]) # max z's along successful escape paths
             ax.axvline(x=i, color='k', linestyle='--', linewidth=1)

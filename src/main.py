@@ -60,6 +60,7 @@ if __name__ == '__main__':
         env.add_obstacles(scale=[.1]*3, pos=[-.5,0,3], qtn=p.getQuaternionFromEuler([0, 0, 0])) # ring
         # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
         env.reset_start_and_goal(start=[0,0,1.8,0,0,1.57]+[0], goal=[0,0,.01]+[0,1.57,0]+[0])
+        goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
     elif args.object == 'Starfish':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)
@@ -72,6 +73,7 @@ if __name__ == '__main__':
         numCtrlPoint = 6
         start = generate_circle_points(numCtrlPoint, rad=.3, z=1.4)
         goal = generate_circle_points(numCtrlPoint, rad=.3, z=.1)
+        goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
         # start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
         # goal = generate_circle_points(numCtrlPoint, rad=.2, z=2.18)
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
@@ -132,7 +134,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Fglue':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         if args.obstacle == 'FbowlS':
             start = [0.571,0,0.428,0,1.013,0] # bowlS, gt: 0.08
         elif args.obstacle == 'FbowlM':
@@ -146,7 +147,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Ftape':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         if args.obstacle == 'FbowlS':
             start = [0.338,0,0.238,0,-0.425,0] # bowlS, gt: 0.24
         elif args.obstacle == 'FbowlM':
@@ -160,7 +160,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Fbanana':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         if args.obstacle == 'FbowlS':
             start = [0.142,0,0.235,0,-2.147,0] # bowlS, gt: 0.24
         elif args.obstacle == 'FbowlM':
@@ -174,7 +173,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Donut45':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         start = [0.050,0.022,0.222,0,0,0] # bowlS, gt: 0.26
         goal = [1,1,-.5]+[0,0,0]
         goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
@@ -183,7 +181,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Donut60':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         start = [0.041,-0.070,0.222,0,0,0] # bowlS, gt: 0.26
         goal = [1,1,-.5]+[0,0,0]
         goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
@@ -192,7 +189,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Donut90':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         start = [0.091,-0.089,0.223,0,0,0] # bowlS, gt: 0.26
         goal = [1,1,-.5]+[0,0,0]
         goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
@@ -201,7 +197,6 @@ if __name__ == '__main__':
         env.robot.set_search_bounds(basePosBounds=[[-1.4,1.4], [-1.4,1.4], [-.6,1]])
         env.reset_start_and_goal(start=start, goal=goal)
     elif args.object == 'Donut120':
-        # all geometries are 10 times large (/m). The final escape energy should /10 and *mg
         start = [0.151,-0.087,0.223,0,0,0] # bowlS, gt: 0.26
         goal = [1,1,-.5]+[0,0,0]
         goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.1, .1]]*2
@@ -218,7 +213,11 @@ if __name__ == '__main__':
     #     springneutralLen = s1[s].item()
     #     k_spring = k[s].item()
     #     env.pb_ompl_interface.set_spring_params(springneutralLen, k_spring)
-    
+    if args.object == 'Band':
+        springneutralLen = .2
+        k_spring = 2/100
+        env.pb_ompl_interface.set_spring_params(springneutralLen, k_spring)
+
     # Choose from different searching methods
     # sleep(200)
     if args.search == 'BisectionSearch':
@@ -231,7 +230,7 @@ if __name__ == '__main__':
         numInnerIter = 1
         env.energy_biased_search(numIter=numInnerIter, save_escape_path=1, )
         E2real = env.sol_final_costs
-        env.visualize_energy_biased_search()
+        # env.visualize_energy_biased_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
             
