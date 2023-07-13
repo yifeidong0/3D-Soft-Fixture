@@ -4,35 +4,10 @@ sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from cagingSearchAlgo import *
 import pybullet as p
 from utils import *
-from time import sleep
-import numpy as np
 
-# # # for test03: band-hourglass
-# r1 = 0.21
-# r2 = .2717
-# h = 0.409
-# # k = 1.0
-# startDim = 3
-# n = np.asarray(list(range(startDim,10)))
-# k = np.asarray(list(range(startDim,10)))
-# alpha = 180 / n
-# alpha = alpha / 180 * np.pi
-# R1 = r1 / np.cos(alpha)
-# R2 = r2 / np.cos(alpha)
-# s1 = 2 * r1 * np.tan(alpha)
-# s2 = 2 * r2 * np.tan(alpha)
-# E2 = 0.5 * k * n * (s2-s1)**2 # E_true = 0.1262, [0.2646    , 0.1568    , 0.12932669, 0.1176    , 0.11136516,
-#     #    0.10761051, 0.10515812] - range(3,10)
 
 if __name__ == '__main__':
-    # for s in range(len(n)):
     args, parser = argument_parser()
-    # basePosBounds=[[-5,5], [-5,5], [-3,5]] # searching bounds
-
-    # create caging environment and items in pybullet
-    # if args.object in get_non_articulated_objects():
-    #     env = RigidObjectCaging(args)
-    #     env.add_obstacles(scale=[.1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([1.57, 0, 0]))
 
     if args.object == 'Ring':
         start = [0.5798,0.0094,1.391,0,0,0]
@@ -74,18 +49,8 @@ if __name__ == '__main__':
         start = generate_circle_points(numCtrlPoint, rad=.3, z=1.4)
         goal = generate_circle_points(numCtrlPoint, rad=.3, z=.1)
         goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
-        # start = generate_circle_points(numCtrlPoint, rad=.8, z=0.98)
-        # goal = generate_circle_points(numCtrlPoint, rad=.2, z=2.18)
         env = ElasticBandCaging(args, numCtrlPoint, start, goal)
         env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-    # elif args.object == 'BandHorizon':
-    #     numCtrlPoint = n[s].item()
-    #     goalSpaceBounds = [[-.6,.6], [-.6,.6],]*numCtrlPoint + [[0.4,0.5]]
-    #     start = generate_circle_points(numCtrlPoint, rad=R1[s].item(), z=0, obj=args.object)
-    #     goal = generate_circle_points(numCtrlPoint, rad=R1[s].item(), z=.45, obj=args.object)
-    #     env = ElasticBandCaging(args, numCtrlPoint, start, goal)
-    #     env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0]))
-    #     env.robot.set_search_bounds(basePosBounds=[[-.6,.6], [-.6,.6], [0, .5]], start=start)
     elif args.object == 'Rope':
         numCtrlPoint = 4
         linkLen = 0.3
@@ -207,22 +172,15 @@ if __name__ == '__main__':
 
 
     env.create_ompl_interface()
-    # print('STATE IS VALID',env.pb_ompl_interface.is_state_valid(start))
     env.pb_ompl_interface.set_goal_space_bounds(goalSpaceBounds)
-    # if args.object == 'BandHorizon':
-    #     springneutralLen = s1[s].item()
-    #     k_spring = k[s].item()
-    #     env.pb_ompl_interface.set_spring_params(springneutralLen, k_spring)
     if args.object == 'Band':
         springneutralLen = .2
         k_spring = 2/100
         env.pb_ompl_interface.set_spring_params(springneutralLen, k_spring)
 
     # Choose from different searching methods
-    # sleep(200)
     if args.search == 'BisectionSearch':
         # useGreedySearch = False # True: bisection search; False: Conservative search
-        # env.bound_shrink_search(useGreedySearch)
         env.energy_bisection_search(numIter=15, maxTimeTaken=50, useBisectionSearch=1)
         # env.visualize_bisection_search() # visualize
 
@@ -233,8 +191,5 @@ if __name__ == '__main__':
         # env.visualize_energy_biased_search()
         print('Energy costs of current obstacle and object config: {}'.format(env.sol_final_costs))
 
-            
     # shut down pybullet (GUI)
     p.disconnect()
-
-    # TODO: comapare the results with ground truth (Open3d OBB - donut model)

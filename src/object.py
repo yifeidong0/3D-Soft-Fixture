@@ -1,8 +1,6 @@
 import pybullet as p
 import copy
 import math
-from scipy.spatial.transform import Rotation as R
-import time
 from utils import *
 
 class ObjectBase():
@@ -104,7 +102,6 @@ class ObjectFromUrdf(ObjectBase):
                     continue
                 self.joint_idx.append(i)
                 self.joint_bounds.append(bounds) # joint_0-3
-        # print('@@@@@@@joint_bounds', self.joint_bounds)
         
         # Visualize Workspace boundaries
         if vis:
@@ -122,9 +119,6 @@ class ObjectFromUrdf(ObjectBase):
     def set_state(self, state):
         pos = state[0:3]
         eulerRot = state[3:6]
-
-        # r = R.from_euler('zyx', eulerRot, degrees=False)
-        # quat = r.as_quat()
         quat = p.getQuaternionFromEuler(eulerRot)
         p.resetBasePositionAndOrientation(self.id, pos, quat)
         self._set_joint_positions(self.joint_idx, state[6:])

@@ -1,5 +1,4 @@
 try:
-    from ompl import util as ou
     from ompl import base as ob
     from ompl import geometric as og
 except ImportError:
@@ -9,19 +8,13 @@ except ImportError:
     import sys
     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'ompl/py-bindings'))
     # sys.path.insert(0, join(dirname(abspath(__file__)), '../whole-body-motion-planning/src/ompl/py-bindings'))
-    print(sys.path)
-    from ompl import util as ou
     from ompl import base as ob
     from ompl import geometric as og
 import pybullet as p
 import utils
 import time
 from itertools import product
-import numpy as np
 import sys
-import kinpy as kp
-from scipy.spatial.transform import Rotation as R
-import math
 import objective
 
 INTERPOLATE_NUM = 500

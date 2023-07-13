@@ -11,7 +11,6 @@ import argparse
 import math
 import numpy as np
 from numpy import linalg as LA
-import time
 from itertools import product
 import copy
 import kinpy as kp
@@ -68,7 +67,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear', 'FbowlS', 'FbowlM', 'FbowlL',], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=720, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\
@@ -81,17 +80,9 @@ def argument_parser():
 
 def path_collector():
     return {
-            # 'Fish': 'models/fish/articulate_fish.xacro', 
-            # 'Fish': 'models/fine-fish/fine-fish.urdf', 
-            # 'Fish': 'models/fine-fish/fine-fish-3parts.urdf', 
             'Fish': 'models/fine-fish-10/fine-fish-10.urdf', 
             'FishHole': 'models/fish-hole/fish-hole-rigid.urdf', 
-
-            # 'Starfish': 'models/starfish/starfish2.urdf', 
-            # 'Starfish': 'models/starfish-soft/starfish-soft.urdf', 
             'Starfish': 'models/starfish-soft/starfish-soft-16dof.urdf', 
-
-            # 'Ring': 'models/fish/ring2_vhacd.OBJ', 
             'Ring': 'models/fish/ring2.urdf', 
             'Donut': 'models/donut/donut.urdf',
             '3fGripper': 'models/robotiq_3f_gripper_visualization/cfg/robotiq-3f-gripper_articulated_decimate.urdf',
@@ -99,15 +90,12 @@ def path_collector():
             'PandaArm': 'models/franka_description/robots/panda_arm.urdf',
             'PlanarRobot': 'models/planar_robot_4_link.xacro',
             'Humanoid': 'models/humanoid.urdf',
-            # 'Bowl': 'models/bowl/small_bowl.stl', 
-            # 'Bowl': 'models/bowl/bowl_cut_polygon.stl', 
             'Bowl': 'models/bowl/bowl_ceramics.stl', 
             'SplashBowl': 'models/splash-bowl/splash-bowl.stl', 
             'Hook': 'models/triple_hook/triple_hook_vhacd.obj', 
             'Bust': 'models/bust/female_bust.obj',
             'Bucket': 'models/bucket/bucket-cutPoly.stl',
             'Hourglass': 'models/hourglass/half-hourglass-downsized.stl',
-            # 'Hourglass': 'models/hourglass/hourglass.obj',
             'Snaplock': 'models/snap-lock/snap-lock.urdf', 
             'Maze': 'models/maze/maze_cutpoly.stl',
             '2Dlock': 'models/2Dsnap-lock/snap-lock.urdf',
@@ -124,22 +112,13 @@ def path_collector():
             'Fglue': 'models/physical-experiment/downsampled4blender/Fglue.urdf',
             'Ftennis': 'models/physical-experiment/downsampled4blender/Ftennis.urdf',
             'Fbanana': 'models/physical-experiment/downsampled4blender/Fbanana.urdf',
-
             'Donut45': 'models/physical-experiment/downsampled4blender/Donut45.urdf',
             'Donut60': 'models/physical-experiment/downsampled4blender/Donut60.urdf',
             'Donut90': 'models/physical-experiment/downsampled4blender/Donut90.urdf',
             'Donut120': 'models/physical-experiment/downsampled4blender/Donut120.urdf',
-                        
             'FbowlS': 'models/physical-experiment/downsampled4blender/FbowlS.stl',
             'FbowlM': 'models/physical-experiment/downsampled4blender/FbowlM.stl',
             'FbowlL': 'models/physical-experiment/downsampled4blender/FbowlL.stl',
-            }
-
-def texture_path_list():
-    return {
-            'Hook': 'models/triple_hook/metal_texture.png', 
-            'Fish': 'models/triple_hook/metal_texture.png', 
-            'Bowl': 'models/triple_hook/metal_texture.png', 
             }
 
 def get_non_articulated_objects():

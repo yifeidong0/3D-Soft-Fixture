@@ -16,13 +16,11 @@ class runScenario():
     def __init__(self, args):
         p.connect(p.GUI)
         p.setTimeStep(1./240.)
-        # p.setAdditionalSearchPath(pybullet_data.getDataPath())
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         
         # planeId = p.loadURDF("plane.urdf", [0,0,-1])
         self.paths = path_collector()
-        self.pathsTex = texture_path_list()
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 1

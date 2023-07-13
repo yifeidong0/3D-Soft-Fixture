@@ -12,7 +12,6 @@
 #include <unistd.h>
 
 /**
- * @example generate_cartesian_pose_motion.cpp
  * An example showing how to generate a Cartesian motion.
  *
  * @warning Before executing this example, make sure there is enough space in front of the robot.
@@ -122,6 +121,7 @@ void getNewEETransform(std::array<double, 16>& initT, std::array<double, 3> eule
   writeMatrix3dToUpperLeft(matNew, initT);
 }
 
+// Function to generate a random pose of the arm given initial configuration (q_init) and a perturbation level (perturbLimit)
 std::array<double, 7> generate_random_pose(std::array<double, 7> q_init, double perturbLimit) {
   std::random_device rd;
   std::mt19937 gen(rd());
@@ -167,60 +167,8 @@ int main(int argc, char** argv) {
         {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
-
-    ////// EE space random shaking ////// 
-    // std::array<double, 16> initial_pose;
-
-    // double radius = .1;
-    // double limit = .1;
-    // double velocity = .1;
-    // double timeEnd = 1.0 / velocity;
-    // int numPoints = 10;
     
-    // std::vector<std::array<double, 3>> sampledPoints = samplePointsInBall(radius, numPoints);
-    // std::vector<std::array<double, 3>> sampledAngles = sampleEulerAngle(limit, numPoints);
-
-    // for (int i=0; i<numPoints; ++i) {
-    //   double time = 0.0;
-
-    //   // Go to the desired random pose
-    //   std::cout << std::endl << "Going to the desired random pose!" << std::endl;
-    //   robot.control([&time, &initial_pose, velocity, timeEnd, sampledPoints, sampledAngles, i](const franka::RobotState& robot_state,
-    //                                       franka::Duration period) -> franka::CartesianPose {
-    //     time += period.toSec();
-
-    //     if (time == 0.0) {
-    //       initial_pose = robot_state.O_T_EE_c;
-    //     }
-    //     std::array<double, 16> new_pose = initial_pose;
-
-    //     // A scaling factor that interpolates the init-to-goal line
-    //     double scale = velocity * time;
-    //     std::cout << std::endl << "scale" << scale << std::endl;
-
-    //     // Get new EE position
-    //     std::cout << std::endl << "Get new EE position" << std::endl;
-    //     new_pose[12] += sampledPoints[i][0] * scale;
-    //     new_pose[13] += sampledPoints[i][1] * scale;
-    //     new_pose[14] += sampledPoints[i][2] * scale;
-
-    //     // Get new EE orientation
-    //     // std::cout << std::endl << "Get new EE orientation" << std::endl;
-    //     // getNewEETransform(new_pose, sampledAngles[i], scale);
-
-    //     if (scale >= 1.0) {
-    //       std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
-    //       return franka::MotionFinished(new_pose);
-    //     }
-    //     return new_pose;
-    //   });
-
-    //   // Return to initiall pose
-    //   std::cout << std::endl << "Returning to initiall pose!" << std::endl;
-    //   robot.control(motion_generator);
-    // }
-    
-    // ////// joint space random shaking ////// 
+    // Joint space random shaking
     double perturbLimit = .41;
     double maxPerturbLimit = 1.5;
     bool return_to_init = 0;
@@ -228,7 +176,7 @@ int main(int argc, char** argv) {
     while (perturbLimit <= maxPerturbLimit) {
       std::cout << "Current perturbation limits: " << perturbLimit << std::endl;
       double count = 0;
-      while (count <= 2*maxTimes) {
+      while (count < 2*maxTimes) {
         if (return_to_init == 1) {
           MotionGenerator motion_generator(.5, q_init);
           robot.control(motion_generator);
@@ -238,14 +186,11 @@ int main(int argc, char** argv) {
           std::array<double, 7> q_random = generate_random_pose(q_init, perturbLimit);
           MotionGenerator motion_generator(.5, q_random);
           robot.control(motion_generator);
-          return_to_init = 0;
+          return_to_init = 1;
         }
         count += 1;
       }
-      // std::cout << "WARNING: This example will increase the perturbation level!"
-      //           << "Press Enter to continue..." << std::endl;
-      // std::cin.ignore();
-      sleep(1.5);
+      sleep(1.5); // pause before increasing the perturbation level
       perturbLimit += 0.03;
     }
   } catch (const franka::Exception& e) {

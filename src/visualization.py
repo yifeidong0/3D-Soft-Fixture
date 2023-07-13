@@ -1,15 +1,10 @@
 from datetime import datetime
 import os
-# import subprocess
 import glob
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
-# from main import argument_parser
-# import pybullet as p
-# import pybullet_data
-# import time
 from scipy import interpolate
 import tikzplotlib
 

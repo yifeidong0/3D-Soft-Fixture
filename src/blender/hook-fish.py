@@ -5,7 +5,6 @@ import math
 import csv
 import numpy as np
 import pybullet as p
-from scipy.spatial.transform import Rotation as R
 
 '''Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py

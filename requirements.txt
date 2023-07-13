@@ -1,0 +1,4 @@
+pybullet==3.2.5
+kinpy==0.2.0
+scipy==1.10.0
+tikzplotlib=0.10.1

@@ -1,11 +1,7 @@
 
 from curses import keyname
 import bpy
-import math
 import csv
-import numpy as np
-import pybullet as p
-from scipy.spatial.transform import Rotation as R
 
 # from blenderUtils import *
 '''Run the script in Blender background mode:
