@@ -4,18 +4,17 @@ This repo provides code for the paper - Soft Fixtures: Practical Caging-Based Ma
 
 [[PREPRINT]](...) [[WEBSITE]](https://sites.google.com/view/softfixture/home) [[VIDEOS]](https://www.youtube.com/playlist?list=PLYP3395168-Swf4ZDVI4SwARKKHaQ84HB)
 
-# Environment
+## Installation instructions:
+
 Tested with:<br>
 **Python 3.10**<br>
 **Ubuntu 22.04**
 
-# Installation instructions:
-
-## 0. Create a virtual environment (optional but recommended)
+### 0. Create a virtual environment (optional but recommended)
 
 You can create a virtual environment using tools like virtualenv or conda. 
 
-## 1. Install OMPL with its Python bindings
+### 1. Install OMPL with its Python bindings
 
 Please first refer to the official installation [instructions](https://ompl.kavrakilab.org/installation.html)
 
@@ -35,30 +34,29 @@ chmod u+x install-ompl-ubuntu.sh
 
 You can also choose to install from source.
 
-## 2. Install other dependencies
+### 2. Install other dependencies
 ```
 pip install -r requirements.txt
 ```
 
-# Usage
+## Usage
 
-## 1. Run escape energy analysis over a scenario
+### 1. Run escape energy analysis over a scenario
 
 Here is a table of arguments you could use to customize your algorithm.
 
 | Argument        | Short Option | Long Option       | Default Value       | Choices                      | Description                                                                                                                                      |
 |-----------------|--------------|-------------------|---------------------|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
-| scenario        | -c           | --scenario        | ShovelFish          | ShovelFish, MaskEar, StarfishBowl, HookFishHole, HandbagGripper, BimanualRubic, HookTrapsRing | Specify the scenario for the demo.                                                                                                                |
-| search          | -s           | --search          | EnergyBiasedSearch  | BisectionSearch, EnergyBiasedSearch | Specify the sampling-based search method to use.                                                                                                |
+| scenario        | -c           | --scenario        | ShovelFish          | ShovelFish, MaskEar, StarfishBowl, HookFishHole, HandbagGripper, BimanualRubic | Specify the scenario for the demo.                                                                                                                |
 | planner         | -p           | --planner         | BITstar             | BITstar, InformedRRTstar, RRTstar, RRT, AITstar | Specify the optimal planner to use.                                                                                                              |
-| object          | -j           | --object          | Fish                | Fish, MaskBand, Starfish, FishHole, Chain, Rubic, Ring | Specify the object to cage.                                                                                                                      |
+| object          | -j           | --object          | Fish                | Fish, MaskBand, Starfish, FishHole, Chain, Rubic | Specify the object to cage.                                                                                                                      |
 | obstacle        | -l           | --obstacle        | Shovel              | Shovel, Ear, LeftHandAndBowl, Hook, 3fGripper | Specify the obstacle that cages the object.                                                                                                      |
 | runtime         | -t           | --runtime         | 30                  | N/A                          | Specify the runtime in seconds. Must be greater than 0.                                                                                          |
 | visualization   | -v           | --visualization   | True                   | False, True                  | Specify whether to visualize the PyBullet GUI.                                                                                                   |
 
 A sample command is provided as follows,
 ```
-python3 src/runScenario.py -c ShovelFish -s EnergyBiasedSearch -p BITstar -j Fish -l Shovel -t 30 -v 1 
+python3 src/runScenario.py -c ShovelFish -p BITstar -j Fish -l Shovel -t 30 -v 1 
 ```
 
 Please follow the correspondance in the arguments as below,
@@ -71,12 +69,8 @@ Please follow the correspondance in the arguments as below,
 | HookFishHole    | FishHole           | Hook         |
 | HandbagGripper  | Chain              | 3fGripper    |
 | BimanualRubic   | Rubic              | 3fGripper    |
-| HookTrapsRing   | Ring               | Hook         |
 
-You could try other planners with EnergyBiasedSearch, though BIT* might perform the best.
-Please use RRT for BisectionSearch (tested and thus preferred).
-
-## 2. Physical experiment
+### 2. Physical experiment
 
 To reproduce our results on a Emika Franka Panda 7-axis robot arm, please 
 
@@ -96,14 +90,14 @@ cmake --build .
 ~/libfranka/build$ ./examples/generate_cartesian_pose_motion <robot-ip>
 ```
 
-# Additional Information
+## Additional Information
 1. Currently tested planners include PRM, RRT, RRTstar, RRTConnect, EST, FMT* and BIT*. But all planners in OMPL should work. Just add them in the set_planner API in PbOMPL class.
 
-# Acknowledgement
+## Acknowledgement
 The code is partly built upon the repo - [pybullet_ompl](https://github.com/lyfkyle/pybullet_ompl.git), which provides interface to use OMPL for motion planning inside PyBullet.
 
-# Contact or Support
+## Contact or Support
 Please contact Yifei Dong at yifeid@kth.se or Prof. Florian Pokorny at fpokorny@kth.se
 
-# Contributors
+## Contributors
 The authors are with the division of Robotics, Perception and Learning, KTH Royal Institute of Technology, 100 44 Stockholm, Sweden. Funded by the European Commission under the Horizon Europe Framework Programme project [SoftEnable](http://softenable.eu/), grant number 101070600.

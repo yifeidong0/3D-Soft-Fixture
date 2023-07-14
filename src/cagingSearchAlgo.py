@@ -1,18 +1,27 @@
+"""
+Title: Preparation of the soft fixturing scenarios.
+Author: Yifei Dong
+Date: 14/07/2023
+Description: The script provides an interface of running our iterative or energy-biased search algorithms 
+and analyzing the escape energy within a single frame of various soft fixture cases.
+"""
+
 import os.path as osp
 import pybullet as p
 import sys
 import pybullet_data
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 import matplotlib.pyplot as plt
-import numpy as np
 from time import sleep
 from object import *
 from utils import *
-import copy
 from pbOmplInterface import PbOMPL
 from visualization.visualization import *
 
 class RigidObjectCaging():
+    '''
+    For rigid objects.
+    '''
     def __init__(self, args):
         self.args = args
         self.obstacles = []
@@ -23,7 +32,6 @@ class RigidObjectCaging():
         else:
             vis = p.DIRECT
         p.connect(vis)
-        # p.setGravity(0, 0, -9.8)
         p.setTimeStep(1./240.)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
 
@@ -33,19 +41,23 @@ class RigidObjectCaging():
         self.eps_thres = 1e-2 # bi-section search resolution
 
     def load_object(self, scale=1):
-        """Load object for caging."""
+        '''
+        Load object for caging.
+        '''
         self.paths = path_collector()
         self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0), globalScaling=scale)
         self.robot = ObjectFromUrdf(self.object_id)
+
         # FOR DEBUG - URDF TUNE
         # self.robot.set_state([0,0,2,0,0,0]+[0.7,0.8])
         # axiscreator(self.object_id, linkId = -1)
         # axiscreator(self.object_id, linkId = 0) # first joint pose is displayed
         # axiscreator(self.object_id, linkId = 1)
-        # sleep(30)
 
     def reset_start_and_goal(self, start=None, goal=None,):
-        # Set start and goal nodes of searching algorithms
+        '''
+        Set start and goal nodes of searching algorithms..
+        '''
         if start is None:
             self.start = [0,0,2.6,1.57,0,0] + [0]*self.robot.articulate_num # :3 pos // 3: rot [radian]
         else:
@@ -54,19 +66,13 @@ class RigidObjectCaging():
             self.goal = [0,0,0,0,0,0] + [0]*self.robot.articulate_num
         else:
             self.goal = goal
-
-        # # make sure states are within search bounds
-        # jbounds = self.robot.get_joint_bounds()
-        # print('@@@@@@@@@len(jbounds), self.start', jbounds, len(jbounds), len(self.start))
-        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-        #     print('The start or goal states violates search boundary conditions!')
-        #     return False 
         
         return True # bounds valid check passed
 
     def add_obstacles(self, pos=[0,0,0], qtn=(1,0,0,1), scale=[.1, .1, .1], jointPos=None, obstacleName=None):
+        '''
+        Add obstacles to the pybullet environment.
+        '''
         if obstacleName is None:
             if self.args.obstacle in ['Box']:
                 # if self.args.object in ['Rope']:
@@ -81,10 +87,6 @@ class RigidObjectCaging():
                 self.add_box([-1.2, 0, 1.2], [1, 1, .2])
                 self.add_box([0, 1.2, 1.2], [1, 1, .2])
                 self.add_box([0, -1.2, 1.2], [1, 1, .2])
-
-            # elif self.args.obstacle in ['Ring']:
-            #     self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], pos, qtn, globalScaling=scale[0])
-            #     self.obstacles.append(self.obstacle_id)
 
             elif self.args.obstacle in self.rigidObjList:
                 # Upload the mesh data to PyBullet and create a static object
@@ -107,10 +109,8 @@ class RigidObjectCaging():
                 self.obstacle_id = p.loadURDF(self.paths[self.args.obstacle], 
                                             pos, qtn, globalScaling=scale[0])
                 self.obstacle = obstascle3fGripper(self.obstacle_id)
-                # self.obstacle._set_joint_positions(self.obstacle.joint_idx, jointPos)
                 self.obstacles.append(self.obstacle_id)
         elif obstacleName in self.rigidObjList:
-            # Upload the mesh data to PyBullet and create a static object
             mesh_collision_shape = p.createCollisionShape(
                 shapeType=p.GEOM_MESH,
                 fileName=self.paths[obstacleName],
@@ -131,6 +131,9 @@ class RigidObjectCaging():
             self.obstacles.append(self.obstacle_id1)
 
     def add_box(self, box_pos, half_box_size, box_qtn=list(p.getQuaternionFromEuler([0,0,0]))):
+        '''
+        Add a box to the pybullet environment.
+        '''
         colBoxId = p.createCollisionShape(p.GEOM_BOX, halfExtents=half_box_size)
         box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBoxId, basePosition=box_pos, baseOrientation=box_qtn)
 
@@ -138,19 +141,27 @@ class RigidObjectCaging():
         return box_id
 
     def create_ompl_interface(self):
+        '''
+        Create an interface class.
+        '''
         self.pb_ompl_interface = PbOMPL(self.robot, self.args, self.obstacles)
 
     def track_path_cost(self, path):
+        '''
+        Calculate and record the escape energy.
+        '''
         energy_along_path = [get_state_energy(state, self.args.object) for state in path]
         escape_energy = max(energy_along_path) - energy_along_path[0] # max potential gain TODO: incremental potential gain
         self.escape_energy_list.append(escape_energy)
 
     def execute_search(self):
+        '''
+        Start the OMPL planner.
+        '''
         res, path, sol_path_energy, best_cost, time_taken = self.pb_ompl_interface.plan(self.goal, self.args.runtime)
         if res:
             if self.args.visualization:
                 self.pb_ompl_interface.execute(path)
-            # if self.args.objective == 'GravityPotential':
             if self.args.search == 'BisectionSearch':
                 self.track_path_cost(path)
         else:
@@ -159,14 +170,15 @@ class RigidObjectCaging():
         return res, path, sol_path_energy, best_cost, time_taken
 
     def energy_biased_search(self, numIter=1, save_escape_path=0, get_cost_from_path=0):
+        '''
+        Preparation and postprocessing of the energy biased search algorithm.
+        '''
         self.pb_ompl_interface.reset_robot_state_bound()
         self.sol_path_energy_list = []
         self.sol_final_costs = []
-        # self.escape_energy_list = [] # successful escapes
         solveds = []
         for i in range(numIter):
             self.robot.set_state(self.start)
-            # sleep(30)
             self.pb_ompl_interface.set_planner(self.args.planner, self.goal)
             solved, path, sol_path_energy, sol_final_cost, _ = self.execute_search()
             
@@ -196,7 +208,8 @@ class RigidObjectCaging():
         return True
 
     def visualize_energy_biased_search(self):
-        '''visualize the convergence of caging depth
+        '''
+        Visualize the convergence of state energy along the esacpe path and save images with verticle rolling lines.
         '''
         # for i in range(len(self.sol_path_energy_list[0])):
         for i in range(5):
@@ -210,18 +223,9 @@ class RigidObjectCaging():
             # plot_escape_energy_from_multi_csv(ax, folderList, isArticulatedObj, axvline=[i*xmax/(numframes-1)])
             plt.savefig("file%03d.png" % i, dpi=300)
 
-        # _, ax1 = plt.subplots()
-        # for i in range(len(self.sol_path_energy_list)):
-        #     ax1.plot(self.sol_path_energy_list[i], label='path {}'.format(i)) # max z's along successful escape paths
-        # ax1.set_xlabel('states along the solution path')
-        # ax1.set_ylabel('state potential energy / J')
-        # ax1.grid(True)
-        # # ax1.legend()
-        # # plt.title('State energy along the escape path in the energy biased search')
-        # plt.show()
-
     def energy_bisection_search(self, numIter=1, maxTimeTaken=120, epsThreshold=5e-4, useBisectionSearch=0):
-        '''Iteratively find the (lowest) threshold of escape energy upper bound that allows an escaping path.
+        '''
+        Iteratively find the (lowest) threshold of escape energy upper bound that allows an escaping path.
         '''
         initCUpper = 10
         self.time_taken_list_runs, self.escape_energy_list_runs = [], [] # record over several runs
@@ -248,21 +252,8 @@ class RigidObjectCaging():
                 # Update bounds
                 curr_cost = self.escape_energy_list[-1]
 
-                print("----------cUpper - cEs - cLower: ", cUpper, ' - ', cEs, ' - ', cLower)
                 # Set lower and upper bounds
                 if useBisectionSearch: # bisection search
-                    # if not res: # no solution
-                    #     if cUpper < np.min(self.escape_energy_list):
-                    #         cLower = cUpper 
-                    #     # cLower = cUpper
-                    #     cUpper = np.min(self.escape_energy_list)
-                    # else: # solution found
-                    #     if curr_cost < cLower: # a solution lower than lower bound found
-                    #         cUpper = curr_cost
-                    #         cLower = 0
-                    #     else: # solution found within expected bounds
-                    #         cUpper = (curr_cost-cLower) / 2. + cLower # greedily search the lower half bounded by current solution
-
                     if res: # found solution
                         cUpper = curr_cost
                         if curr_cost < cLower: # a solution lower than lower bound found
@@ -291,8 +282,8 @@ class RigidObjectCaging():
                     # Reset energy threshold
                     self.pb_ompl_interface.reset_bisec_energy_thres(cUpper+startEnergy)
 
-                print("----------escape_energy_list: ", self.escape_energy_list)
-                print("----------time_taken_list: ", self.time_taken_list)
+                # print("----------escape_energy_list: ", self.escape_energy_list)
+                # print("----------time_taken_list: ", self.time_taken_list)
             
             # Record data over runs
             self.time_taken_list_runs.append(self.time_taken_list) 
@@ -302,7 +293,8 @@ class RigidObjectCaging():
             self.pb_ompl_interface.reset_bisec_energy_thres(initCUpper)
 
     def visualize_bisection_search(self):
-        '''visualize the convergence of caging depth
+        '''
+        Visualize the convergence of caging depth.
         '''
         _, ax1 = plt.subplots()
         for i in range(len(self.time_taken_list_runs)):
@@ -316,6 +308,9 @@ class RigidObjectCaging():
 
 
 class ArticulatedObjectCaging(RigidObjectCaging):
+    '''
+    For articulated objects, such as fish.
+    '''
     def __init__(self, args, objScale):
         self.args = args
         self.obstacles = []
@@ -335,6 +330,9 @@ class ArticulatedObjectCaging(RigidObjectCaging):
 
 
 class SnapLock2DCaging(RigidObjectCaging):
+    '''
+    For the 2D snap lock scenario.
+    '''
     def __init__(self, args, objScale, basePosBounds):
         self.args = args
         self.basePosBounds = basePosBounds
@@ -354,13 +352,11 @@ class SnapLock2DCaging(RigidObjectCaging):
         self.reset_start_and_goal()
 
     def load_object(self, scale=1):
-        """Load object for caging."""
         self.paths = path_collector()
         self.object_id = p.loadURDF(self.paths[self.args.object], (0,0,0), globalScaling=scale)
         self.robot = SnapLock2D(self.object_id, self.basePosBounds)
 
     def reset_start_and_goal(self, start=None, goal=None):
-        # Set start and goal nodes of searching algorithms
         if start is None:
             self.start = [0,0,0] + [0]*self.robot.articulate_num
         else:
@@ -382,6 +378,9 @@ class SnapLock2DCaging(RigidObjectCaging):
 
 
 class ElasticBandCaging(RigidObjectCaging):
+    '''
+    For the load-in and set-up of the elastic band represented by control points.
+    '''
     def __init__(self, args, numCtrlPoint, start, goal):
         self.args = args
         self.obstacles = []
@@ -402,11 +401,8 @@ class ElasticBandCaging(RigidObjectCaging):
         self.reset_start_and_goal(start, goal)
 
     def load_object(self):
-        """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        # for i in range(self.numCtrlPoint):
-        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
         if self.args.object == 'Band': 
             self.robot = objectElasticBand(self.object_id, self.numCtrlPoint)
         if self.args.object == 'BandHorizon': 
@@ -417,18 +413,13 @@ class ElasticBandCaging(RigidObjectCaging):
         self.start = [0,0,2]*self.numCtrlPoint if start is None else start
         self.goal = [0,0,3]*self.numCtrlPoint if goal is None else goal
 
-        # # make sure states are within search bounds
-        # jbounds = self.robot.get_joint_bounds()
-        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-        #     print('The start or goal states violates search boundary conditions!')
-        #     return False 
-        
-        return True # bounds valid check passed
+        return True
 
 
 class MaskBandCaging(RigidObjectCaging):
+    '''
+    For the mask wearing scenario.
+    '''
     def __init__(self, args, numCtrlPoint, start, goal):
         self.args = args
         self.obstacles = []
@@ -449,30 +440,21 @@ class MaskBandCaging(RigidObjectCaging):
         self.reset_start_and_goal(start, goal)
 
     def load_object(self):
-        """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        # for i in range(self.numCtrlPoint):
-        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
-
         self.robot = objectMaskBand(self.object_id, self.numCtrlPoint)
 
     def reset_start_and_goal(self, start=None, goal=None):
         # Set start and goal nodes of searching algorithms
         self.start = [0,0,0]*self.numCtrlPoint if start is None else start
         self.goal = [0,0,0.5]*self.numCtrlPoint if goal is None else goal
-
-        # # make sure states are within search bounds
-        # jbounds = self.robot.get_joint_bounds()
-        # startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        # if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-        #     print('The start or goal states violates search boundary conditions!')
-        #     return False 
-        
-        return True # bounds valid check passed
+  
+        return True
 
 class RopeCaging(RigidObjectCaging):
+    '''
+    For the load-in and set-up of a rope.
+    '''
     def __init__(self, args, numCtrlPoint, linkLen, start, goal):
         self.args = args
         self.numCtrlPoint = numCtrlPoint
@@ -494,10 +476,8 @@ class RopeCaging(RigidObjectCaging):
         self.reset_start_and_goal(start, goal)
 
     def load_object(self):
-        """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
-        # NODE COLLISION TEST
         for i in range(self.numCtrlPoint+2): # number of nodes
            self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=.01)) # '1cm': diameter
         self.robot = objectRope(self.object_id, self.numCtrlPoint, self.linkLen)
@@ -519,6 +499,9 @@ class RopeCaging(RigidObjectCaging):
 
 
 class ChainCaging(RigidObjectCaging):
+    '''
+    For the load-in and set-up of a rope loop.
+    '''
     def __init__(self, args, numCtrlPoint, linkLen, start, goal):
         self.args = args
         self.numCtrlPoint = numCtrlPoint
@@ -540,7 +523,6 @@ class ChainCaging(RigidObjectCaging):
         self.reset_start_and_goal(start, goal)
 
     def load_object(self):
-        """Load object for caging."""
         self.paths = path_collector()
         self.object_id = []
         self.robot = objectChain(self.object_id, self.numCtrlPoint, self.linkLen)
@@ -548,57 +530,11 @@ class ChainCaging(RigidObjectCaging):
     def reset_start_and_goal(self, start=None, goal=None):
         self.start = start
         self.goal = goal
-        
-        return True # bounds valid check passed
-
+        return 
+    
     def get_chain_node_pos_path(self, path):
         chainNodePath = []
         for state in path:
             _, chainNodePos = get_chain_node_pos(state, self.linkLen)
             chainNodePath.append(flatten_nested_list(chainNodePos))
-
         return chainNodePath
-
-class ElasticJellyCaging(RigidObjectCaging):
-    def __init__(self, args, numCtrlPoint, start, goal):
-        self.args = args
-        self.obstacles = []
-        self.rigidObjList = get_non_articulated_objects()
-
-        if args.visualization:
-            vis = p.GUI
-        else:
-            vis = p.DIRECT
-        p.connect(vis)
-        p.setTimeStep(1./240.)
-        p.setAdditionalSearchPath(pybullet_data.getDataPath())
-
-        self.numCtrlPoint = numCtrlPoint
-        self.start = start
-        self.goal = goal
-        self.load_object()
-        self.reset_start_and_goal(start, goal)
-
-    def load_object(self):
-        """Load object for caging."""
-        self.paths = path_collector()
-        self.object_id = []
-        # for i in range(self.numCtrlPoint):
-        #    self.object_id.append(p.loadURDF("sphere_1cm.urdf", (0,0,0), globalScaling=0.01)) # '1cm': diameter
-
-        self.robot = objectElasticJelly(self.object_id, self.numCtrlPoint)
-
-    def reset_start_and_goal(self, start=None, goal=None):
-        # Set start and goal nodes of searching algorithms
-        self.start = [0,0,2]*self.numCtrlPoint if start is None else start
-        self.goal = [0,0,3]*self.numCtrlPoint if goal is None else goal
-
-        # make sure states are within search bounds
-        jbounds = self.robot.get_joint_bounds()
-        startBools = [self.start[i]>=jbounds[i][0] and self.start[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        goalBools = [self.goal[i]>=jbounds[i][0] and self.goal[i]<=jbounds[i][1] for i in range(len(jbounds))]
-        if startBools.count(False)>0 or goalBools.count(False)>0: # some bounds restrictions are violated
-            print('The start or goal states violates search boundary conditions!')
-            return False 
-        
-        return True # bounds valid check passed

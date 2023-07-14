@@ -1,16 +1,26 @@
 import bpy
 import csv
 
+'''
+Record keyframes for a movement primitive of a wearing mask scenario. The data go to Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
+/snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
+'''
+
 def flatten_nested_list(input):
-    '''Input in the format of [[1], [2, 3], [4, 5, 6, 7]].
+    '''
+    Input in the format of [[1], [2, 3], [4, 5, 6, 7]].
         Two nested layers at most.
     '''
     return [num for sublist in input for num in sublist]
 
 def record_stripe_data(data):
+    '''
+    Record 6 control points along a mask loop over frames.
+    '''
     folderName = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/4blender/mask-head'
 
-    # create csv headers
+    # Create csv headers
     headers = ['frameID', 
                'vertex005fixed-x', 'vertex005fixed-y', 'vertex005fixed-z', 
                'vertex140-x', 'vertex140-y', 'vertex140-z', 
@@ -21,12 +31,12 @@ def record_stripe_data(data):
                'vertex180-x', 'vertex180-y', 'vertex180-z', 
                'vertex190fixed-x', 'vertex190fixed-y', 'vertex190fixed-z',]
 
-    # write headers to csv
+    # Write headers to csv
     with open('{}/data.csv'.format(folderName), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(i for i in headers)
 
-    # write data to csv
+    # Write data to csv
     for i in range(len(data)):
         with open('{}/data.csv'.format(folderName), 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -51,8 +61,3 @@ for i in range(frameBoundLeft, frameBoundRight):
     data.append(flatten_nested_list(subdata))
 
 record_stripe_data(data)
-
-# # Create an empty object for visualization
-# obj_empty = bpy.data.objects.new("Test", None)
-# bpy.context.collection.objects.link(obj_empty)
-# obj_empty.location = co_final

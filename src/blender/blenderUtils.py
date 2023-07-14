@@ -1,6 +1,9 @@
 import bpy
 
 def get_mesh_data(objectName: str) -> None:
+    '''
+    Get data of a mesh (no. of vertices and faces).
+    '''
     # Get a reference to the active object in the scene
     obj = bpy.data.objects[objectName]
 
@@ -15,6 +18,9 @@ def get_mesh_data(objectName: str) -> None:
     print("Total faces:", num_faces)
 
 def cut_num_polygon(ratio: float, objectName: str) -> None:
+    '''
+    Decimate number of polygons in a mesh.
+    '''
     # Get the active object
     obj = bpy.data.objects[objectName]
 

@@ -1,13 +1,16 @@
+"""
+Title: Pybullet - OMPL interface.
+Author: Yifei Dong
+Date: 14/07/2023
+Description: The script provides an interface between Pybullet and OMPL, including OMPL parameter setup and planner settings.
+"""
 try:
     from ompl import base as ob
     from ompl import geometric as og
 except ImportError:
-    # if the ompl module is not in the PYTHONPATH assume it is installed in a
-    # subdirectory of the parent directory called "py-bindings."
     from os.path import abspath, dirname, join
     import sys
     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'ompl/py-bindings'))
-    # sys.path.insert(0, join(dirname(abspath(__file__)), '../whole-body-motion-planning/src/ompl/py-bindings'))
     from ompl import base as ob
     from ompl import geometric as og
 import pybullet as p
@@ -17,7 +20,7 @@ from itertools import product
 import sys
 import objective
 
-INTERPOLATE_NUM = 500
+INTERPOLATE_NUM = 100
 
 class PbStateSpace(ob.RealVectorStateSpace):
     def __init__(self, num_dim) -> None:
@@ -26,30 +29,25 @@ class PbStateSpace(ob.RealVectorStateSpace):
         self.state_sampler = None
 
     def allocStateSampler(self):
-        '''
+        """
         This will be called by the internal OMPL planner
-        '''
+        """
         # WARN: This will cause problems if the underlying planner is multi-threaded!!!
         if self.state_sampler:
             return self.state_sampler
 
-        # when ompl planner calls this, we will return our sampler
+        # When ompl planner calls this, we will return our sampler
         return self.allocDefaultStateSampler()
 
     def set_state_sampler(self, state_sampler):
-        '''
+        """
         Optional, Set custom state sampler.
-        '''
+        """
         self.state_sampler = state_sampler
 
 
 class PbOMPL():
     def __init__(self, robot, args, obstacles=[]) -> None:
-        '''
-        Args
-            robot: A PbOMPLRobot instance.
-            obstacles: list of obstacle ids. Optional.
-        '''
         self.args = args
         self.robot = robot
         self.robot_id = robot.id
@@ -62,48 +60,52 @@ class PbOMPL():
         if self.args.planner in ["BITstar", "AITstar",]:
             self.useGoalSpace = 0 # not applicable
         else:
-            self.useGoalSpace = 1
-        # self.balancedObjRatio = 0.01
+            self.useGoalSpace = 1 # a goal region instead of a single goal configuration
+
         # spheres of control/node points are moved away to avoid collision while ray-casting
         self.nodeAwayPos = [10]*3
-
-        # self.reset_robot_state_bound()
   
     def set_goal_space_bounds(self, goalSpaceBounds):
+        '''
+        Set the goal space region.
+        '''
         self.goalSpaceBounds = goalSpaceBounds
 
     def set_obstacles(self):
-        # self.obstacles = obstacles
-
-        # update collision detection
+        '''
+        Update collision detection.
+        '''
         self.setup_collision_detection()
 
     def add_obstacles(self, obstacle_id):
+        '''
+        Add an obstacle to the list.
+        '''
         self.obstacles.append(obstacle_id)
 
     def reset_bisec_energy_thres(self, energy_threshold):
+        '''
+        Reset bisection energy threshold after one iteration.
+        '''
         self.use_bisection_search = 1
         self.energy_threshold = energy_threshold
 
     def set_spring_params(self, springneutralLen, k):
+        '''
+        Set the stiffness and rest length of springs.
+        '''
         self.springneutralLen = springneutralLen
         self.k_spring = k
 
     def is_state_valid(self, state):
+        '''
+        Check if a configuration (not in collision, within the search boundaries) is valid for the planner.
+        '''
         # Check if the state overshoots the energy threshold in bisection search
         if self.use_bisection_search:
             current_energy = utils.get_state_energy(state, self.args.object)
             if current_energy > self.energy_threshold:
                 return False
-
-        # Skip the collision check of initial state
-        # if letInitStateGo:
-        #     stateNp = np.asarray([float(s) for s in state])
-        #     initNp = np.asarray([float(s) for s in self.robot.get_cur_state()])
-        #     print('initNp', initNp)
-        #     print('np.linalg.norm(stateNp-initNp)', np.linalg.norm(stateNp-initNp))
-        #     if np.linalg.norm(stateNp-initNp)<1e-5:
-        #         return True
 
         # Check self-collision
         stateList = self.state_to_list(state)
@@ -120,10 +122,6 @@ class PbOMPL():
 
         elif self.args.object in ["MaskBand"]:
             if utils.mask_band_collision_raycast(stateList, self.bandFixedV0, self.bandFixedV1):
-                return False
-
-        elif self.args.object in ["Jelly"]:
-            if utils.jelly_collision_raycast(stateList, checkCoPlane=1):
                 return False
             
         elif self.args.object in ["Rope"]:
@@ -153,22 +151,28 @@ class PbOMPL():
         return True
 
     def record_fixed_vertex_pos(self, bandFixedV0, bandFixedV1):
+        '''
+        Record the two fixed control points positions in the mask wearing scenario.
+        '''
         self.bandFixedV0 = bandFixedV0
         self.bandFixedV1 = bandFixedV1
 
     def setup_collision_detection(self, self_collisions = False, allow_collision_links=[]):
+        '''
+        Check if a configuration (not in collision, within the search boundaries) is valid for the planner.
+        '''
         if self.args.object in ["Rope"]:
             self.check_link_pairs = [] # do not check self-collision
             self.check_body_pairs = list(product(self.robot.id, self.obstacles))
         else:
             self.check_link_pairs = utils.get_self_link_pairs(self.robot.id, self.robot.joint_idx) if self_collisions else []
-            # moving_links = frozenset(
-                # [item for item in utils.get_moving_links(self.robot.id, self.robot.joint_idx) if not item in allow_collision_links])
             moving_bodies = [self.robot.id] # for deformable ball
-            # moving_bodies = [(self.robot.id, moving_links)] # original 
             self.check_body_pairs = list(product(moving_bodies, self.obstacles))
 
     def reset_robot_state_bound(self):
+        '''
+        Check if a configuration (not in collision, within the search boundaries) is valid for the planner.
+        '''
         bounds = ob.RealVectorBounds(self.robot.num_dim)
         joint_bounds = self.robot.get_joint_bounds()
         for i, bound in enumerate(joint_bounds):
@@ -184,14 +188,12 @@ class PbOMPL():
         self.si = ob.SpaceInformation(self.space)
         self.si.setStateValidityChecker(ob.StateValidityCheckerFn(self.is_state_valid))
         self.si.setup()
-        # self.si.setStateValidityCheckingResolution(0.005)
         
         # Setup sampling-based planner
         if planner_name == "PRM":
             self.planner = og.PRM(self.si)
         elif planner_name == "RRT":
             self.planner = og.RRT(self.si)
-            # self.planner.params().setParam("range", "0.5")
         elif planner_name == "RRTConnect":
             self.planner = og.RRTConnect(self.si)
             self.planner.params().setParam("range", "0.05")
@@ -199,10 +201,6 @@ class PbOMPL():
             self.planner = og.RRTstar(self.si)
             self.planner.params().setParam("range", "0.1") # controls the maximum distance between a new state and its nearest neighbor in the tree
             self.planner.params().setParam("rewire_factor", "0.01") # controls the radius of the ball used during the rewiring phase 
-            # self.planner.params().setParam("tree_pruning", "1")
-            # self.planner.params().setParam("use_k_nearest", "0")
-            # self.planner.params().setParam("use_admissible_heuristic", "0") 
-            # self.planner.params().setParam("number_sampling_attempts", "1000")
             self.planner.params().setParam("focus_search", "1")
         elif planner_name == "EST":
             self.planner = og.EST(self.si)
@@ -210,12 +208,8 @@ class PbOMPL():
             self.planner = og.FMT(self.si)
         elif planner_name == "BITstar":
             self.planner = og.BITstar(self.si)
-            # self.planner.params().setParam("find_approximate_solutions", "1")
             # samples_per_batch - small value, faster initial paths, while less accurate (higher final cost)
             self.planner.params().setParam("samples_per_batch", "1000") # fish, starfish, hook
-            # self.planner.params().setParam("samples_per_batch", "20000") # band
-            # self.planner.params().setParam("use_just_in_time_sampling", "1")
-            # self.planner.params().setParam("rewire_factor", "0.1") # higher value, less rewires
         elif planner_name == "ABITstar":
             self.planner = og.ABITstar(self.si)
         elif planner_name == "InformedRRTstar":
@@ -225,7 +219,6 @@ class PbOMPL():
             self.planner.params().setParam("number_sampling_attempts", "1000")
         elif planner_name == "AITstar":
             self.planner = og.AITstar(self.si)
-            # self.planner.params().setParam("rewire_factor", "0.1")
             self.planner.params().setParam("samples_per_batch", "500") # fish, starfish, hook
         elif planner_name == "SORRTstar":
             self.planner = og.SORRTstar(self.si)
@@ -234,8 +227,6 @@ class PbOMPL():
             self.planner.params().setParam("rewire_factor", "0.1") # controls the radius of the ball used during the rewiring phase 
         elif planner_name == "PRMstar":
             self.planner = og.PRMstar(self.si)
-        # elif planner_name == "FMTstar":
-        #     self.planner = og.FMTstar(self.si)
         elif planner_name == "LBTRRT":
             self.planner = og.LBTRRT(self.si)
             self.planner.params().setParam("epsilon", "0.01") # A smaller value for epsilon will result in a denser tree
@@ -267,7 +258,7 @@ class PbOMPL():
             ss.setBounds(bounds)
             goal_space.setSpace(ss)
 
-            # set start and goal
+            # Set start and goal
             self.pdef.addStartState(s)
             self.pdef.setGoal(goal_space)
         else:
@@ -288,8 +279,6 @@ class PbOMPL():
                 self.potentialObjective = objective.ElasticBandPotentialObjective(self.si, start, self.args, self.springneutralLen, self.k_spring)
             elif self.args.object == "MaskBand":
                 self.potentialObjective = objective.MaskBandPotentialObjective(self.si, start, self.args, self.bandFixedV0, self.bandFixedV1)
-            elif self.args.object == "Jelly":
-                self.potentialObjective = objective.ElasticJellyPotentialObjective(self.si, start, self.args)
             elif self.args.object == "Rope":
                 self.potentialObjective = objective.RopePotentialObjective(self.si, start, self.robot.linkLen)
             elif self.args.object == "Chain":
@@ -303,13 +292,12 @@ class PbOMPL():
 
     def plan_start_goal(self, goal, allowed_time=10.0, reached_thres=0.5):
         '''
-        plan a path to goal from the given robot start state
+        Plan a path to goal from the given robot start state.
         '''
         print(self.planner.params())
-
         orig_robot_state = self.robot.get_cur_state()
 
-        # attempt to solve the problem within allowed planning time
+        # Attempt to solve the problem within allowed planning time
         t0 = time.time()
         solved = self.planner.solve(allowed_time)
         time_taken = time.time() - t0
@@ -319,7 +307,6 @@ class PbOMPL():
         
         if solved:
             print("Found solution: interpolating into {} segments".format(INTERPOLATE_NUM))
-            # solution_path = self.planner.bestPathFromGoalToStart() # TODO: expose the corresponding C++ protected function
             sol_path_geometric = self.pdef.getSolutionPath()
             try:
                 sol_path_states_non_interp = sol_path_geometric.getStates()
@@ -330,10 +317,6 @@ class PbOMPL():
             sol_path_list_non_interp = [self.state_to_list(s) for s in sol_path_states_non_interp]
             sol_path_list = [self.state_to_list(s) for s in sol_path_states]
 
-            # check if solution path is valid
-            # for sol_path in sol_path_list:
-            #     self.is_state_valid(sol_path)
-                
             # Get cost of the solution path
             if self.args.search == 'EnergyBiasedSearch':
                 sol_path_energy = [self.potentialObjective.stateEnergy(i) for i in sol_path_list_non_interp]
@@ -344,27 +327,26 @@ class PbOMPL():
                 else:
                     best_cost = self.planner.bestCost().value() # approximate solution? available for BITstar
 
-            # make sure goal is reached
+            # Make sure goal is reached
             if self.args.planner in ['BITstar']:
                 diff = [sol_path_list[-1][i]-goal[i] for i in range(len(goal))]
                 if sum(abs(i) for i in diff) < reached_thres:
                     res = True
             else:
                 isInsideBounds = [sol_path_list[-1][i]>self.goalSpaceBounds[i][0] and sol_path_list[-1][i]<self.goalSpaceBounds[i][1] for i in range(self.state_dim)]
-                print('@@@@@@@@isInsideBounds', isInsideBounds)
                 if isInsideBounds.count(False) == 0:
                     res = True
         else:
             print("No solution found")
 
-        # reset robot state
+        # Reset robot state
         self.robot.set_state(orig_robot_state)
 
         return res, sol_path_list, sol_path_energy, best_cost, time_taken
 
     def plan(self, goal, allowed_time=10.0):
         '''
-        plan a path to goal from current robot state
+        Plan a path to goal from current robot state
         '''
         return self.plan_start_goal(goal, allowed_time)
 
@@ -391,8 +373,6 @@ class PbOMPL():
                 utils.rope_collision_raycast(q, self.robot.linkLen, visRays=1)
             elif self.args.object == 'Chain':
                 utils.chain_collision_raycast(q, self.robot.linkLen, visRays=1)
-            elif self.args.object == 'Jelly':
-                utils.jelly_collision_raycast(q, visRays=1)
 
             p.stepSimulation()
             time.sleep(7/240)

@@ -2,10 +2,12 @@
 import bpy
 import math
 import csv
-
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for a movement primitive of a scooping fish scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
+
 NUM_FISH_JOINT = 9
 
 def get_bones_and_set_mode(armature):
@@ -79,7 +81,8 @@ def add_a_keyframe(fishArmature, shovel, data, i):
     shovel.keyframe_insert(data_path="rotation_quaternion", frame=i)
 
 def add_keyframes(dataFolderPath: str, objNames: list[str]) -> None:
-    '''Read data from source csv and invoke per-frame keyframe adding function.
+    '''
+    Read data from source csv and invoke per-frame keyframe adding function.
     '''
     fishArmature, shovel = [bpy.data.objects[objNames[i]] for i in range(len(objNames))]
     shovel.rotation_mode = 'QUATERNION'
@@ -100,8 +103,7 @@ def set_hand_pose(objName: str, pose: list[6]) -> None:
     obj.location = tuple(pose[:3])
     obj.rotation_euler = tuple(pose[3:])
 
-'''Main loop'''
-
+'''Main'''
 armatureName = 'fishArmature'
 shovelName = 'shovel'
 handName = 'hand'

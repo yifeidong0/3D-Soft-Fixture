@@ -2,8 +2,9 @@
 import bpy
 import math
 import csv
-# from blenderUtils import *
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for an escape path demo of a band scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
 def get_mesh_data(objectName: str) -> None:
@@ -33,26 +34,13 @@ def cut_num_polygon(ratio: float, objectName: str) -> None:
     # Apply the modifier
     bpy.ops.object.modifier_apply(modifier=decimate_mod.name)
 
-# def reset_band(curveName):
-# TODO: not work yet
-#     # Get a reference to the curve object
-#     obj = bpy.data.objects[curveName]
-#     bpy.context.view_layer.objects.active = obj
-#     curve = obj.data
-#     points = curve.splines[0].bezier_points
-
-#     # Loop through each control point and remove its keyframes
-#     for point in points:
-#         point.keyframe_delete(data_path="co")
-
 def add_a_keyframe(points, pointPositions: list, i: int, numCtrlPnt=6) -> None:
-    '''pointPositions: 
+    '''
+    pointPositions: 
             list[x1,y1,z1,...,xn,yn,zn], positions of band control points.
     '''
     for k,point in enumerate(points):
         point.co = tuple(pointPositions[3*k:3*k+3])
-        # point.handle_left_type = 'VECTOR'
-        # point.handle_right_type = 'VECTOR'
         point.keyframe_insert(data_path="co", frame=i)
 
         # Set the position of the handles for the control point
@@ -91,12 +79,7 @@ def add_keyframes(dataFolderPath: str, curveName: str) -> None:
             add_a_keyframe(points, pointPositions, i)
             i += 1
 
-'''Main loop'''
-# objName = 'hourglass'
-# ratio = 0.8
-# get_mesh_data(objName)
-# cut_num_polygon(ratio, objName)
-
+'''Main'''
 curveName = 'BezierCircle'
 # reset_band(curveName)
 

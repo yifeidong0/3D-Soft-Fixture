@@ -6,7 +6,9 @@ import csv
 import numpy as np
 import pybullet as p
 
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for a movement primitive of a hooking fish scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
 
@@ -14,8 +16,8 @@ def add_a_keyframe(objects: list,
                    data: list, 
                    i: int, 
                    ) -> None:
-    '''Add pose information of all moving components in a keyframe. 
-        data: 
+    '''
+    Add pose information of all moving components in a keyframe. 
         i:
             int, frame ID.
     '''
@@ -42,7 +44,8 @@ def add_a_keyframe(objects: list,
     bpy.context.view_layer.update()
 
 def add_keyframes(dataFolderPath: str, objNames: list[str]) -> None:
-    '''Read data from source csv and invoke per-frame keyframe adding function.
+    '''
+    Read data from source csv and invoke per-frame keyframe adding function.
     '''
     objs = [bpy.data.objects[objNames[i]] for i in range(len(objNames))]
     objs[0].rotation_mode = 'QUATERNION'
@@ -60,11 +63,7 @@ def add_keyframes(dataFolderPath: str, objNames: list[str]) -> None:
             i += 1
 
 
-'''Main loop'''
+'''Main'''
 objNames = ['fish', 'hook', 'hand']
 dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/HookFishHole_15-05-2023-18-24-46_dynamics'
-
 add_keyframes(dataFolderPath, objNames)
-
-# Set 3D cursor position
-# bpy.context.scene.cursor.location = (0.0,-0.66,0.39)

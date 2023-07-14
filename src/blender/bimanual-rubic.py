@@ -3,9 +3,13 @@ import bpy
 import math
 import csv
 import mathutils
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for a movement primitive of the bimanual rubic cube manipulation scenario. 
+The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
+
 LINK_NAMES_LEFT = ['finger_1_link_0', 'finger_1_link_1', 'finger_1_link_2', 'finger_1_link_3', 
               'finger_2_link_0', 'finger_2_link_1', 'finger_2_link_2', 'finger_2_link_3', 
               'finger_middle_link_0', 'finger_middle_link_1', 'finger_middle_link_2', 'finger_middle_link_3', 
@@ -118,10 +122,7 @@ def add_keyframes(dataFolderPath):
             i += 1
 
 
-'''Main loop'''
-
+'''Main'''
 reset_gripper()
-
 dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/BimanualRubic_19-05-2023-21-01-44_dynamics'
-
 add_keyframes(dataFolderPath)

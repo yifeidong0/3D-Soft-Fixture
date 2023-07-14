@@ -2,10 +2,12 @@
 import bpy
 import math
 import csv
-# from blenderUtils import *
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for an escape path demo of a radish fixturing scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
+
 def get_mesh_data(objectName: str) -> None:
     # Get a reference to the active object in the scene
     obj = bpy.data.objects[objectName]
@@ -44,13 +46,13 @@ def remove_animation():
 
 
 def add_a_keyframe(points, pointPositions: list, i: int, numCtrlPnt=6) -> None:
-    '''pointPositions: 
+    '''
+    Add one keyframe.
+    pointPositions: 
             list[x1,y1,z1,...,xn,yn,zn], positions of band control points.
     '''
     for k,point in enumerate(points):
         point.co = tuple(pointPositions[3*k:3*k+3])
-        # point.handle_left_type = 'VECTOR'
-        # point.handle_right_type = 'VECTOR'
         point.keyframe_insert(data_path="co", frame=i)
 
         # Set the position of the handles for the control point
@@ -72,6 +74,9 @@ def add_a_keyframe(points, pointPositions: list, i: int, numCtrlPnt=6) -> None:
 
 
 def add_keyframes(dataFolderPath: str, curveName: str) -> None:
+    '''
+    Add multiple keyframes.
+    '''
     # Get a reference to the curve object
     obj = bpy.data.objects[curveName]
     bpy.context.view_layer.objects.active = obj
@@ -89,12 +94,7 @@ def add_keyframes(dataFolderPath: str, curveName: str) -> None:
             add_a_keyframe(points, pointPositions, i)
             i += 1
 
-'''Main loop'''
-# objName = 'hourglass'
-# ratio = 0.8
-# get_mesh_data(objName)
-# cut_num_polygon(ratio, objName)
-
+'''Main'''
 curveName = 'BezierCircle'
 remove_animation()
 

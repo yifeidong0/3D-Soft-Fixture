@@ -1,10 +1,16 @@
+"""
+Title: escape energy analysis with fixed obstacles in a single frame.
+Author: Yifei Dong
+Date: 14/07/2023
+Description: The script provides an interface of running our iterative or energy-biased search algorithms 
+and analyzing the escape energy within a single frame of various soft fixture cases.
+"""
 import os.path as osp
 import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from cagingSearchAlgo import *
 import pybullet as p
 from utils import *
-
 
 if __name__ == '__main__':
     args, parser = argument_parser()
@@ -40,7 +46,6 @@ if __name__ == '__main__':
         objScale = 1
         env = ArticulatedObjectCaging(args, objScale)
         env.add_obstacles(scale=[1]*3, pos=[0,0,.6], qtn=p.getQuaternionFromEuler([0, 0, 0])) # splash bowl
-        # env.add_obstacles(scale=[10]*3, pos=[0,0,1], qtn=p.getQuaternionFromEuler([1.57, 0, 0])) # 3fGripper
         # env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3.5]])
         start = [-0.401751, -0.198753, 1.46589, -0.529868, 0.138347, -0.357632, -0.5, 0.5, -0.17, 0.35, 0.5, 0.5, 0.22, 0.5, 0.5, 0.41]
         env.reset_start_and_goal(start=start, goal=[0,0,.01]+[0,0,1.57]+[0]*env.robot.articulate_num)
@@ -67,16 +72,6 @@ if __name__ == '__main__':
         env = ChainCaging(args, numCtrlPoint, linkLen, start, goal)
         env.robot.set_search_bounds(vis=1, basePosBounds=[[-2,2], [-2,2], [0, 3]])
         env.add_obstacles(scale=[10]*3, pos=[0,-.5,2.2], qtn=p.getQuaternionFromEuler([-1.57, -2, 1.57])) # 3fGripper
-    elif args.object == 'Jelly':
-        numCtrlPoint = 4
-        l = 1
-        zs = 1
-        ofs = 0.7
-        start = [-l/2,-l/2,-l/2+zs] + [-l/2,-l/2,l/2+zs] + [l/2,-l/2,l/2+zs] + [-l/2,l/2,l/2+zs]
-        goal = [-l/2-ofs,-l/2-ofs,-l/2+zs] + [-l/2-ofs,-l/2-ofs,l/2+zs] + [l/2-ofs,-l/2-ofs,l/2+zs] + [-l/2-ofs,l/2-ofs,l/2+zs]
-        env = ElasticJellyCaging(args, numCtrlPoint, start, goal)
-        env.add_obstacles(scale=[1]*3, pos=[0,0,0], qtn=p.getQuaternionFromEuler([0, 0, 0])) # maze
-        env.robot.set_search_bounds(basePosBounds=[[-2,2], [-2,2], [0,3]])
     elif args.object == '2Dlock':
         objScale = 1
         basePosBounds = [[-5, 5], [-5, 5]]
@@ -183,7 +178,6 @@ if __name__ == '__main__':
         # useGreedySearch = False # True: bisection search; False: Conservative search
         env.energy_bisection_search(numIter=15, maxTimeTaken=50, useBisectionSearch=1)
         # env.visualize_bisection_search() # visualize
-
     elif args.search == 'EnergyBiasedSearch':
         numInnerIter = 1
         env.energy_biased_search(numIter=numInnerIter, save_escape_path=1, )

@@ -6,9 +6,9 @@ import csv
 import numpy as np
 import pybullet as p
 from scipy.spatial.transform import Rotation as R
-
-# from blenderUtils import *
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for an escape path demo of a 3D snap lock scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
 
@@ -47,7 +47,8 @@ def add_a_keyframe(objects: list,
                    jointPosInBody: np.ndarray = np.array([[0.],[-0.66],[0.39],[1]]),
                    transformLastRow: np.ndarray = np.array([[0,0,0,1]])
                    ) -> None:
-    '''Add pose information of all moving components in a keyframe. 
+    '''
+    Add pose information of all moving components in a keyframe. 
         data: 
             list[x,y,z,r,p,y,joint_angle], containing pose of base link and the joint angle.
         i:
@@ -67,7 +68,6 @@ def add_a_keyframe(objects: list,
 
     # Update arm pose
     objects[1].location = tuple(jointPosInWorld.flatten())[:3]
-    # objects[1].location = tuple([data[:3][i]+armPosOffset[i] for i in range(3)])
     jointRotOffset = (data[-1], 0.0, 0.0)
     objects[1].rotation_euler = tuple([data[3:6][i]+rotOffset[i]+jointRotOffset[i] for i in range(3)])
 
@@ -81,7 +81,8 @@ def add_a_keyframe(objects: list,
     bpy.context.view_layer.update()
 
 def add_keyframes(dataFolderPath: str, objNames: list[str]) -> None:
-    '''Read data from source csv and invoke per-frame keyframe adding function.
+    '''
+    Read data from source csv and invoke per-frame keyframe adding function.
     '''
     objs = [bpy.data.objects[objNames[i]] for i in range(len(objNames))]
 
@@ -102,15 +103,12 @@ def set_ring_pose(objName: str, pose: list[6]) -> None:
     obj.rotation_euler = tuple(pose[3:])
 
 
-'''Main loop'''
+'''Main'''
 lockNames = ['body', 'arm']
 ringName = 'ring2'
 ringPose = [-.5, 0, 3, 0, 0, 0]
 dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/3DSnapLock_05-05-2023-17-59-32_escape_path_4blender'
 ratio = 0.6
-
-# get_mesh_data(ringName)
-# cut_num_polygon(ratio, ringName)
 
 set_ring_pose(ringName, ringPose)
 add_keyframes(dataFolderPath, lockNames)

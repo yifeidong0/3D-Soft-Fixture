@@ -2,11 +2,11 @@
 import bpy
 import math
 import csv
-# from blenderUtils import *
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for a movement primitive of a grabbing rope loop scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
-
 
 LINK_NAMES_LEFT = ['finger_1_link_0', 'finger_1_link_1', 'finger_1_link_2', 'finger_1_link_3', 
               'finger_2_link_0', 'finger_2_link_1', 'finger_2_link_2', 'finger_2_link_3', 
@@ -43,7 +43,8 @@ def reset_gripper():
 
 
 def add_a_keyframe_chain(points, bag, pointPositions: list, i: int, numCtrlPnt=7) -> None:
-    '''pointPositions: 
+    '''
+    pointPositions: 
             list[x1,y1,z1,...,xn,yn,zn], positions of chain control points.
     '''
     # Set cube state
@@ -141,7 +142,7 @@ def add_keyframes_gripper(dataFolderPath, numCtrlPnt):
             i += 1
 
 
-'''Main loop'''
+'''Main'''
 curveName = 'BezierCircle'
 bagName = 'bbag'
 numCtrlPnt = 7
@@ -154,5 +155,4 @@ dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/H
 dataFolderPath1 = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/HandbagGripper_25-05-2023-10-15-48_dynamics'
 
 add_keyframes_chain(dataFolderPath1, curveName, bagName, numCtrlPnt)
-
 add_keyframes_gripper(dataFolderPath1, numCtrlPnt)

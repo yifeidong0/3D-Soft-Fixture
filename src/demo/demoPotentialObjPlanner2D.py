@@ -5,7 +5,6 @@ Date: 14/07/2023
 Description: The script demonstrates energy-biased optimal path search in a 2D C-space.
 Adapted from https://github.com/ompl/ompl/blob/main/demos/OptimalPlanning.py
 """
-
 import sys
 try:
     from ompl import util as ou
@@ -20,7 +19,6 @@ except ImportError:
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-
 
 # Hyperparameters
 rads = [[.1, .2], [.1, .7], [.1, .6]]
@@ -46,7 +44,8 @@ class minPathPotentialObjective(ob.OptimizationObjective):
         self.start_ = start
         self.useIncrementalCost_ = useIncrementalCost
 
-    '''I think the way of defining potential energy gain (mechanical work required from an external hand
+    '''
+    I think the way of defining potential energy gain (mechanical work required from an external hand
     to lift up an object or extend an elastic band) was wrong.
     Previously we find the max energy along the path. However, each time potential energy gains, extra work required; 
     potential energy drops, it LOSES this part of energy by applying work on the hand.
@@ -232,7 +231,7 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
     optimizingPlanner.setProblemDefinition(pdef)
     optimizingPlanner.setup()
 
-    # attempt to solve the planning problem in the given runtime
+    # Attempt to solve the planning problem in the given runtime
     solved = optimizingPlanner.solve(runTime)
 
     if solved:

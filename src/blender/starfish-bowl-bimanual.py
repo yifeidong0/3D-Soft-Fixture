@@ -3,9 +3,12 @@ import bpy
 import math
 import csv
 import mathutils
-'''Run the script in Blender background mode:
+'''
+Insert keyframes for a movement primitive of a catching starfish scenario. The data came from Pybullet-OMPL algorithms.
+Run the script in Blender background mode:
 /snap/bin$ ./blender -b ~/Documents/blender-models/rope.blend -P ~/Documents/KTH/git/3D-Energy-Bounded-Caging/src/blenderScript.py
 '''
+
 BASE_BONES = ['Bone11', 'Bone21', 'Bone31', 'Bone41', 'Bone51']
 SECOND_BONES = ['Bone12', 'Bone22', 'Bone32', 'Bone42', 'Bone52']
 NUM_FISH_JOINT = 10
@@ -120,8 +123,7 @@ def add_keyframes(dataFolderPath, objNames):
             i += 1
 
 
-'''Main loop'''
-
+'''Main'''
 armatureName = 'Armature'
 bowlName = 'joinedBowl'
 handName = 'rightHand'
@@ -129,5 +131,4 @@ objNames = [armatureName, bowlName, handName]
 reset_fish(armatureName)
 
 dataFolderPath = '/home/yif/Documents/KTH/git/3D-Energy-Bounded-Caging/results/StarfishBowl_18-05-2023-20-54-19_dynamics'
-
 add_keyframes(dataFolderPath, objNames)

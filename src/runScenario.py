@@ -49,26 +49,10 @@ class runScenario():
         self.idxSce = []
 
     def initializeParams(self):
-        '''Initialize parameters for several scenarios.
+        '''
+        Initialize parameters for several scenarios.
         '''
         match self.args.scenario:
-            case 'HookFishHole':
-                self.object = 'FishHole'
-                self.objectPos = [.0,-.4,1.4]
-                self.objectEul = [3.14,3.14,3.14]
-                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = 'Hook'
-                self.obstaclePos = [0.5, -.35, 3]
-                self.obstacleEul = [-.6, 0, 0]
-                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [.1,.1,.1]
-                self.basePosBounds=[[-.3,.3], [.5,2.5], [1.8,3]]
-                self.goalCoMPose = [0,2,1.9] + [0, 0, 0]
-                self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[math.radians(-10), math.radians(10)]]*3
-                self.startFrame = 12000
-                self.endFrame = 18000
-                self.downsampleRate = 200
-                self.half_box_size = [1,2.5,.1]
             case 'ShovelFish':
                 self.object = 'Fish'
                 self.objectPos = [0,-1.3,1.7]
@@ -90,6 +74,19 @@ class runScenario():
                 self.downsampleRate = 500
                 self.boxBasePos = [0,0,1]
                 self.half_box_size = [1,2.5,.1]
+            case 'MaskEar':
+                self.object = 'MaskBand'
+                self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
+                self.objectStart = [0,0,0] * self.numCtrlPoint
+                self.objectGoal = []
+                self.obstacle = 'Ear'
+                self.obstaclePos = [0,0,0]
+                self.obstacleEul = [0,0,0]
+                self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [1.0,]*3
+                self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
+                self.startFrame = 1
+                self.endFrame = 163
             case 'StarfishBowl':
                 self.object = 'Starfish'
                 self.objectPos = [0,1.5,3.5]
@@ -110,25 +107,23 @@ class runScenario():
                 self.boxBaseEul = [0,0,0]
                 self.boxBaseQtn = list(p.getQuaternionFromEuler(self.boxBaseEul))
                 self.half_box_size = [1,1,.05]
-            case 'BimanualRubic':
-                self.object = 'Rubic'
-                self.objectPos = [0,0,2]
-                self.objectEul = [0,0,0]
+            case 'HookFishHole':
+                self.object = 'FishHole'
+                self.objectPos = [.0,-.4,1.4]
+                self.objectEul = [3.14,3.14,3.14]
                 self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
-                self.obstacle = '3fGripper'
-                self.obstaclePos = [0,0,1]
-                self.obstacleEul = [1.57, 0, 0]
+                self.obstacle = 'Hook'
+                self.obstaclePos = [0.5, -.35, 3]
+                self.obstacleEul = [-.6, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstaclePos1 = [0,0,4]
-                self.obstacleEul1 = [-1.57, 0, 1.57,]
-                self.obstacleQtn1 = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [10.0,]*3
-                self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
-                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
-                self.goalCoMPose = [0,1,0.01] + [0]*3
-                self.startFrame = 4000
-                self.endFrame = 4200
-                self.downsampleRate = 50 # 10
+                self.obstacleScale = [.1,.1,.1]
+                self.basePosBounds=[[-.3,.3], [.5,2.5], [1.8,3]]
+                self.goalCoMPose = [0,2,1.9] + [0, 0, 0]
+                self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[math.radians(-10), math.radians(10)]]*3
+                self.startFrame = 12000
+                self.endFrame = 18000
+                self.downsampleRate = 200
+                self.half_box_size = [1,2.5,.1]
             case 'HandbagGripper':
                 self.object = 'Chain'
                 self.numCtrlPoint = 4 # numChainLink = numChainNode = numCtrlPoint+3
@@ -152,19 +147,25 @@ class runScenario():
                 self.startFrame = 0
                 self.endFrame = 140
                 self.downsampleRate = 1
-            case 'MaskEar':
-                self.object = 'MaskBand'
-                self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
-                self.objectStart = [0,0,0] * self.numCtrlPoint
-                self.objectGoal = []
-                self.obstacle = 'Ear'
-                self.obstaclePos = [0,0,0]
-                self.obstacleEul = [0,0,0]
+            case 'BimanualRubic':
+                self.object = 'Rubic'
+                self.objectPos = [0,0,2]
+                self.objectEul = [0,0,0]
+                self.objectQtn = list(p.getQuaternionFromEuler(self.objectEul)) # XYZW
+                self.obstacle = '3fGripper'
+                self.obstaclePos = [0,0,1]
+                self.obstacleEul = [1.57, 0, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
-                self.obstacleScale = [1.0,]*3
-                self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
-                self.startFrame = 1
-                self.endFrame = 163
+                self.obstaclePos1 = [0,0,4]
+                self.obstacleEul1 = [-1.57, 0, 1.57,]
+                self.obstacleQtn1 = list(p.getQuaternionFromEuler(self.obstacleEul))
+                self.obstacleScale = [10.0,]*3
+                self.goalSpaceBounds = [[-2,2], [-2,2], [0,.1]] + [[-.1,.1], [-.1,.1], [-.1,.1]]
+                self.basePosBounds = [[-2,2], [-2,2], [0,4]]
+                self.goalCoMPose = [0,1,0.01] + [0]*3
+                self.startFrame = 0
+                self.endFrame = 4200
+                self.downsampleRate = 50
             case 'HookTrapsRing':
                 self.object = 'Ring'
                 self.objectPos = [1.3,-.1,3.4]
@@ -183,13 +184,15 @@ class runScenario():
                 self.downsampleRate = 1
 
     def loadObject(self):
-        '''Loading models of objects to pybullet.
+        '''
+        Loading models of objects to pybullet.
         '''
         if self.args.object not in ['Chain', 'MaskBand']:
             self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
 
     def loadObstacle(self):
-        '''Loading models of obstacles to pybullet.
+        '''
+        Loading models of obstacles to pybullet.
         '''
         obst = self.args.obstacle
         if obst in ['Bowl', 'Hook', 'SplashBowl', 'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Ear']:
@@ -216,7 +219,8 @@ class runScenario():
             self.obstacle = obstascle3fGripper(self.obstacleId)
 
     def getJointStates(self, id):
-        '''Obtaining joint states of an object.
+        '''
+        Obtaining joint states of an object.
         '''
         numJoints = p.getNumJoints(id)
         if numJoints == 0:  # rigid object with no joints
@@ -229,7 +233,8 @@ class runScenario():
         return joint_positions, joint_velocities, joint_torques
 
     def runHandbagGripper(self):
-        '''For the task of grabbing a rope loop of bloodbags with a gripper.
+        '''
+        For the task of grabbing a rope loop of bloodbags with a gripper.
         '''
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
@@ -283,7 +288,8 @@ class runScenario():
             i += 1
 
     def runHookFish(self):
-        '''For the tasks of hooking frozen fish with a fish hook.
+        '''
+        For the tasks of hooking frozen fish with a fish hook.
         '''
         # Add a table
         box_pos = [0,-2.78,1]
@@ -344,7 +350,8 @@ class runScenario():
             i += 1
 
     def runShovelFish(self):
-        '''For the task of shoveling fish with a shovel, a supporting hand and tabletop.
+        '''
+        For the task of shoveling fish with a shovel, a supporting hand and tabletop.
         '''
         # Add a table
         colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
@@ -408,7 +415,8 @@ class runScenario():
             i += 1
 
     def runStarfishBowl(self):
-        '''For the task of catching a starfish with a bowl and wobbling the bowl 
+        '''
+        For the task of catching a starfish with a bowl and wobbling the bowl 
         to bring the starfish down to its bottom.
         '''
         # Add a right hand that initially holds the starfish and sheds
@@ -482,7 +490,8 @@ class runScenario():
             i += 1
 
     def runBimanualRubic(self):
-        '''For the task of manipulating a rubic cube with two Robotiq grippers.
+        '''
+        For the task of manipulating a rubic cube with two Robotiq grippers.
         '''
         self.obstaclePose = self.obstaclePos + self.obstacleEul
         self.obstaclePose1 = self.obstaclePos1 + self.obstacleEul1
@@ -569,7 +578,8 @@ class runScenario():
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
     def readMaskEar(self, folderName):
-        '''For the task of wearing a mask with two fingers. Different from scenarios above, the dynamics are 
+        '''
+        For the task of wearing a mask with two fingers. Different from scenarios above, the dynamics are 
         simulated in Blender instead in this example, and we read the mask loop pose over frames from a data
         file.
         '''
@@ -616,7 +626,9 @@ class runScenario():
         p.disconnect()
 
     def runDynamicFalling(self):
-        '''For the tasks of catching a falling ring with a fish hook.'''
+        '''
+        For the tasks of catching a falling ring with a fish hook.
+        '''
         i = 0        
         while (1):
             p.stepSimulation()
@@ -760,9 +772,9 @@ if __name__ == '__main__':
 
             # Choose a searching method
             if args.search == 'BisectionSearch':
-                useBisecSearch = 1 # True: bisection search; False: Conservative search
-                maxT = 600
-                numIter = 3
+                useBisecSearch = 1 # 1: bisection search; 0: incremental search
+                maxT = 60 # cut-off time of the iterative search
+                numIter = 1 # no. of inner iterations
                 env.energy_bisection_search(numIter=numIter, useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
 
                 # Create new folder
