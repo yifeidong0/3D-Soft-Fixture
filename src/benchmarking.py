@@ -7,7 +7,7 @@ from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import *
 from main import argument_parser
 from utils import *
-from visualization import *
+from visualization.visualization import *
 import numpy as np
 from runScenario import runScenario
 

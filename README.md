@@ -7,21 +7,21 @@ This repo provides code for the paper - Soft Fixtures: Practical Caging-Based Ma
 # Environment
 Tested with:<br>
 **Python 3.10**<br>
-**Ubuntu22.04**
+**Ubuntu 22.04**
 
 # Installation instructions:
 
-0. Create a virtual environment (optional but recommended)
+## 0. Create a virtual environment (optional but recommended)
 
 You can create a virtual environment using tools like virtualenv or conda. 
 
-1. Install OMPL with its Python bindings
+## 1. Install OMPL with its Python bindings
 
 Please first refer to the official installation [instructions](https://ompl.kavrakilab.org/installation.html)
 
 For Ubuntu systems, you could simply do:
 
-1.1 Download the OMPL (installation script)[https://ompl.kavrakilab.org/install-ompl-ubuntu.sh]
+1.1 Download the OMPL [installation script](https://ompl.kavrakilab.org/install-ompl-ubuntu.sh)
 
 1.2 Make it executable:
 ```
@@ -35,26 +35,69 @@ chmod u+x install-ompl-ubuntu.sh
 
 You can also choose to install from source.
 
-2. Install other dependencies
+## 2. Install other dependencies
 ```
 pip install -r requirements.txt
 ```
 
 # Usage
-Two examples are provided.
-This demo plans the arm motion of a Franka robot.
+
+## 1. Run escape energy analysis over a scenario
+
+Here is a table of arguments you could use to customize your algorithm.
+
+| Argument        | Short Option | Long Option       | Default Value       | Choices                      | Description                                                                                                                                      |
+|-----------------|--------------|-------------------|---------------------|------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| scenario        | -c           | --scenario        | ShovelFish          | ShovelFish, MaskEar, StarfishBowl, HookFishHole, HandbagGripper, BimanualRubic, HookTrapsRing | Specify the scenario for the demo.                                                                                                                |
+| search          | -s           | --search          | EnergyBiasedSearch  | BisectionSearch, EnergyBiasedSearch | Specify the sampling-based search method to use.                                                                                                |
+| planner         | -p           | --planner         | BITstar             | BITstar, InformedRRTstar, RRTstar, RRT, AITstar | Specify the optimal planner to use.                                                                                                              |
+| object          | -j           | --object          | Fish                | Fish, MaskBand, Starfish, FishHole, Chain, Rubic, Ring | Specify the object to cage.                                                                                                                      |
+| obstacle        | -l           | --obstacle        | Shovel              | Shovel, Ear, LeftHandAndBowl, Hook, 3fGripper | Specify the obstacle that cages the object.                                                                                                      |
+| runtime         | -t           | --runtime         | 30                  | N/A                          | Specify the runtime in seconds. Must be greater than 0.                                                                                          |
+| visualization   | -v           | --visualization   | True                   | False, True                  | Specify whether to visualize the PyBullet GUI.                                                                                                   |
+
+A sample command is provided as follows,
 ```
-python examples/demo_franka.py
+python3 src/runScenario.py -c ShovelFish -s EnergyBiasedSearch -p BITstar -j Fish -l Shovel -t 30 -v 1 
 ```
 
-This demo plans whole-body motion of a planar 4-link snake-like robot.
+Please follow the correspondance in the arguments as below,
+
+| Scenario        | Object             | Obstacle     |
+|-----------------|--------------------|--------------|
+| ShovelFish      | Fish               | Shovel       |
+| MaskEar         | MaskBand           | Ear          |
+| StarfishBowl    | Starfish           | LeftHandAndBowl |
+| HookFishHole    | FishHole           | Hook         |
+| HandbagGripper  | Chain              | 3fGripper    |
+| BimanualRubic   | Rubic              | 3fGripper    |
+| HookTrapsRing   | Ring               | Hook         |
+
+You could try other planners with EnergyBiasedSearch, though BIT* might perform the best.
+Please use RRT for BisectionSearch (tested and thus preferred).
+
+## 2. Physical experiment
+
+To reproduce our results on a Emika Franka Panda 7-axis robot arm, please 
+
+2.1 Refer to Franka FCI [instructions](https://frankaemika.github.io/docs/installation_linux.html#building-from-source) and build libfranka
+
+2.2 Copy the cpp script src/franka/generate_cartesian_pose_random_shaking.cpp to [the path](https://github.com/frankaemika/libfranka/tree/master/examples) and add it to CMakeLists.txt
+
+2.3 Rebuild the project
 ```
-python examples/demo_planar.py
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF ..
+cmake --build .
+```
+
+2.4 Run the script
+```
+~/libfranka/build$ ./examples/generate_cartesian_pose_motion <robot-ip>
 ```
 
 # Additional Information
 1. Currently tested planners include PRM, RRT, RRTstar, RRTConnect, EST, FMT* and BIT*. But all planners in OMPL should work. Just add them in the set_planner API in PbOMPL class.
-2. To work with other robot, you might need to inherit from PbOMPLRobot class in PbOMPL and override several functionalities. Refer to my_planar_robot.py for an example. Refer to demo_plannar.py for an example.
 
 # Acknowledgement
 The code is partly built upon the repo - [pybullet_ompl](https://github.com/lyfkyle/pybullet_ompl.git), which provides interface to use OMPL for motion planning inside PyBullet.

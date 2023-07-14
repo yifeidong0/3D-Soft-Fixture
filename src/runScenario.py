@@ -1,36 +1,43 @@
+"""
+Title: escape energy analysis over scenarios
+Author: Yifei Dong
+Date: 14/07/2023
+Description: The script provides an interface of running our iterative or energy-biased search algorithms 
+and analyzing the escape energy over several manipulation primitives.
+"""
+
 import pybullet as p
 import time
 import os.path as osp
 import sys
 sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
-from pbOmplInterface import PbOMPL
 from cagingSearchAlgo import *
 from main import argument_parser
 import pybullet_data
 from utils import *
 from object import obstascle3fGripper
-from visualization import *
+from visualization.visualization import *
 import numpy as np
 
 class runScenario():
     def __init__(self, args):
+        # Pybullet setup
         p.connect(p.GUI)
         p.setTimeStep(1./240.)
         p.setRealTimeSimulation(0)
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
         
-        # planeId = p.loadURDF("plane.urdf", [0,0,-1])
         self.paths = path_collector()
         self.args = args
         self.gravity = -9.81
         self.downsampleRate = 1
 
-        # load object and obstacle
+        # Load object and obstacle models
         self.initializeParams()
         self.loadObject()
         self.loadObstacle()
 
-        # data structures for object and obstacle configs
+        # Data structures for object and obstacle configs
         self.objBasePosSce = []
         self.objBaseQtnSce = []
         self.objBaseEulSce = []
@@ -42,6 +49,8 @@ class runScenario():
         self.idxSce = []
 
     def initializeParams(self):
+        '''Initialize parameters for several scenarios.
+        '''
         match self.args.scenario:
             case 'HookFishHole':
                 self.object = 'FishHole'
@@ -73,12 +82,12 @@ class runScenario():
                 self.handScale = [1,1,1]
                 self.handPos = [.5,-1.6,1.8]
                 self.handQtn = list(p.getQuaternionFromEuler([-1.57,.2,-2.2]))
-                self.basePosBounds = [[-2,2], [-1.5,1], [0,2]] # [[-2,2], [-1.5,1], [0,2]] # [[-1,1], [-1,1], [1.5,7]]
-                self.goalCoMPose = [1.5,0,.5] + [0, 0, 0] # [1.5,0,.5] + [0, 0, 0] # [0,0.8,1.51] + [0, 0, 0]
+                self.basePosBounds = [[-2,2], [-1.5,1], [0,2]]
+                self.goalCoMPose = [1.5,0,.5] + [0, 0, 0]
                 self.goalSpaceBounds = [[-.3,.3], [.5,2.5], [1.8,1.83]] + [[-.1,.1]]*9
-                self.startFrame = 5200 # 0 # 28000
-                self.endFrame = 28000 # 28000 # 40000
-                self.downsampleRate = 650 # 500
+                self.startFrame = 0
+                self.endFrame = 40000
+                self.downsampleRate = 500
                 self.boxBasePos = [0,0,1]
                 self.half_box_size = [1,2.5,.1]
             case 'StarfishBowl':
@@ -137,26 +146,24 @@ class runScenario():
                 self.obstacle = '3fGripper'
                 self.obstaclePos = [0,-.5,2.2]
                 self.obstacleEul = [-1.57, -2, 1.57]
-                # self.obstaclePos = [0,-1,2.5]
-                # self.obstacleEul = [0, -1.57, 0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [10.0,]*3
                 self.basePosBounds = [[-2,2], [-2,2], [0,4]]
                 self.startFrame = 0
                 self.endFrame = 140
-                self.downsampleRate = 4 # 1
+                self.downsampleRate = 1
             case 'MaskEar':
                 self.object = 'MaskBand'
                 self.numCtrlPoint = 6 # numChainLink = numChainNode = numCtrlPoint+3
                 self.objectStart = [0,0,0] * self.numCtrlPoint
-                self.objectGoal = [] # [0,0,.5] * self.numCtrlPoint
+                self.objectGoal = []
                 self.obstacle = 'Ear'
                 self.obstaclePos = [0,0,0]
                 self.obstacleEul = [0,0,0]
                 self.obstacleQtn = list(p.getQuaternionFromEuler(self.obstacleEul))
                 self.obstacleScale = [1.0,]*3
                 self.basePosBounds = [[0.55,1], [-.5,.3], [-.4,.5]]
-                self.startFrame = 120 # 137
+                self.startFrame = 1
                 self.endFrame = 163
             case 'HookTrapsRing':
                 self.object = 'Ring'
@@ -171,15 +178,19 @@ class runScenario():
                 self.basePosBounds=[[-.5,2], [-.5,.5], [1.3,2.7]] # searching bounds
                 self.goalSpaceBounds = [[1.4,2], [-.5,.5], [1.3,2.1]] + [[math.radians(-180), math.radians(180)]] + [[-.2, .2]]*2
                 self.goalCoMPose = [1.6,0,1.5] + [1.57, 0, 0]
-                self.startFrame = 390 # 280 - 520
-                self.endFrame = 390
+                self.startFrame = 280
+                self.endFrame = 520
                 self.downsampleRate = 1
 
     def loadObject(self):
+        '''Loading models of objects to pybullet.
+        '''
         if self.args.object not in ['Chain', 'MaskBand']:
             self.objectId = p.loadURDF(self.paths[self.args.object], self.objectPos, self.objectQtn)
 
     def loadObstacle(self):
+        '''Loading models of obstacles to pybullet.
+        '''
         obst = self.args.obstacle
         if obst in ['Bowl', 'Hook', 'SplashBowl', 'LeftHand', 'Shovel', 'LeftHandAndBowl', 'Ear']:
             mesh_collision_shape = p.createCollisionShape(
@@ -205,6 +216,8 @@ class runScenario():
             self.obstacle = obstascle3fGripper(self.obstacleId)
 
     def getJointStates(self, id):
+        '''Obtaining joint states of an object.
+        '''
         numJoints = p.getNumJoints(id)
         if numJoints == 0:  # rigid object with no joints
             return [], [], []
@@ -216,13 +229,13 @@ class runScenario():
         return joint_positions, joint_velocities, joint_torques
 
     def runHandbagGripper(self):
-        '''For the task of a gripper grabbing a handbag.'''
+        '''For the task of grabbing a rope loop of bloodbags with a gripper.
+        '''
         self.obstaclePose = self.obstaclePos + self.obstacleEul
 
         # Set initial joint states - hand
         jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
         self.numJoints = len(jointPositions)
-        # obstacleJointPos = [jointPositions[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
         obstacleState = self.obstaclePose + jointPositions
         self.obstacle.set_state(obstacleState)
 
@@ -230,11 +243,10 @@ class runScenario():
         i = 0
         new_state_chain = self.objectStart
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            # time.sleep(2/240.)
 
+            # Define manipulation primitives
             i_thres = [150,450]
             if i < i_thres[0]:
                 increment_obs = [0,0,0,] + [0,0,0.] + [0,0.005,0,0]*3 # + [0]*4
@@ -251,12 +263,6 @@ class runScenario():
             # Get new chain state
             new_state_chain = [new_state_chain[k]+increment_chain[k] for k in range(len(self.objectStart))]
 
-            # Validate collision status
-            # if i < i_thres[0]:
-            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
-            # else:
-            #     print('STATE IS INVALID',  chain_collision_raycast(new_state_chain, self.linkLen, visRays=1))
-                
             if i % self.downsampleRate == 0 and i >= self.startFrame:
                 # Record obstacle state - hand
                 self.obsBasePosSce.append(new_state_left[:3])
@@ -277,9 +283,8 @@ class runScenario():
             i += 1
 
     def runHookFish(self):
-        '''For the tasks of hooking fish'''
-        i = 0
-
+        '''For the tasks of hooking frozen fish with a fish hook.
+        '''
         # Add a table
         box_pos = [0,-2.78,1]
         box_state = box_pos + [0,0,0]
@@ -288,12 +293,14 @@ class runScenario():
         self.box = ObjectFromUrdf(box_id)
         self.boxBasePosSce = []
 
+        # start simulation
+        i = 0
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
             time.sleep(.1/240.)
             
+            # Define manipulation primitives
             i_thres = 4500
             if i < i_thres:
                 increment_hook = [0,0.0001,-0.0001,] + [0,0,0]
@@ -337,11 +344,9 @@ class runScenario():
             i += 1
 
     def runShovelFish(self):
-        '''For the task of shoveling fish with a shovel, a supporting hand and tabletop.'''
-        i = 0
-
+        '''For the task of shoveling fish with a shovel, a supporting hand and tabletop.
+        '''
         # Add a table
-        # box_state = self.boxBasePos + [0,0,0]
         colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
         box_id = p.createMultiBody(baseMass=0, baseCollisionShapeIndex=colBox_id, basePosition=self.boxBasePos)
         self.box = ObjectFromUrdf(box_id)
@@ -363,12 +368,12 @@ class runScenario():
         )
 
         # Dynamics rolling on
+        i = 0
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
-            # time.sleep(10/240.)
             
+            # Define manipulation primitives
             i_thres = 24000
             if i < i_thres:
                 increment_shovel = [0,-0.0001,-0.000,] + [0,0,0]
@@ -403,9 +408,9 @@ class runScenario():
             i += 1
 
     def runStarfishBowl(self):
-        '''For the task of catching a starfish with a bowl.'''
-        i = 0
-
+        '''For the task of catching a starfish with a bowl and wobbling the bowl 
+        to bring the starfish down to its bottom.
+        '''
         # Add a right hand that initially holds the starfish and sheds
         box_state = self.boxBasePos + self.boxBaseEul
         colBox_id = p.createCollisionShape(p.GEOM_BOX, halfExtents=self.half_box_size)
@@ -421,12 +426,13 @@ class runScenario():
         p.changeDynamics(self.obstacleId, -1, lateralFriction=0.20, spinningFriction=0, rollingFriction=0.001,)
 
         # Dynamics rolling on
+        i = 0
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
             time.sleep(.2/240.)
             
+            # Define manipulation primitives
             i_thres = [1000,2200]
             if i < i_thres[0]: # right hand sheds
                 increment_bowl = [0,0,0,] + [0,0,0]
@@ -476,7 +482,8 @@ class runScenario():
             i += 1
 
     def runBimanualRubic(self):
-        '''For the task of 2 grippers clenching rubic cube.'''
+        '''For the task of manipulating a rubic cube with two Robotiq grippers.
+        '''
         self.obstaclePose = self.obstaclePos + self.obstacleEul
         self.obstaclePose1 = self.obstaclePos1 + self.obstacleEul1
         self.obsBasePosSce1 = []
@@ -495,24 +502,22 @@ class runScenario():
         # Set initial joint states - left hand
         jointPositions,_,_ = self.getJointStates(self.obstacleId) # list(12)
         self.numJoints = len(jointPositions)
-        # obstacleJointPos = [jointPositions[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions[i] for i in range(len(jointPositions))]
         obstacleState = self.obstaclePose + jointPositions
         self.obstacle.set_state(obstacleState)
         
         # Set initial joint states - right hand
         jointPositions1,_,_ = self.getJointStates(self.obstacleId1)
-        # obstacleJointPos1 = [jointPositions1[i]-0/1000 if (i==1 or i==5 or i==9) else jointPositions1[i] for i in range(len(jointPositions1))]
         obstacleState1 = self.obstaclePose1 + jointPositions1
         self.obstacle1.set_state(obstacleState1)
         
         # start simulation
         i = 0
         while (1):
-            # print(i)
             p.stepSimulation()
             p.setGravity(0, 0, self.gravity)
             time.sleep(.5/240.)
 
+            # Define manipulation primitives
             i_thres = [1000,2000]
             if i < i_thres[0]:
                 increment_obs = [0,0,0,] + [0,0,0] + self.numJoints*[0]
@@ -534,8 +539,6 @@ class runScenario():
             curr_state_right = self.obstacle1.get_cur_state() if i>0 else obstacleState1
             new_state_right = [curr_state_right[k]+increment_right[k] for k in range(len(curr_state_right))]
             self.obstacle1.set_state(new_state_right)
-
-            # print(len(p.getClosestPoints(bodyA=self.objectId, bodyB=self.obstacleId, distance=-0.025)))
 
             if i % self.downsampleRate == 0 and i > self.startFrame:
                 # Record obstacle state - left hand
@@ -562,10 +565,14 @@ class runScenario():
                 break
             i += 1
 
-        # quaternion to euler
+        # Quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
     def readMaskEar(self, folderName):
+        '''For the task of wearing a mask with two fingers. Different from scenarios above, the dynamics are 
+        simulated in Blender instead in this example, and we read the mask loop pose over frames from a data
+        file.
+        '''
         self.frameID = []
         self.objectStateSce = []
         headers = ['frameID', 
@@ -581,7 +588,7 @@ class runScenario():
         with open('{}/data.csv'.format(folderName), 'r') as csvfile:
             csvreader = csv.DictReader(csvfile)
             for i, row in enumerate(csvreader):
-                # fixed vertices positions of the mask band
+                # Fixed vertices positions of the mask band
                 if i == 0:
                     self.bandFixedV0, self.bandFixedV1 = [], []
                     for h in headers[1:4]:
@@ -591,7 +598,7 @@ class runScenario():
                     for h in headers[-3:]:
                         self.bandFixedV1.append(float(row[h]))
 
-                # record a section of band states over frames
+                # Record a section of band states over frames
                 id = int(row['frameID'])
                 if id >= self.startFrame and id <= self.endFrame:
                     self.frameID.append(id)
@@ -609,7 +616,7 @@ class runScenario():
         p.disconnect()
 
     def runDynamicFalling(self):
-        '''For the tasks of articulated fish or ring falling'''
+        '''For the tasks of catching a falling ring with a fish hook.'''
         i = 0        
         while (1):
             p.stepSimulation()
@@ -620,7 +627,7 @@ class runScenario():
                 jointPositions,_,_ = self.getJointStates(self.objectId) # list(11)
                 gemPos, gemQtn = p.getBasePositionAndOrientation(self.objectId) # tuple(3), tuple(4)
 
-                # record objects' DoF
+                # Record objects' DoF
                 self.objBasePosSce.append(list(gemPos))
                 self.objBaseQtnSce.append(list(gemQtn))
                 self.objJointPosSce.append(jointPositions)
@@ -631,28 +638,25 @@ class runScenario():
                 break
             i += 1
 
-        # record obstacles' DoF
+        # Record obstacles' DoF
         sceLen = len(self.objBasePosSce)
         self.obsBasePosSce = [self.obstaclePos for i in range(sceLen)]
         self.obsBaseQtnSce = [self.obstacleQtn for i in range(sceLen)]
         self.obsBaseEulSce = [self.obstacleEul for i in range(sceLen)]
         self.obsJointPosSce = [[] for i in range(sceLen)]
 
-        # quaternion to euler
+        # Quaternion to euler
         self.objBaseEulSce = [list(p.getEulerFromQuaternion(q)) for q in self.objBaseQtnSce]
 
 
 if __name__ == '__main__':
-    # t_list = [2,6,10,15,22,30,38,50,70,100,200,350,600]
-    # for t in t_list:
     args, parser = argument_parser()
-    # args.runtime = t
-    numRunTime = 20
+    numRunTime = 1
     for n in range(numRunTime):
         rigidObjectList = get_non_articulated_objects()
         isArticulatedObj = False if args.object in rigidObjectList else True
     
-        # run a dynamic falling scenario and analyze frame-wise escape energy
+        # Run the scenarios and record frame-wse poses of objects and obstacles
         sce = runScenario(args)
         if args.scenario in ['HookFishHole']:
             sce.runHookFish()
@@ -674,7 +678,6 @@ if __name__ == '__main__':
             sce.readMaskEar(folderName)
         elif args.scenario in ['HookTrapsRing']:
             sce.runDynamicFalling()
-            # record_dynamics_scene(sce, args)
 
         # Create caging environment and items in pybullet
         if args.object in rigidObjectList:
@@ -695,8 +698,6 @@ if __name__ == '__main__':
             env.add_obstacles(sce.obsBasePosSce[0], sce.obsBaseQtnSce[0], sce.obstacleScale)
 
         # Add extra obstacles
-        # if args.scenario in ['HookFishHole']:
-        #     box_id = env.add_box(sce.boxBasePosSce[0], sce.half_box_size)
         if args.scenario in ['ShovelFish']:
             box_id = env.add_box(sce.boxBasePos, sce.half_box_size)
             env.add_obstacles(sce.handPos, sce.handQtn, sce.handScale, obstacleName='LeftHand')
@@ -705,7 +706,6 @@ if __name__ == '__main__':
         elif args.scenario in ['BimanualRubic']:
             env.add_obstacles(sce.obsBasePosSce1[0], sce.obsBaseQtnSce1[0], sce.obstacleScale, obstacleName='3fGripper')
 
-        # print('FISH {}, BOX {}, HAND {}, SHOVEL {} IDs'.format(env.robot.id, box_id, env.obstacle_id_new, env.obstacle_id))
         escapeEnergyCostSce = []
         startEnergySce = [] # start state energy
         startGEnergySce = [] # start G potential energy
@@ -714,16 +714,12 @@ if __name__ == '__main__':
         # Run the caging analysis algorithm over downsampled frames we extracted above
         numMainIter = len(sce.objectStateSce) if args.scenario in ['MaskEar'] else len(sce.objJointPosSce)
         for i in range(numMainIter):
-            # if i == 1:
-            #     continue
-
             # Set obstacle's state
             if args.scenario in ['GripperClenchesStarfish',]:
                 env.obstacle._set_joint_positions(env.obstacle.joint_idx, sce.obsJointPosSce[i])
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
             if args.scenario in ['HookFishHole']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
-                # p.resetBasePositionAndOrientation(box_id, sce.boxBasePosSce[i], list(p.getQuaternionFromEuler([0,0,0])))
             if args.scenario in ['ShovelFish']:
                 p.resetBasePositionAndOrientation(env.obstacle_id, sce.obsBasePosSce[i], sce.obsBaseQtnSce[i])
             if args.scenario in ['StarfishBowl']:
@@ -755,8 +751,6 @@ if __name__ == '__main__':
             else:
                 objGoalState = sce.goalCoMPose + [0]*env.robot.articulate_num
             env.reset_start_and_goal(objStartState, objGoalState)
-            # if not isValidStartAndGoal: # start or goal state invalid
-            #     continue
 
             # Create OMPL interface
             env.create_ompl_interface()
@@ -770,8 +764,6 @@ if __name__ == '__main__':
                 maxT = 600
                 numIter = 3
                 env.energy_bisection_search(numIter=numIter, useBisectionSearch=useBisecSearch, maxTimeTaken=maxT)
-                # env.visualize_bisection_search() # visualize
-                # print('final z threshold: {}, escape energy: {}'.format(z_thres, escape_energy))
 
                 # Create new folder
                 createFolder = 1 if i == 0 else 0
@@ -789,7 +781,6 @@ if __name__ == '__main__':
                 save_escape_path = 0
                 get_cost_from_path = 0 # for rigid objects and incremental cost
                 isSolved = env.energy_biased_search(numInnerIter, save_escape_path, get_cost_from_path=get_cost_from_path)
-                # env.visualize_energy_biased_search()
 
                 # Record start and escape energy
                 if args.object in ['Fish']:
@@ -803,7 +794,6 @@ if __name__ == '__main__':
                     startEEnergy = env.pb_ompl_interface.potentialObjective.getElasticEnergy(objStartState)
                     startGEnergy, startEnergy = 0, startEEnergy
                 else:
-                    # startEnergy = env.state_energy_escape_path_iter[0][0] if isSolved else np.inf
                     startGEnergy, startEEnergy = None, None
                     startEnergy = objStartState[2]
                 startEnergySce.append(startEnergy)
@@ -824,11 +814,5 @@ if __name__ == '__main__':
                 energyData = [startEnergy, startGEnergy, startEEnergy, escapeEnergyCost]
                 record_data_loop(sce, args, energyData, folderName, i)
 
-            # sleep(10)
-
         # Shut down pybullet (GUI)
         p.disconnect()
-
-        # # Plot
-        # energyData = (startEnergySce, startGEnergySce, startEEnergySce, escapeEnergyCostSce)
-        # plot_escape_energy(energyData, args, folderName, isArticulatedObj)

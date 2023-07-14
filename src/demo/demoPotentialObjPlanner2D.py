@@ -1,5 +1,10 @@
-#########################################################################
-# https://github.com/ompl/ompl/blob/main/demos/OptimalPlanning.py
+"""
+Title: 2D demonstration
+Author: Yifei Dong
+Date: 14/07/2023
+Description: The script demonstrates energy-biased optimal path search in a 2D C-space.
+Adapted from https://github.com/ompl/ompl/blob/main/demos/OptimalPlanning.py
+"""
 
 import sys
 try:
@@ -7,8 +12,6 @@ try:
     from ompl import base as ob
     from ompl import geometric as og
 except ImportError:
-    # if the ompl module is not in the PYTHONPATH assume it is installed in a
-    # subdirectory of the parent directory called "py-bindings."
     from os.path import abspath, dirname, join
     sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'py-bindings'))
     from ompl import util as ou
@@ -17,7 +20,6 @@ except ImportError:
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import ompl
 
 
 # Hyperparameters
@@ -54,22 +56,6 @@ class minPathPotentialObjective(ob.OptimizationObjective):
     min{Egain} <-> min{Etotal} 
     '''
 
-    '''Original: max potential gain'''
-    # def combineCosts(self, c1, c2):
-    #     '''
-    #     The vertex i cost is expressed as the potential energy gain along 
-    #     the path connecting i and v_start, and formulated as
-    #     v_child.cost = combineCost(v_parent.cost, 
-    #                             motionCost(v_parent, v_child))
-    #                 = max(v_parent.cost, v_child.energy-v_start.energy)
-    #     '''
-    #     '''Combine the current cost with a motion cost'''
-    #     return ob.Cost(max(c1.value(), c2.value()))
-
-    # def motionCost(self, s1, s2):
-    #     return ob.Cost(s2[1] - self.start_[1])
-
-    '''Accumulated potential gain'''
     def combineCosts(self, c1, c2):
         if self.useIncrementalCost_:
             return ob.Cost(c1.value() + c2.value())
@@ -84,7 +70,6 @@ class minPathPotentialObjective(ob.OptimizationObjective):
 
 def getPotentialObjective(si, start, useIncrementalCost):
     obj = minPathPotentialObjective(si, start, useIncrementalCost)
-    # obj.setCostToGoHeuristic(ob.CostToGoHeuristic(ob.goalRegionCostToGo)) # TODO:
     return obj
 
 def getThresholdPathLengthObj(si):
@@ -126,11 +111,9 @@ def allocatePlanner(si, plannerType):
     elif plannerType.lower() == "prmstar":
         planner = og.PRMstar(si)
         # planner = og.PRM(si)
-        # planner.params().setParam("max_nearest_neighbors", "1")
         return planner
     elif plannerType.lower() == "rrtstar":
         planner = og.RRTstar(si)
-        # planner.params().setParam("number_sampling_attempts", "1000")
         planner.params().setParam("range", "0.01")
         planner.params().setParam("rewire_factor", "0.01")
         return planner
@@ -138,7 +121,6 @@ def allocatePlanner(si, plannerType):
         return og.SORRTstar(si)
     elif plannerType.lower() == "lbtrrt":
         planner = og.LBTRRT(si)
-        # planner.params().setParam("goal_bias", "0.2")
         # epsilon: smaller values of epsilon tend to explore the space more thoroughly but can be slower, while larger values of epsilon tend to be faster
         planner.params().setParam("epsilon", "0.01")
         return planner
@@ -178,8 +160,6 @@ def plot(sol_path_list):
 
     # create a circle object
     for i in range(len(rads)):
-        # circle = plt.Circle(centers[i], radius=rads[i], color='red')
-        # ax.add_artist(circle)
         plot_ellipse(centers[i], rads[i], ax)
 
     # set axis limits and aspect ratio
@@ -217,9 +197,6 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
     # Energy of start and goal
     Es, Eg = start[1], goal[1]
 
-    # goal_sampler = ob.GoalRegion(si)
-    # goal_sampler.setThreshold(0.1)
-
     # Create a problem instance
     pdef = ob.ProblemDefinition(si)
 
@@ -233,7 +210,6 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
         bounds.setHigh(0, 1.)
         bounds.setLow(1, .0)
         bounds.setHigh(1, .1)
-        # s.setBounds(0.6, 0.7)
         s.setBounds(bounds)
         goal_space.setSpace(s)
 
@@ -274,8 +250,6 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
             pathLength, \
             objValue))
         print('External mechanical work required to escape (total potential energy gain along the escape path): ', sumEnergyGain)
-        # print(pdef.getSolutionPath())
-        # print('sol_path_list', sol_path_list)
 
         plot(sol_path_list)
 

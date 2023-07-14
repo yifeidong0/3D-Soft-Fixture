@@ -1,9 +1,12 @@
 from datetime import datetime
-import os
 import glob
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import os.path as osp
+import sys
+sys.path.insert(0, osp.join(osp.dirname(osp.abspath(__file__)), '../'))
 from utils import *
 from scipy import interpolate
 import tikzplotlib

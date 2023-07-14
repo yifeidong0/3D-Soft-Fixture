@@ -1,7 +1,11 @@
-'''
-Adapted from
+
+"""
+Title: collection of utility functions
+Author: Yifei Dong
+Date: 14/07/2023
+Description: This script contains most utility functions in this repo. Adapted from
 https://github.com/StanfordVL/iGibson/blob/master/igibson/external/pybullet_tools/utils.py
-'''
+"""
 
 from __future__ import print_function
 import pybullet as p
@@ -27,14 +31,14 @@ def argument_parser():
     parser = argparse.ArgumentParser(description='3D energy-bounded caging demo program.')
 
     # Add a filename argument
-    # MaskEar - MaskBand, Ear
-    # BimanualRubic - Rubic, 3fGripper
+    # 1. ShovelFish - Fish, Shovel
+    # 2. MaskEar - MaskBand, Ear
+    # 3. StarfishBowl - Starfish, LeftHandAndBowl
+    # 4. HookFishHole - FishHole, Hook
+    # 5. HandbagGripper - Chain, 3fGripper
+    # 6. BimanualRubic - Rubic, 3fGripper
     # HookTrapsRing - Ring, Hook
     # BandHourglass - BandHorizon, Hourglass
-    # HookFishHole - FishHole, Hook
-    # StarfishBowl - Starfish, LeftHandAndBowl
-    # ShovelFish - Fish, Shovel
-    # HandbagGripper - Chain, 3fGripper
     # Franka - x, x
     # 2DSnapLock - 2Dlock, 2Dkey
     # 3DSnapLock - Snaplock, ring
@@ -67,7 +71,7 @@ def argument_parser():
                  'ShadowHand', 'Bucket', 'Ear', 'FbowlS', 'FbowlM', 'FbowlL',], \
         help='(Optional) Specify the obstacle that cages the object.')
     
-    parser.add_argument('-t', '--runtime', type=float, default=60, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=30, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0. (In the current settings, 240 s not better a lot than 120 s)')
     
     parser.add_argument('-v', '--visualization', type=bool, default=0, help=\

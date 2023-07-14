@@ -10,7 +10,7 @@ from object import *
 from utils import *
 import copy
 from pbOmplInterface import PbOMPL
-from visualization import *
+from visualization.visualization import *
 
 class RigidObjectCaging():
     def __init__(self, args):

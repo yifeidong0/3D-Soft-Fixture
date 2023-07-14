@@ -1,3 +1,9 @@
+/*
+ * An example showing how to generate joint-space motions at incremental perturbation levels.
+ *
+ * @warning Before executing this example, make sure there is enough space in front of the robot.
+ */
+
 // Copyright (c) 2017 Franka Emika GmbH
 // Use of this source code is governed by the Apache-2.0 license, see LICENSE
 #include <cmath>
@@ -10,12 +16,6 @@
 #include "examples_common.h"
 #include <Eigen/Dense>
 #include <unistd.h>
-
-/**
- * An example showing how to generate a Cartesian motion.
- *
- * @warning Before executing this example, make sure there is enough space in front of the robot.
- */
 
 // Function to multiply two rotation matrices in SO(3)
 Eigen::Matrix3d multiplyRotationMatrices(const Eigen::Matrix3d& rotation1, const Eigen::Matrix3d& rotation2) {
