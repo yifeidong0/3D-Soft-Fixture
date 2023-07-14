@@ -59,6 +59,10 @@ A sample command is provided as follows,
 python3 src/runScenario.py -c ShovelFish -p BITstar -j Fish -l Shovel -t 30 -v 1 
 ```
 
+After running it, you will obtain results as following,
+
+![example](results/ICRA2024/videos/scooping_fish.gif)
+
 Please follow the correspondance in the arguments as below,
 
 | Scenario        | Object             | Obstacle     |
