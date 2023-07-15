@@ -93,10 +93,6 @@ cmake --build .
 ```
 ~/libfranka/build$ ./examples/generate_cartesian_pose_motion <robot-ip>
 ```
-
-## Additional Information
-1. Currently tested planners include PRM, RRT, RRTstar, RRTConnect, EST, FMT* and BIT*. But all planners in OMPL should work. Just add them in the set_planner API in PbOMPL class.
-
 ## Acknowledgement
 The code is partly built upon the repo - [pybullet_ompl](https://github.com/lyfkyle/pybullet_ompl.git), which provides interface to use OMPL for motion planning inside PyBullet.
 
