@@ -1,0 +1,11 @@
+Model Information:
+* title:	Tileable Stylized Wooden Floor Texture
+* source:	https://sketchfab.com/3d-models/tileable-stylized-wooden-floor-texture-167a3fd14d65456dacfacd9eee793e6f
+* author:	JennyB (https://sketchfab.com/jenny77)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Tileable Stylized Wooden Floor Texture" (https://sketchfab.com/3d-models/tileable-stylized-wooden-floor-texture-167a3fd14d65456dacfacd9eee793e6f) by JennyB (https://sketchfab.com/jenny77) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Mina'i ware bowl, 1200-1299 CE
+* source:	https://sketchfab.com/3d-models/minai-ware-bowl-1200-1299-ce-304aa606135a47ec9291b464bba6b357
+* author:	Minneapolis Institute of Art (https://sketchfab.com/artsmia)
+
+Model License:
+* license type:	CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)
+* requirements:	Author must be credited. No commercial use. Modified versions must have the same license.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Mina'i ware bowl, 1200-1299 CE" (https://sketchfab.com/3d-models/minai-ware-bowl-1200-1299-ce-304aa606135a47ec9291b464bba6b357) by Minneapolis Institute of Art (https://sketchfab.com/artsmia) licensed under CC-BY-NC-SA-4.0 (http://creativecommons.org/licenses/by-nc-sa/4.0/)

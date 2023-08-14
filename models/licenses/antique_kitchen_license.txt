@@ -1,0 +1,11 @@
+Model Information:
+* title:	Antique Kitchen
+* source:	https://sketchfab.com/3d-models/antique-kitchen-017dbf073761426896e715053cf2d883
+* author:	Stan (https://sketchfab.com/Stas_SayHallo)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Antique Kitchen" (https://sketchfab.com/3d-models/antique-kitchen-017dbf073761426896e715053cf2d883) by Stan (https://sketchfab.com/Stas_SayHallo) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

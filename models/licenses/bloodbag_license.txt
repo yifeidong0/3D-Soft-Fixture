@@ -1,0 +1,11 @@
+Model Information:
+* title:	Cozy Blood Bag
+* source:	https://sketchfab.com/3d-models/cozy-blood-bag-0302621453a54ae7a31ec56f22d7eb44
+* author:	Liam Moffitt (https://sketchfab.com/divadan)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Cozy Blood Bag" (https://sketchfab.com/3d-models/cozy-blood-bag-0302621453a54ae7a31ec56f22d7eb44) by Liam Moffitt (https://sketchfab.com/divadan) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

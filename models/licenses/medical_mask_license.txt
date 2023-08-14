@@ -1,0 +1,11 @@
+Model Information:
+* title:	Disposable Medical Masks
+* source:	https://sketchfab.com/3d-models/disposable-medical-masks-657b3a5d3e184a01b1708a3a24c27b44
+* author:	Léonard_Doye Alias Leoskateman (https://sketchfab.com/leoskateman)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Disposable Medical Masks" (https://sketchfab.com/3d-models/disposable-medical-masks-657b3a5d3e184a01b1708a3a24c27b44) by Léonard_Doye Alias Leoskateman (https://sketchfab.com/leoskateman) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

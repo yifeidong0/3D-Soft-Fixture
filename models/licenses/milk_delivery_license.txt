@@ -1,0 +1,11 @@
+Model Information:
+* title:	Milk Delivery
+* source:	https://sketchfab.com/3d-models/milk-delivery-b41e30c422d943409291050b77364568
+* author:	anastasiaremezova (https://sketchfab.com/anastasiaremezova)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Milk Delivery" (https://sketchfab.com/3d-models/milk-delivery-b41e30c422d943409291050b77364568) by anastasiaremezova (https://sketchfab.com/anastasiaremezova) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

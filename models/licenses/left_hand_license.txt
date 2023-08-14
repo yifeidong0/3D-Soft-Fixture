@@ -1,0 +1,11 @@
+Model Information:
+* title:	hand
+* source:	https://sketchfab.com/3d-models/hand-a43c9c9059b24e2aa4af08d1a76f0916
+* author:	kevinruiz (https://sketchfab.com/kevinruiz)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "hand" (https://sketchfab.com/3d-models/hand-a43c9c9059b24e2aa4af08d1a76f0916) by kevinruiz (https://sketchfab.com/kevinruiz) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

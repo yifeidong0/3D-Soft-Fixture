@@ -1,0 +1,11 @@
+Model Information:
+* title:	Charité University Hospital - Operating Room
+* source:	https://sketchfab.com/3d-models/charite-university-hospital-operating-room-9ec46c4d615a4581a235eebfb162f574
+* author:	ChrisRE (https://sketchfab.com/ChrisRE)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Charité University Hospital - Operating Room" (https://sketchfab.com/3d-models/charite-university-hospital-operating-room-9ec46c4d615a4581a235eebfb162f574) by ChrisRE (https://sketchfab.com/ChrisRE) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
