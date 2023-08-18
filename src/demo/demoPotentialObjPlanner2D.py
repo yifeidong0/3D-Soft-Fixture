@@ -21,11 +21,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Hyperparameters
-rads = [[.1, .2], [.1, .7], [.1, .6]]
-centers = [[.2, 0], [.5, .8], [.85, .25]]
-useGoalSpace = 1
-balancedObjRatio = .01
-useIncrementalCost = 1
+# rads = [[.05, .6], [.05, .3], [.05, .6]]
+# centers = [[.2, 0], [.5, .6], [.85, .25]]
+useGoalSpace = 0
+useIncrementalCost = 0
+runtime = 30.0
+planner = 'BITstar'
 
 class ValidityChecker(ob.StateValidityChecker):
     def isValid(self, state):
@@ -43,17 +44,6 @@ class minPathPotentialObjective(ob.OptimizationObjective):
         self.si_ = si
         self.start_ = start
         self.useIncrementalCost_ = useIncrementalCost
-
-    '''
-    I think the way of defining potential energy gain (mechanical work required from an external hand
-    to lift up an object or extend an elastic band) was wrong.
-    Previously we find the max energy along the path. However, each time potential energy gains, extra work required; 
-    potential energy drops, it LOSES this part of energy by applying work on the hand.
-    The energy required to send the object out of the soft fixture should be the piece-wise sum of energy gains along the path,
-    
-    Egain = 0.5 * (Etotal - (Estart-Egoal)) 
-    min{Egain} <-> min{Etotal} 
-    '''
 
     def combineCosts(self, c1, c2):
         if self.useIncrementalCost_:
@@ -81,8 +71,8 @@ def getBalancedObjective(si, start, useIncrementalCost):
     potentialObj = minPathPotentialObjective(si, start, useIncrementalCost)
 
     opt = ob.MultiOptimizationObjective(si)
-    opt.addObjective(lengthObj, balancedObjRatio)
-    opt.addObjective(potentialObj, 1-balancedObjRatio)
+    opt.addObjective(lengthObj, alpha)
+    opt.addObjective(potentialObj, 1)
     return opt
 
 def getPathLengthObjective(si):
@@ -98,7 +88,7 @@ def allocatePlanner(si, plannerType):
         return og.BFMT(si)
     elif plannerType.lower() == "bitstar":
         planner = og.BITstar(si)
-        # planner.params().setParam("rewire_factor", "100")
+        planner.params().setParam("rewire_factor", "0.2")
         return planner
     elif plannerType.lower() == "fmtstar":
         return og.FMT(si)
@@ -242,30 +232,37 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
         pathLength = sol_path_geometric.length()
         sol_path_states = sol_path_geometric.getStates()
         sol_path_list = [state_to_list(state) for state in sol_path_states]
-
+        sol_path_ys = [state[1] for state in sol_path_states]
+        pathPotentialCost = max(sol_path_ys)
+        totalCost = alpha*pathLength + max(sol_path_ys)
+       
+        print("pathPotentialCost: ", pathPotentialCost)
+        print("pathLengthCost: ", pathLength)
+        print('Cost, c = alpha*pathLengthCost + pathPotentialCost: ', totalCost)
         print('{0} found solution of path length {1:.4f} with an optimization ' \
             'objective value of {2:.4f}'.format( \
             optimizingPlanner.getName(), \
             pathLength, \
             objValue))
-        print('External mechanical work required to escape (total potential energy gain along the escape path): ', sumEnergyGain)
-
-        plot(sol_path_list)
 
         if fname:
             with open(fname, 'w') as outFile:
                 outFile.write(pdef.getSolutionPath().printAsMatrix())
     else:
         print("No solution found.")
+        return None, None, None
+    
+    print('===================================')
+    return pathPotentialCost, pathLength, totalCost
 
 if __name__ == "__main__":
     # Create an argument parser
     parser = argparse.ArgumentParser(description='Optimal motion planning demo program.')
 
     # Add a filename argument
-    parser.add_argument('-t', '--runtime', type=float, default=10.0, help=\
+    parser.add_argument('-t', '--runtime', type=float, default=runtime, help=\
         '(Optional) Specify the runtime in seconds. Defaults to 1 and must be greater than 0.')
-    parser.add_argument('-p', '--planner', default='RRTstar', \
+    parser.add_argument('-p', '--planner', default=planner, \
         choices=['LBTRRT', 'BFMTstar', 'BITstar', 'FMTstar', 'InformedRRTstar', 'PRMstar', 'RRTstar', \
         'SORRTstar'], \
         help='(Optional) Specify the optimal planner to use, defaults to RRTstar if not given.')
@@ -299,4 +296,48 @@ if __name__ == "__main__":
         ou.OMPL_ERROR("Invalid log-level integer.")
 
     # Solve the planning problem
-    plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost)
+    alphas = [0.0, 1e-4, 1e-3, 1e-2, 5e-2, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+    numOuterLoops = len(alphas)
+    numInnerLoops = 8
+    normalizedTotalCostMean = []
+    normalizedTotalCostStd = []
+    for i in range(numOuterLoops):
+        alpha = alphas[i]
+        normalizedTotalCostsAlpha = []
+        for j in range(numInnerLoops):
+            rads = np.random.rand(3,2)
+            rads[0][0] = rads[0][0]*0.08 + 0.01
+            rads[0][1] = rads[0][1]*0.8 + 0.1
+            rads[1][0] = rads[1][0]*0.08 + 0.01
+            rads[1][1] = rads[1][1]*0.3 + 0.2
+            rads[2][0] = rads[2][0]*0.08 + 0.01
+            rads[2][1] = rads[2][1]*0.7 + 0.2
+
+            centers = np.random.rand(3,2)
+            centers[0][0] = centers[0][0]*0.1 + 0.15
+            centers[0][1] = 0
+            centers[1][0] = centers[1][0]*0.2 + 0.4
+            centers[1][1] = centers[1][1]*0.3 + 0.3
+            centers[2][0] = centers[2][0]*0.07 + 0.8
+            centers[2][1] = centers[2][1]*0.2 + 0.0
+
+            pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost)
+            if totalCost is not None:
+                normalizedTotalCostsAlpha.append(totalCost/pathPotentialCost)
+        mean = sum(normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
+        variance = sum((x - mean) ** 2 for x in normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
+        std = variance ** 0.5
+        normalizedTotalCostMean.append(mean)
+        normalizedTotalCostStd.append(std)
+
+    # Plot alpha v.s. normalized total cost
+    mean = np.asarray(normalizedTotalCostMean)
+    std = np.asarray(normalizedTotalCostStd)
+    print("alphas: ", alphas)
+    print("mean: ", mean)
+    print("std: ", std)
+    plt.plot(alphas, mean, '-', color='#31a354', linewidth=2)
+    plt.fill_between(alphas, mean-std, mean+std, alpha=0.4, color='#31a354')
+    plt.gca().set_xscale('log')
+    plt.savefig("alpha-normalized-cost.png")
+    plt.show()
