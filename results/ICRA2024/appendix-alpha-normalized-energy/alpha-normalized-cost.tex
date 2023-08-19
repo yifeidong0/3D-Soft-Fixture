@@ -1,0 +1,76 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{seagreen4916384}{RGB}{49,163,84}
+
+\begin{axis}[
+log basis x={10},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={alpha},
+xmajorgrids,
+xmin=0.0001, xmax=1,
+xmode=log,
+xtick style={color=black},
+xtick={1e-05,0.0001,0.001,0.01,0.1,1,10},
+xticklabels={
+  \(\displaystyle {10^{-5}}\),
+  \(\displaystyle {10^{-4}}\),
+  \(\displaystyle {10^{-3}}\),
+  \(\displaystyle {10^{-2}}\),
+  \(\displaystyle {10^{-1}}\),
+  \(\displaystyle {10^{0}}\),
+  \(\displaystyle {10^{1}}\)
+},
+y grid style={darkgray176},
+ylabel={normalized estimated escape energy},
+ymajorgrids,
+ymin=0.95, ymax=5,
+ytick style={color=black}
+]
+\path [draw=seagreen4916384, fill=seagreen4916384, opacity=0.4]
+(axis cs:0,1)
+--(axis cs:0,1)
+--(axis cs:0.0001,1.000270479173)
+--(axis cs:0.001,1.002782338315)
+--(axis cs:0.01,1.02892687966)
+--(axis cs:0.05,1.1681707713)
+--(axis cs:0.1,1.2836639494)
+--(axis cs:0.2,1.506439138)
+--(axis cs:0.3,2.055934589)
+--(axis cs:0.5,2.619120123)
+--(axis cs:0.7,2.898881195)
+--(axis cs:1,3.758115618)
+--(axis cs:1,4.816276622)
+--(axis cs:1,4.816276622)
+--(axis cs:0.7,4.021919865)
+--(axis cs:0.5,3.423756257)
+--(axis cs:0.3,2.633262531)
+--(axis cs:0.2,1.796601222)
+--(axis cs:0.1,1.4319978706)
+--(axis cs:0.05,1.2707045087)
+--(axis cs:0.01,1.03813166034)
+--(axis cs:0.001,1.004418101685)
+--(axis cs:0.0001,1.000405500827)
+--(axis cs:0,1)
+--cycle;
+
+\addplot [thick, seagreen4916384]
+table {%
+0 1
+0.0001 1.00033799
+0.001 1.00360022
+0.01 1.03352927
+0.05 1.21943764
+0.1 1.35783091
+0.2 1.65152018
+0.3 2.34459856
+0.5 3.02143819
+0.7 3.46040053
+1 4.28719612
+};
+\end{axis}
+
+\end{tikzpicture}
