@@ -21,12 +21,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Hyperparameters
-# rads = [[.05, .6], [.05, .3], [.05, .6]]
-# centers = [[.2, 0], [.5, .6], [.85, .25]]
 useGoalSpace = 0
 useIncrementalCost = 0
-runtime = 30.0
-planner = 'BITstar'
+runtime = 10.0
+planner = 'BITstar' # 'BITstar'
+runSingle = 0
+gamma = 3.0
 
 class ValidityChecker(ob.StateValidityChecker):
     def isValid(self, state):
@@ -71,7 +71,7 @@ def getBalancedObjective(si, start, useIncrementalCost):
     potentialObj = minPathPotentialObjective(si, start, useIncrementalCost)
 
     opt = ob.MultiOptimizationObjective(si)
-    opt.addObjective(lengthObj, alpha)
+    opt.addObjective(lengthObj, gamma)
     opt.addObjective(potentialObj, 1)
     return opt
 
@@ -88,7 +88,8 @@ def allocatePlanner(si, plannerType):
         return og.BFMT(si)
     elif plannerType.lower() == "bitstar":
         planner = og.BITstar(si)
-        planner.params().setParam("rewire_factor", "0.2")
+        planner.params().setParam("rewire_factor", "0.5")
+        planner.params().setParam("samples_per_batch", "2000")
         return planner
     elif plannerType.lower() == "fmtstar":
         return og.FMT(si)
@@ -138,29 +139,39 @@ def plot_ellipse(center, radius, ax):
     b = radius[1]    # radius on the y-axis
 
     t = np.linspace(0, 2*np.pi, 100)
-    ax.plot(u+a*np.cos(t) , v+b*np.sin(t), color='red')
+    x = u + a * np.cos(t)
+    y = v + b * np.sin(t)
 
-def plot(sol_path_list):
+    ax.fill(x, y, alpha=0.7, color='#f4a63e')
+    ax.plot(x, y, alpha=0.7, color='#f4a63e')
+
+def plot(sol_path_list, normalizedCost):
     # Plot the solution path
     xpath = [state[0] for state in sol_path_list]
     ypath = [state[1] for state in sol_path_list]
     fig, ax = plt.subplots()
-    ax.plot(xpath, ypath)
+    ax.plot(xpath, ypath, color='#31a354')
 
     # create a circle object
     for i in range(len(rads)):
         plot_ellipse(centers[i], rads[i], ax)
 
     # set axis limits and aspect ratio
+    ax.text(0.02, 0.98, '$\\gamma=${}'.format(gamma), transform=ax.transAxes, verticalalignment='top', fontsize=17)
+    ax.text(0.02, 0.895, '$\\overline{{C}}(\\sigma^*)={:.2f}$'.format(normalizedCost), transform=ax.transAxes, verticalalignment='top', fontsize=17)
     ax.set_xlim([0, 1.])
     ax.set_ylim([0, 1.])
     ax.set_aspect('equal')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title('Escape path - objective of lowest incremental potential energy gain')
+    ax.set_xlabel('x', fontsize=16)
+    ax.set_ylabel('y', fontsize=16)
+    ax.set_xticks([0, 0.5, 1.0])
+    ax.set_yticks([0, 0.5, 1.0])
+    ax.tick_params(direction='in', length=6, width=1, colors='k', grid_color='k', grid_alpha=0.5, labelsize=10)
+    # ax.set_title('Escape path - objective of lowest incremental potential energy gain')
+    # plt.savefig("gamma-{}.png".format(gamma), dpi=200)
     plt.show()
 
-def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
+def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost, visualize=0):
     # Construct the robot state space in which we're planning. We're
     # planning in [0,1]x[0,1], a subset of R^2.
     space = ob.RealVectorStateSpace(2)
@@ -228,22 +239,28 @@ def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost):
         # Output the length of the path found
         sol_path_geometric = pdef.getSolutionPath()
         objValue = sol_path_geometric.cost(pdef.getOptimizationObjective()).value()
-        sumEnergyGain = (objValue - (Es-Eg)) / 2
+        # sumEnergyGain = (objValue - (Es-Eg)) / 2
         pathLength = sol_path_geometric.length()
         sol_path_states = sol_path_geometric.getStates()
         sol_path_list = [state_to_list(state) for state in sol_path_states]
         sol_path_ys = [state[1] for state in sol_path_states]
         pathPotentialCost = max(sol_path_ys)
-        totalCost = alpha*pathLength + max(sol_path_ys)
-       
+        totalCost = gamma*pathLength + pathPotentialCost
+        normalizedCost = totalCost/referencePotentialCost
+        
         print("pathPotentialCost: ", pathPotentialCost)
         print("pathLengthCost: ", pathLength)
-        print('Cost, c = alpha*pathLengthCost + pathPotentialCost: ', totalCost)
+        print('Cost, c = gamma*pathLengthCost + pathPotentialCost: ', totalCost)
+        print('Normalized cost, c_bar = gamma*pathLengthCost/referencePotentialCost + 1: ', normalizedCost)
         print('{0} found solution of path length {1:.4f} with an optimization ' \
             'objective value of {2:.4f}'.format( \
             optimizingPlanner.getName(), \
             pathLength, \
             objValue))
+        
+        # plot the map and path
+        if visualize:
+            plot(sol_path_list, normalizedCost)
 
         if fname:
             with open(fname, 'w') as outFile:
@@ -296,48 +313,59 @@ if __name__ == "__main__":
         ou.OMPL_ERROR("Invalid log-level integer.")
 
     # Solve the planning problem
-    alphas = [0.0, 1e-4, 1e-3, 1e-2, 5e-2, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
-    numOuterLoops = len(alphas)
-    numInnerLoops = 8
-    normalizedTotalCostMean = []
-    normalizedTotalCostStd = []
-    for i in range(numOuterLoops):
-        alpha = alphas[i]
-        normalizedTotalCostsAlpha = []
-        for j in range(numInnerLoops):
-            rads = np.random.rand(3,2)
-            rads[0][0] = rads[0][0]*0.08 + 0.01
-            rads[0][1] = rads[0][1]*0.8 + 0.1
-            rads[1][0] = rads[1][0]*0.08 + 0.01
-            rads[1][1] = rads[1][1]*0.3 + 0.2
-            rads[2][0] = rads[2][0]*0.08 + 0.01
-            rads[2][1] = rads[2][1]*0.7 + 0.2
+    if runSingle:
+        rads = [[.05, .6], [.05, .3], [.05, .6]]
+        centers = [[.2, 0], [.5, .6], [.85, .25]]
+        pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost, visualize=1)
+    else:    
+        gammas = [0.0, 1e-4, 1e-3, 1e-2, 5e-2, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+        numOuterLoops = len(gammas)
+        numInnerLoops = 8
+        normalizedTotalCostMean = []
+        normalizedTotalCostStd = []
+        for i in range(numOuterLoops):
+            gamma = gammas[i]
+            normalizedTotalCostsAlpha = []
+            for j in range(numInnerLoops):
+                rads = np.random.rand(3,2)
+                rads[0][0] = rads[0][0]*0.05 + 0.04
+                rads[0][1] = rads[0][1]*0.8 + 0.1
+                rads[1][0] = rads[1][0]*0.05 + 0.04
+                rads[1][1] = rads[1][1]*0.3 + 0.2
+                rads[2][0] = rads[2][0]*0.05 + 0.04
+                rads[2][1] = rads[2][1]*0.7 + 0.2
 
-            centers = np.random.rand(3,2)
-            centers[0][0] = centers[0][0]*0.1 + 0.15
-            centers[0][1] = 0
-            centers[1][0] = centers[1][0]*0.2 + 0.4
-            centers[1][1] = centers[1][1]*0.3 + 0.3
-            centers[2][0] = centers[2][0]*0.07 + 0.8
-            centers[2][1] = centers[2][1]*0.2 + 0.0
+                centers = np.random.rand(3,2)
+                centers[0][0] = centers[0][0]*0.1 + 0.15
+                centers[0][1] = 0
+                centers[1][0] = centers[1][0]*0.2 + 0.4
+                centers[1][1] = centers[1][1]*0.3 + 0.3
+                centers[2][0] = centers[2][0]*0.07 + 0.8
+                centers[2][1] = centers[2][1]*0.2 + 0.0
 
-            pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost)
-            if totalCost is not None:
-                normalizedTotalCostsAlpha.append(totalCost/pathPotentialCost)
-        mean = sum(normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
-        variance = sum((x - mean) ** 2 for x in normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
-        std = variance ** 0.5
-        normalizedTotalCostMean.append(mean)
-        normalizedTotalCostStd.append(std)
+                # Get reference energy cost
+                referencePotentialCost = max(centers[0][1]+rads[0][1], centers[2][1]+rads[2][1])
+                if centers[1][1] - rads[1][1] < 0:
+                    referencePotentialCost = max(referencePotentialCost, centers[1][1] + rads[1][1])
+                print("referencePotentialCost: ", referencePotentialCost)
 
-    # Plot alpha v.s. normalized total cost
-    mean = np.asarray(normalizedTotalCostMean)
-    std = np.asarray(normalizedTotalCostStd)
-    print("alphas: ", alphas)
-    print("mean: ", mean)
-    print("std: ", std)
-    plt.plot(alphas, mean, '-', color='#31a354', linewidth=2)
-    plt.fill_between(alphas, mean-std, mean+std, alpha=0.4, color='#31a354')
-    plt.gca().set_xscale('log')
-    plt.savefig("alpha-normalized-cost.png")
-    plt.show()
+                pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost, visualize=0)
+                if totalCost is not None:
+                    normalizedTotalCostsAlpha.append(totalCost/referencePotentialCost)
+            mean = sum(normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
+            variance = sum((x - mean) ** 2 for x in normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
+            std = variance ** 0.5
+            normalizedTotalCostMean.append(mean)
+            normalizedTotalCostStd.append(std)
+
+        # Plot gamma v.s. normalized total cost
+        mean = np.asarray(normalizedTotalCostMean)
+        std = np.asarray(normalizedTotalCostStd)
+        print("gammas: ", gammas)
+        print("mean: ", mean)
+        print("std: ", std)
+        plt.plot(gammas, mean, '-', color='#31a354', linewidth=2)
+        plt.fill_between(gammas, mean-std, mean+std, alpha=0.4, color='#31a354')
+        # plt.gca().set_xscale('log')
+        plt.savefig("gamma-normalized-cost.png")
+        # plt.show()
