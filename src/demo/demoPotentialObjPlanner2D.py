@@ -19,6 +19,7 @@ except ImportError:
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import tikzplotlib
 
 # Hyperparameters
 useGoalSpace = 0
@@ -26,7 +27,7 @@ useIncrementalCost = 0
 runtime = 10.0
 planner = 'BITstar' # 'BITstar'
 runSingle = 0
-gamma = 3.0
+gamma = 0.0
 
 class ValidityChecker(ob.StateValidityChecker):
     def isValid(self, state):
@@ -168,8 +169,9 @@ def plot(sol_path_list, normalizedCost):
     ax.set_yticks([0, 0.5, 1.0])
     ax.tick_params(direction='in', length=6, width=1, colors='k', grid_color='k', grid_alpha=0.5, labelsize=10)
     # ax.set_title('Escape path - objective of lowest incremental potential energy gain')
-    # plt.savefig("gamma-{}.png".format(gamma), dpi=200)
-    plt.show()
+    plt.savefig("gamma-{}-{}.png".format(gamma, j), dpi=200)
+    tikzplotlib.save("gamma-{}-{}.tex".format(gamma, j))
+    # plt.show()
 
 def plan(runTime, plannerType, objectiveType, fname, useIncrementalCost, visualize=0):
     # Construct the robot state space in which we're planning. We're
@@ -316,9 +318,16 @@ if __name__ == "__main__":
     if runSingle:
         rads = [[.05, .6], [.05, .3], [.05, .6]]
         centers = [[.2, 0], [.5, .6], [.85, .25]]
+        
+        # Get reference energy cost
+        referencePotentialCost = max(centers[0][1]+rads[0][1], centers[2][1]+rads[2][1])
+        if centers[1][1] - rads[1][1] < 0:
+            referencePotentialCost = max(referencePotentialCost, centers[1][1] + rads[1][1])
+        print("referencePotentialCost: ", referencePotentialCost)
+        
         pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost, visualize=1)
     else:    
-        gammas = [0.0, 1e-4, 1e-3, 1e-2, 5e-2, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+        gammas = [0.0] # [0.0, 1e-4, 1e-3, 1e-2, 5e-2, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
         numOuterLoops = len(gammas)
         numInnerLoops = 8
         normalizedTotalCostMean = []
@@ -349,7 +358,7 @@ if __name__ == "__main__":
                     referencePotentialCost = max(referencePotentialCost, centers[1][1] + rads[1][1])
                 print("referencePotentialCost: ", referencePotentialCost)
 
-                pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost, visualize=0)
+                pathPotentialCost, pathLength, totalCost = plan(args.runtime, args.planner, args.objective, args.file, useIncrementalCost, visualize=1)
                 if totalCost is not None:
                     normalizedTotalCostsAlpha.append(totalCost/referencePotentialCost)
             mean = sum(normalizedTotalCostsAlpha) / len(normalizedTotalCostsAlpha)
@@ -367,5 +376,5 @@ if __name__ == "__main__":
         plt.plot(gammas, mean, '-', color='#31a354', linewidth=2)
         plt.fill_between(gammas, mean-std, mean+std, alpha=0.4, color='#31a354')
         # plt.gca().set_xscale('log')
-        plt.savefig("gamma-normalized-cost.png")
+        # plt.savefig("gamma-normalized-cost.png")
         # plt.show()
