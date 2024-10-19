@@ -1,8 +1,8 @@
 ![example](results/ICRA2024/others/soft-fixture-scenarios.png)
 
-This repo provides code for the paper - Soft Fixtures: Practical Caging-Based Manipulation of Rigid and Deformable Objects
+This repo provides code for the IEEE ICRA 2024 paper - Soft Fixtures: Practical Caging-Based Manipulation of Rigid and Deformable Objects
 
-[[PREPRINT]](...) [[WEBSITE]](https://sites.google.com/view/softfixture/home) [[VIDEOS]](https://www.youtube.com/playlist?list=PLYP3395168-Swf4ZDVI4SwARKKHaQ84HB)
+[[PAPER]](https://arxiv.org/abs/2309.01224) [[WEBSITE]](https://sites.google.com/view/softfixture/home) [[VIDEOS]](https://www.youtube.com/playlist?list=PLYP3395168-Swf4ZDVI4SwARKKHaQ84HB)
 
 ## Installation instructions:
 
@@ -93,6 +93,20 @@ cmake --build .
 ```
 ~/libfranka/build$ ./examples/generate_cartesian_pose_motion <robot-ip>
 ```
+
+## Citation
+If you find the code useful, please consider cite the following paper
+```
+@inproceedings{dong2024quasi,
+  title={Quasi-static soft fixture analysis of rigid and deformable objects},
+  author={Dong, Yifei and Pokorny, Florian T},
+  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)},
+  pages={6513--6520},
+  year={2024},
+  organization={IEEE}
+}
+```
+
 ## Acknowledgement
 The code is partly built upon the repo - [pybullet_ompl](https://github.com/lyfkyle/pybullet_ompl.git), which provides interface to use OMPL for motion planning inside PyBullet.
 
